@@ -1,0 +1,51 @@
+<form autocomplete="off" onsubmit="event.preventDefault()">
+    
+    <h2><b>Calibration</b></h2>  
+
+    Starting calibration procedure.<br>
+    The four corners of the Foundry window are the calibration points. To calibrate, move to one of the corners and wait a few seconds.<br>
+    Make sure the Foundry screen is positioned the way you want to use it. For example, make it full screen (F11).
+    If the Foundry window is moved, resized, or made full screen, please restart the calibration.
+    <br>
+    <h3><b>Calibration Points</b></h3> 
+
+    <table style="float:right;text-align:center;width:100%">
+        <tr>
+            <th style="width:33.3%">Point</th>
+            <th style="width:33.3%">X</th>
+            <th style="width:33.3%">Y</th> 
+        </tr>
+        {{#each iteration as |i|}}
+            <tr>
+                <td id="iterationPoint{{i}}" style="color:grey">{{i}}</td>
+                <td id="calPoint_x{{i}}" style="color:grey">0</td>
+                <td id="calPoint_y{{i}}" style="color:grey">0</td>
+            </tr>
+        {{/each}}
+    </table>
+
+    <p id="noMovement">
+        <b>Move a base to the calibration point and wait a few seconds.</b>
+    </p>
+
+    <p id="waiting" style="display:none">
+        <b>Locking in point in 5 seconds.</b>
+    </p>
+
+    <p id="calDone" style="display:none">
+        <b>Calibration done. You can close this window.</b>
+    </p>
+
+    <p id="calCancel" style="display:none">
+        <b>Calibration cancelled. You can close this window or wait 5 seconds.</b>
+    </p>
+
+    <button name="calNext" type="button" id=calNextBtn>
+        <i></i> Next
+    </button>
+
+    <button type="submit" id=calCloseBtn style="display:none">
+        Close
+    </button>
+</form>
+

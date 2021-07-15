@@ -1,0 +1,146 @@
+<form autocomplete="off" onsubmit="event.preventDefault()">
+
+    <style>
+        .column {
+            float: left;
+            width: 50%;
+        }
+
+        /* Clear floats after the columns */
+        .row:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        header.table-header {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px;
+            border: 1px solid #191813;
+            text-align: center;
+            color: #f0f0e0;
+            font-weight: bold;
+            text-shadow: 1px 1px #000;
+        }
+        ul.permissions-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+    
+            overflow: hidden auto;
+            scrollbar-width: thin;
+        }
+        li.permission {
+            padding: 5px;
+            border-bottom: 1px solid #7a7971;
+        }
+        li.permission .form-fields {
+            justify-content: space-around;
+        }
+        li.permission input[type="checkbox"] {
+            margin: 0;
+        }
+        .index {
+            flex: 0 0 200px;
+            text-align: left;
+            font-weight: bold;
+        }
+        .tableId {
+            text-align: left;
+            font-weight: bold;
+            flex: 0 0 7%;
+        }
+        .tableName {
+            text-align: left;
+            font-weight: bold;
+            flex: 0 0 20%;
+        }
+        .tableLink {
+            text-align: center;
+            font-weight: bold;
+            flex: 0 0 8%;
+        }
+        .hint {
+            flex: 0 0 100%;
+            color: #4b4a44;
+            font-size: 13px;
+            margin: 5px 0 0;
+        }
+        .form-fields {
+            justify-content: space-around;
+            }
+    </style>
+
+    <div class="row" style="width:850px">
+        <div class="column" style="width: 49%">
+            <p class="notes">
+                {{localize "MaterialPlane.BaseSetup.Main.Description"}}<br>
+            </p>
+            <ul class="notes">
+                <li><b>{{localize "MaterialPlane.BaseSetup.BaseId.Label"}}:</b> {{localize "MaterialPlane.BaseSetup.BaseId.Description"}}</li>
+                <li><b>{{localize "MaterialPlane.BaseSetup.TokenName.Label"}}:</b> {{localize "MaterialPlane.BaseSetup.TokenName.Description"}}</li>
+                <li><b>{{localize "MaterialPlane.BaseSetup.TokenScene.Label"}}:</b> {{localize "MaterialPlane.BaseSetup.TokenScene.Description"}}</li>
+                <li><b>{{localize "MaterialPlane.BaseSetup.ActorName.Label"}}:</b> {{localize "MaterialPlane.BaseSetup.ActorName.Description"}}</li>
+                <li><b>{{localize "MaterialPlane.BaseSetup.LinkActor.Label"}}:</b> {{localize "MaterialPlane.BaseSetup.LinkActor.Description"}}</li>
+                <li><b>{{localize "MaterialPlane.BaseSetup.Id.Label"}}:</b> {{localize "MaterialPlane.BaseSetup.Id.Description"}}</li>
+                <li><b>{{localize "MaterialPlane.BaseSetup.Data.Label"}}:</b> {{localize "MaterialPlane.BaseSetup.Data.Description"}}</li>
+                <li><b>{{localize "MaterialPlane.BaseSetup.Delete.Label"}}:</b> {{localize "MaterialPlane.BaseSetup.Delete.Description"}}</li>
+                <li><b>{{localize "MaterialPlane.BaseSetup.PlusButton.Label"}}:</b> {{localize "MaterialPlane.BaseSetup.PlusButton.Description"}}</li>
+            </ul>         
+        </div>
+
+        <div class="column" style="float:right">
+            <div style="height:100%">
+                <H3>{{localize "MaterialPlane.BaseSetup.NewData"}}</H3>
+                <div>
+                    <label>{{localize "MaterialPlane.BaseSetup.BaseId.Label"}}:</label>
+                    <input type="number"  style="width:15%;float:right;" id="MP_lastBaseAddress" value={{lastBaseAddress}}>
+                </div>
+                <br>
+                <div>
+                    <label>{{localize "MaterialPlane.BaseSetup.TokenName.Label"}}:</label>
+                    <input type="text" style="width:50%;float:right;" id="MP_lastTokenName" value="{{lastTokenName}}" {{this.disabled}}>
+                </div>
+                <br>
+                <div>
+                    <label>{{localize "MaterialPlane.BaseSetup.TokenScene.Label"}}:</label>
+                    <input type="text" style="width:50%;float:right;" id="MP_lastTokenSceneName" value="{{lastTokenSceneName}}" {{this.disabled}}>
+                </div>
+                <br>
+                <div>
+                    <label>{{localize "MaterialPlane.BaseSetup.ActorName.Label"}}:</label>
+                    <input type="text" style="width:50%;float:right;" id="MP_lastTokenActorName" value="{{lastTokenActorName}}" {{this.disabled}}>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+    <header class="table-header flexrow" style="margin-bottom:5px;width:100%">
+        <label class="tableId">{{localize "MaterialPlane.BaseSetup.BaseId.Label"}}</label>
+        <label class="tableName">{{localize "MaterialPlane.BaseSetup.TokenName.Label"}}</label>
+        <label class="tableName">{{localize "MaterialPlane.BaseSetup.TokenScene.Label"}}</label>
+        <label class="tableName">{{localize "MaterialPlane.BaseSetup.ActorName.Label"}}</label>
+        <label class="tableLink">{{localize "MaterialPlane.BaseSetup.LinkActor.Label"}}</label>
+        <label class="tableLink">{{localize "MaterialPlane.BaseSetup.Id.Label"}}</label>
+        <label class="tableLink">{{localize "MaterialPlane.BaseSetup.Data.Label"}}</label>
+        <label class="tableLink">{{localize "MaterialPlane.BaseSetup.Delete.Label"}}</label>
+    </header>
+
+    <div id="MP_baseList">
+    {{#each bases}}
+        <div style="display:flex; width:100%">
+            <input type="number"  name="baseId" style="width:6.5%; margin-right:0.5%;color:{{this.color}}" id="baseId-{{this.iteration}}" value={{this.baseId}}>
+            <input type="text" name="tokenName" style="width:19.5%; margin-right:0.5%" id="tokenName-{{this.iteration}}" value="{{this.tokenName}}" {{this.disabled}}>
+            <input type="text" name="sceneName" style="width:19.5%; margin-right:0.5%" id="sceneName-{{this.iteration}}" value="{{this.sceneName}}" {{this.disabled}}>
+            <input type="text" name="actorName" style="width:19.5%; margin-right:2.5%" id="actorName-{{this.iteration}}" value="{{this.actorName}}">
+            <input type="checkbox" name="linkActor" style="margin-right: 4%" id="linkActor-{{this.iteration}}" {{checked this.linkActor}}>
+            <button type="button" name="setId" style="width:5%; margin-right:3%" id="setId-{{this.iteration}}"><i class="fas fa-fingerprint"></i></button>
+            <button type="button" name="setData" style="width:5%; margin-right:2.5%" id="setData-{{this.iteration}}"><i class="fas fa-table"></i></button>
+            <button type="button" name="delete" style="width:5%" id="delete-{{this.iteration}}"><i class="fas fa-trash"></i></button>
+        </div>
+    {{/each}}
+    </div>
+
+    <button type="button" name="add" style="width:5%; float:right; margin-right:3.2%"><i class="fas fa-plus"></i></button>
+</form>
