@@ -1,24 +1,3 @@
-/**
- * Module name: Material Plane
- * Github repository: https://github.com/CDeenen/MaterialPlane
- * Author: C Deenen (Cris#6864 on Discord)
- * 
- * Useful reference material:
- * Websockets: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
- * 
- * Opening a websocket:
- *      let ws = new WebSocket('ws://[IP]':'[port])
- *          Example: let ws = new WebSocket('ws://192.168.1.1:80')
- * 
- * Sending data:
- *      ws.send("dataHere")
- * 
- * Receiving data:
- *      ws.onmessage = function message(data) {
- *          //do stuff with the data
- *      }
- */
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Global variables
@@ -34,17 +13,13 @@ export const moduleName = "MaterialPlane";
 export let lastToken;
 export let lastTokenSceneName;
 
-
-//Token & movement related variables
-
-//export let circle = new Circle();
-
-
 let hideElements = false;
 let enableModule = false;
 
 export let calibrationDialog;
 export let calibrationProgress;
+
+export let hwVariant;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -52,9 +27,9 @@ export let calibrationProgress;
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
+export function setHwVariant(v) {
+    hwVariant = v;
+}
 
 /**
  * Check keys for 'Ctrl' press, to show or hide elements

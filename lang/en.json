@@ -17,8 +17,6 @@
     "MaterialPlane.Sett.SensorIP_Hint": "Fill in the IP address of the sensor module",
     "MaterialPlane.Sett.MovementMarker": "Draw Movement Marker",
     "MaterialPlane.Sett.MovementMarker_Hint": "During token movement, draw a marker to indicate where the token will move moved to on token drop",
-    "MaterialPlane.Sett.hwVariant": "Hardware Variant",
-    "MaterialPlane.Sett.hwVariant_Hint": "Select the sensor hardware that you use",
     "MaterialPlane.Sett.DIY_SIMPLE": "Simple DIY",
     "MaterialPlane.Sett.DIY_FULL": "Full DIY",
     "MaterialPlane.Sett.BETA": "Beta Kit",

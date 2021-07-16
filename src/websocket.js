@@ -1,4 +1,4 @@
-import { moduleName,calibrationDialog,calibrationProgress } from "../MaterialPlane.js";
+import { moduleName,calibrationDialog,calibrationProgress,hwVariant,setHwVariant } from "../MaterialPlane.js";
 import { IRtoken } from "./IRtoken.js";
 import { cursor, scaleIRinput } from "./misc.js";
 import { Pen} from "./pen.js";
@@ -53,6 +53,7 @@ let batteryStorage = [];
 async function analyzeWSmessage(msg,passthrough = false){
     //console.log('raw',msg);
     let data = JSON.parse(msg);
+    //console.log('data',data)
     if (data.status == "ping") {
         batteryStorage.push((data.battery.voltage - 3)*100);
 
@@ -99,9 +100,13 @@ async function analyzeWSmessage(msg,passthrough = false){
                 document.getElementById("batteryIcon").className = icon; 
             }
         }
+
+        if (data.source == 'calibration' && document.getElementById('MaterialPlane_CalProgMenu') == null) {
+            sendWS("CAL CANCEL");
+        }
         return;
     }
-
+    //console.log('data',data)
     const targetUser = game.settings.get(moduleName,'TargetName');
     if (data.status == 'IR data') {
         if (calibrationProgress?.calibrationRunning) {
@@ -264,6 +269,7 @@ async function analyzeWSmessage(msg,passthrough = false){
             ir: data.ir
         }
         calibrationDialog.setSettings(settings);
+        setHwVariant(data.hardware);
     }
     else if (data.status == 'calibration') {
         if (data.state == 'starting') calibrationProgress.start();
@@ -275,14 +281,15 @@ async function analyzeWSmessage(msg,passthrough = false){
 
 /**
  * Start a new websocket
- * Start a 10s interval, if no connection is made, run resetWS()
+ * Start a 1s interval, connection fails, retry
  * If connection is made, set interval to 1.5s to check for disconnects
  * If message is received, reset the interval, and send the message to analyzeWSmessage()
  */
-export function startWebsocket() {
+export async function startWebsocket() {
     console.log("starting WS")
     ip = game.settings.get(moduleName,'IP');
     ws = new WebSocket('ws://'+ip+':'+port);
+    clearInterval(wsInterval);
 
     ws.onmessage = function(msg){
         analyzeWSmessage(msg.data);
@@ -291,7 +298,7 @@ export function startWebsocket() {
     }
 
     ws.onopen = function() {
-        console.log("Material Plane: Websocket connected")
+        console.log("Material Plane: Websocket connected",ws)
         ui.notifications.info("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.Connected")+ip+':'+port);
         wsOpen = true;
         clearInterval(wsInterval);
@@ -299,7 +306,7 @@ export function startWebsocket() {
     }
   
     clearInterval(wsInterval);
-    wsInterval = setInterval(resetWS, 10000);
+    wsInterval = setInterval(resetWS, 1000);
 }
 
 /**
@@ -307,17 +314,19 @@ export function startWebsocket() {
  */
 function resetWS(){
     if (wsOpen) {
+        wsOpen = false;
         console.log("Material Plane: Disconnected from server");
         ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.Disconnected"));
+        startWebsocket();
     }
-    else {
+    else if (ws.readyState == 3){
         console.log("Material Plane: Connection to server failed");
         ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.ConnectFail"));
+        startWebsocket();
     }
-    startWebsocket();
 }
 
 
 export function sendWS(txt){
-    ws.send(txt);
+    if (wsOpen) ws.send(txt);
 }

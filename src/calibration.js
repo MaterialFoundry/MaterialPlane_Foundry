@@ -1,5 +1,5 @@
 import { sendWS } from "./websocket.js";
-import { moduleName, calibrationProgress } from "../MaterialPlane.js";
+import { moduleName, calibrationProgress, hwVariant } from "../MaterialPlane.js";
 
 let countdownCount = 5;
 let countdown;
@@ -76,7 +76,7 @@ export class calibrationForm extends FormApplication {
     updatePoint(data) {
         if (data.point > 4) return;
 
-        if (data.command == 2) {
+        if (data.command == 129) {
             data.x = 0;
             data.y = 0;
             data.avgBrightness = 0;
@@ -144,10 +144,10 @@ export class calibrationForm extends FormApplication {
     static get defaultOptions() {
         return mergeObject(super.defaultOptions, {
             id: "MaterialPlane_CalMenu",
-            title: "Material Plane: "+game.i18n.localize("MaterialPlane.CalSett.Title"),
+            title: "Material Plane: Calibration",
             template: "./modules/MaterialPlane/templates/calibrationMenu.html",
-            classes: ["sheet"],
-            width: 600
+            width: 600,
+            height: 800
         });
     }
 
@@ -160,10 +160,10 @@ export class calibrationForm extends FormApplication {
      */
     getData() {
         this.menuOpen = true;
-        const msg = "GET SETTINGS";
-        const diyHW = game.settings.get(moduleName,'hwVariant') == 0 ? '' : 'none'; 
-        const prodHW = game.settings.get(moduleName,'hwVariant') == 0 ? 'none' : ''; 
-        sendWS(msg);
+        
+        const diyHW = (hwVariant == "DIY_FULL" || hwVariant == "DIY_BASIC") ? 'none' : ''; 
+        const prodHW = hwVariant == "BETA" ? 'none' : ''; 
+        setTimeout(function(){sendWS("GET SETTINGS");},500);
         return {
             settings:this.settings,
             framePeriod: 15,
@@ -455,6 +455,7 @@ export class calibrationProgressScreen extends FormApplication {
     }
 
     cancel() {
+        if (document.getElementById('MaterialPlane_CalProgMenu') == null) return;
         setTimeout(function(){calibrationProgress.close();},5000);
         this.calibrationRunning = false;
         document.getElementById("calCancel").style="";
@@ -466,6 +467,7 @@ export class calibrationProgressScreen extends FormApplication {
 }
 
 export function removeOverlay(){
+    if (game.settings.get(moduleName,'TargetName') != game.user.name) return;
     canvas.stage.removeChild(overlay);
     overlay.remove();
     overlay = undefined;

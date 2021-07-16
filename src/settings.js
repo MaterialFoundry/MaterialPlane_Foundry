@@ -99,19 +99,6 @@ export const registerSettings = function() {
     });
 
     /**
-     * Sets the movement method
-     */
-     game.settings.register(MODULE.moduleName,'hwVariant', {
-        name: "MaterialPlane.Sett.hwVariant",
-        hint: "MaterialPlane.Sett.hwVariant_Hint",
-        scope: "world",
-        config: true,
-        type:Number,
-        default:0,
-        choices:["MaterialPlane.Sett.BETA","MaterialPlane.Sett.DIY_SIMPLE","MaterialPlane.Sett.DIY_FULL"]
-    });
-
-    /**
      * Sets the name of the target client (who has the TV connected)
      */
     game.settings.register(MODULE.moduleName,'IP', {

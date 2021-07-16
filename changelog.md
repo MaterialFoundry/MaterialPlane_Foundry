@@ -1,4 +1,12 @@
-# Changelog Module
+# Changelog Material Plane Foundry Module
+### v2.0.1 - 16-07-2021
+-'Average Count' is now also editable for DIY sensors (using calibration screen), which allows you to improve positional accuracy at the cost of responsiveness.
+-Fixed issue where sensor would stay in calibration mode if calibration was not successfully completed.
+-Removed console error that appeared for the GM when calibration was done.
+-Improved on-screen calibration instructions
+-Removed 'Hardware Variant' module setting, since it's now autodetected
+-WebSocket client no longer creates duplicate connections, which resulted in errors
+
 ### v2.0.0 - 15-07-2021
 This is basically a complete rewrite of the module, made with support for the new hardware in mind.<br>
 The old hardware is compatible, but requires an update.<br>
