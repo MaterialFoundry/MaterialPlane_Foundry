@@ -7,7 +7,6 @@ Additions:
     <li>You can now configure the websocket port to use. <b>For current users: This means that you need to add this to the 'Sensor Module IP Address' module setting</b></li>
     <li>Material Plane can connect through Material Server, using it as a proxy server to allow MP to function on SSL Foundry servers (requires MS v1.0.3)</li>
     <li>Through Material Server, MP can connect to the server using the USB Serial Port (requires MS v1.0.3)</li>
-    <li>Cursor of the pen now hides after 1 second of inactivity</li>
     <li>Added offset compensation for when, after calibration, there is an offset between the base location and in-game location</li>
     <li>Made elements in the calibration screen collapsible to prevent excessive scrolling</li>
     <li>Added 'Auto exposure' button to the calibration screen (only works for Beta HW)</li>
@@ -21,7 +20,10 @@ Fixes:
 
 Other:
 <ul>
+    <li>Cursor of the pen now hides after 1 second of inactivity</li>
     <li>Reduced the max average count to 20</li>
+    <li>Minor changes to the communication protocol between sensor and module</li>
+    <li>Battery percentage calculation has been moved to the sensor</li>
 </ul>
 
 Compatible with:
