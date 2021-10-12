@@ -1,52 +1,14 @@
 import { moduleName,calibrationDialog,calibrationProgress,hwVariant,setHwVariant } from "../MaterialPlane.js";
-import { IRtoken } from "./IRtoken.js";
-import { cursor, scaleIRinput } from "./misc.js";
-import { Pen} from "./pen.js";
+import { analyzeIR } from "./analyzeIR.js";
 
 //Websocket variables
-let ip = "192.168.1.189";       //Ip address of the websocket server
-let port = "3000";                //Port of the websocket server
+let ip = "materialserver.local:3000";       //Ip address of the websocket server
 var ws;                         //Websocket variable
 let wsOpen = false;             //Bool for checking if websocket has ever been opened => changes the warning message if there's no connection
 let wsInterval;                 //Interval timer to detect disconnections
 
-export let lastBaseAddress = 0;
-export let IRtokens = [];
-let cursors = [];
-let pen;
-let oldCommand = 0;
-
-function getTokenByID(id){
-    const tokenIDs = game.settings.get(moduleName,'baseSetup');
-    const baseData = tokenIDs.find(p => p.baseId == id);
-    if (baseData == undefined) return undefined;
-    if (baseData.linkActor) return canvas.tokens.children[0].children.find(p => p.actor.name == baseData.actorName);
-    else if (baseData.sceneName == canvas.scene.name)return canvas.tokens.children[0].children.find(p => p.name == baseData.tokenName);
-    return undefined;
-}
-
-let foundBases = 0;
-
-export function initializeIRtokens(){
-    for (let i=0; i<16; i++) IRtokens[i] = new IRtoken();
-}
-
-export function initializeCursors(){
-    for (let i=0; i<16; i++) {
-        cursors[i] = new cursor();
-        canvas.stage.addChild(cursors[i]);
-        cursors[i].init();
-    }
-    pen = new Pen();
-    pen.init();
-}
-
-let batteryStorage = [];
-
 /**
- * Analyzes the message received from the IR tracker.
- * If coordinates are received, scale the coordinates to the in-game coordinate system, find the token closest to those coordinates, and either take control of a new token or update the position of the image of that token
- * If no coordinates are received, move token to last recieved position
+ * Analyzes the message received from the IR tracker.-
  * 
  * @param {*} msg Message received from the IR tracker
  */
@@ -55,19 +17,19 @@ async function analyzeWSmessage(msg,passthrough = false){
     let data = JSON.parse(msg);
     //console.log('data',data)
     if (data.status == "ping") {
-        batteryStorage.push((data.battery.voltage - 3)*100);
+        //Display battery status
+        //console.log('battery',data.battery.voltage,data.battery.percentage)
+        let battery = data.battery.percentage;
+        if (battery > 100) battery = 100;
+        if (battery < 0) battery = 0;
+        let icon;
+        if (battery >= 80) icon = 'fas fa-battery-full';
+        else if (battery >= 60 && battery < 80) icon = 'fas fa-battery-three-quarters';
+        else if (battery >= 40 && battery < 60) icon = 'fas fa-battery-half';
+        else if (battery >= 20 && battery < 40) icon = 'fas fa-battery-quarter';
+        else if (battery < 20) icon = 'fas fa-battery-empty';
 
         if (document.getElementById("batteryLabel") == null) {
-            let battery = Math.ceil((data.battery.voltage - 3)*100);
-            if (battery > 100) battery = 100;
-            if (battery < 0) battery = 0;
-            let icon;
-            if (battery >= 80) icon = 'fas fa-battery-full';
-            else if (battery >= 60 && battery < 80) icon = 'fas fa-battery-three-quarters';
-            else if (battery >= 40 && battery < 60) icon = 'fas fa-battery-half';
-            else if (battery >= 20 && battery < 40) icon = 'fas fa-battery-quarter';
-            else if (battery < 20) icon = 'fas fa-battery-empty';
-
             const playersElement = document.getElementsByClassName("players-mode")[0];
             let batteryIcon = document.createElement("i");
             batteryIcon.id = "batteryIcon";
@@ -77,28 +39,13 @@ async function analyzeWSmessage(msg,passthrough = false){
             batteryLabel.id = "batteryLabel";
             batteryLabel.innerHTML = `${battery}%`;
             batteryLabel.style.fontSize = "1em";
+
             playersElement.after(batteryLabel);
             playersElement.after(batteryIcon);
         }
         else {
-            if (batteryStorage.length >= 10) {
-                let batt = 0;
-                for (let i=0; i<batteryStorage.length; i++) batt += batteryStorage[i];
-                let battery = Math.ceil(batt / batteryStorage.length);
-                if (battery > 100) battery = 100;
-                if (battery < 0) battery = 0;
-                batteryStorage = [];
-
-                let icon;
-                if (battery >= 80) icon = 'fas fa-battery-full';
-                else if (battery >= 60 && battery < 80) icon = 'fas fa-battery-three-quarters';
-                else if (battery >= 40 && battery < 60) icon = 'fas fa-battery-half';
-                else if (battery >= 20 && battery < 40) icon = 'fas fa-battery-quarter';
-                else if (battery < 20) icon = 'fas fa-battery-empty';
-                
-                document.getElementById("batteryLabel").innerHTML = `${battery}%`;
-                document.getElementById("batteryIcon").className = icon; 
-            }
+            document.getElementById("batteryLabel").innerHTML = `${battery}%`;
+            document.getElementById("batteryIcon").className = icon; 
         }
 
         if (data.source == 'calibration' && document.getElementById('MaterialPlane_CalProgMenu') == null) {
@@ -106,164 +53,16 @@ async function analyzeWSmessage(msg,passthrough = false){
         }
         return;
     }
-    //console.log('data',data)
-    const targetUser = game.settings.get(moduleName,'TargetName');
-    if (data.status == 'IR data') {
-        if (calibrationProgress?.calibrationRunning) {
-            //return;
-        }
-        else if (calibrationDialog?.menuOpen) {
-            calibrationDialog.drawCalCanvas();
-            //return;
-        }
-        
-        if (data.data.length == 0) {
-            if (game.user.name != targetUser) return;
-            for (let token of IRtokens) token.dropIRtoken(); 
-            foundBases = 0;
-            return;
-        }
-       
-        foundBases = data.points;
-        if (data.data[0].command > 2 && data.data[0].command != 129 && calibrationDialog?.menuOpen == false && calibrationProgress?.calibrationRunning == false) {
-            if (game.user.name != targetUser) return;
-            pen.analyze(data);
-        }
-        else {
-            for (let i=0; i<data.data.length; i++) {
-                const point = data.data[i];
-                
-                if (calibrationProgress?.calibrationRunning) {
-                    calibrationProgress.updatePoint(point);
-                    continue;
-                }
-                else if (calibrationDialog?.menuOpen) {
-                    calibrationDialog.updatePoint(point);
-                    continue;
-                }
-                if (game.user.name != targetUser) return;
-                
-                let forceNew = false;
-                const coords = {x:point.x, y:point.y};
-                let scaledCoords = scaleIRinput(coords);
-    
-                if (foundBases == 1) {
-                    if (point.id != 0) {
-                        if (point.id != lastBaseAddress || IRtokens[point.point].token == undefined) {
-                            const token = getTokenByID(point.id);
-                            if (token != undefined) IRtokens[point.point].token = token;
-                            forceNew = true;
-                        }
-                    }
-                    lastBaseAddress = point.id;
-                    if (document.getElementById("MP_lastBaseAddress") != null) {
-                        document.getElementById("MP_lastBaseAddress").value=point.id;
-                        for (let i=0; i<99; i++) {
-                            let base = document.getElementById("baseId-"+i);
-                            if (base != null) {
-                                if (point.id == base.value) base.style.color="green";
-                                else base.style.color="";
-                            }
-                            
-                        }
-                    }
-                }
-                
-                if (point.command < 2) {   //move token
-                    if (await IRtokens[point.point].update(coords,scaledCoords,forceNew) == false) {
-                        if (coords.x != undefined && coords.y != undefined) {
-                            cursors[point.point].updateCursor({
-                                x: scaledCoords.x,
-                                y: scaledCoords.y,
-                                size: 5,
-                                color: "0xFF0000"
-                            });
-                        }
-                    }
-                    else {
-                        cursors[point.point].hide();
-                    }
-                }
-                else if (point.command == 129) {    //drop token
-                    IRtokens[point.point].dropIRtoken();
-                    cursors[point.point].hide();
-                }
-                else if (point.command == 8) {      //pen pointer
-                    if (coords.x != undefined && coords.y != undefined) {
-                        if (oldCommand != 8) {
-                            pen.release(oldCommand,{
-                                x: scaledCoords.x,
-                                y: scaledCoords.y
-                            });
-                        }
-                        pen.updateCursor({
-                            x: scaledCoords.x,
-                            y: scaledCoords.y,
-                            size: 5,
-                            color: "0x00FF00",
-                            rawCoords: coords
-                        });
-                    }
-                }
-                else if (point.command == 40) {      //pen left
-                    if (coords.x != undefined && coords.y != undefined) {
-                        pen.click(point.command,{
-                            x: scaledCoords.x,
-                            y: scaledCoords.y,
-                            rawCoords: coords
-                        });
-                    }
-                }
-                else if (point.command == 24) {      //pen right
-                    if (coords.x != undefined && coords.y != undefined) {
-                        if (oldCommand == 24) {
-                            pen.hold(point.command,{
-                                x: scaledCoords.x,
-                                y: scaledCoords.y
-                            });
-                        }
-                        else {
-                            pen.click(point.command,{
-                                x: scaledCoords.x,
-                                y: scaledCoords.y,
-                                rawCoords: coords
-                            });
-                        }
-                    }
-                }
-                else if (point.command == 94) {      //pen front
-                    if (coords.x != undefined && coords.y != undefined) {
-                        if (oldCommand == 94) {
-                            pen.hold(point.command,{
-                                x: scaledCoords.x,
-                                y: scaledCoords.y
-                            });
-                        }
-                        else {
-                            pen.click(point.command,{
-                                x: scaledCoords.x,
-                                y: scaledCoords.y,
-                                rawCoords: coords
-                            });
-                        }
-                    }
-                }
-                else if (point.command == 72) {      //pen rear
-                    if (coords.x != undefined && coords.y != undefined) {
-                        pen.updateCursor({
-                            x: scaledCoords.x,
-                            y: scaledCoords.y,
-                            size: 5,
-                            color: "0x00FFFF"
-                        });
-                    }
-                }
-                oldCommand = point.command;
-            }
-        }
-        
+    else if (data.status == "Auto Exposure Done") {
+        ui.notifications.info("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.AutoExposureDone"));
     }
-    else if (data.status == 'connected') {
+    else if (data.status == 'IR data') {
+        if (calibrationProgress?.calibrationRunning) {}
+        else if (calibrationDialog?.menuOpen) { calibrationDialog.drawCalCanvas(); }
+        analyzeIR(data);
+        return;
+    }
+    else if (data.status == 'update') {
         const settings = {
             cal: data.cal,
             ir: data.ir
@@ -277,6 +76,12 @@ async function analyzeWSmessage(msg,passthrough = false){
         else if (data.state == 'cancelled') calibrationProgress.cancel();
         else calibrationProgress.setPoint(data.state);
     }
+    else if (data.status == 'sensorConnected') {
+        ui.notifications.info(`Material Plane: ${game.i18n.localize("MaterialPlane.Notifications.ConnectedMSS")}: ${game.settings.get(moduleName,'IP')}`);
+    }
+    else if (data.status == 'serialConnected') {
+        ui.notifications.info(`Material Plane: ${game.i18n.localize("MaterialPlane.Notifications.ConnectedMSS")}: ${data.port}`);
+    }
 };
 
 /**
@@ -286,9 +91,10 @@ async function analyzeWSmessage(msg,passthrough = false){
  * If message is received, reset the interval, and send the message to analyzeWSmessage()
  */
 export async function startWebsocket() {
-    console.log("starting WS")
-    ip = game.settings.get(moduleName,'IP');
-    ws = new WebSocket('ws://'+ip+':'+port);
+    
+    ip = game.settings.get(moduleName,'EnMaterialServer') ? game.settings.get(moduleName,'MaterialServerIP') : game.settings.get(moduleName,'IP');
+    console.log(`Material Plane: Starting websocket on 'ws://${ip}'`);
+    ws = new WebSocket('ws://'+ip);
     clearInterval(wsInterval);
 
     ws.onmessage = function(msg){
@@ -299,8 +105,18 @@ export async function startWebsocket() {
 
     ws.onopen = function() {
         console.log("Material Plane: Websocket connected",ws)
-        ui.notifications.info("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.Connected")+ip+':'+port);
+        if (game.settings.get(moduleName,'EnMaterialServer')) ui.notifications.info(`Material Plane: ${game.i18n.localize("MaterialPlane.Notifications.ConnectedMS")}: ${ip}`);
+        else ui.notifications.info(`Material Plane: ${game.i18n.localize("MaterialPlane.Notifications.Connected")}: ${ip}`);
         wsOpen = true;
+        if (game.settings.get(moduleName,'EnMaterialServer')) {
+            const msg = {
+                target: "server",
+                module: "MP",
+                ip: game.settings.get(moduleName,'IP')
+            }
+            ws.send(JSON.stringify(msg));
+        }
+        
         clearInterval(wsInterval);
         wsInterval = setInterval(resetWS, 5000);
     }
@@ -315,12 +131,12 @@ export async function startWebsocket() {
 function resetWS(){
     if (wsOpen) {
         wsOpen = false;
-        console.log("Material Plane: Disconnected from server");
+        console.warn("Material Plane: Disconnected from server");
         ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.Disconnected"));
         startWebsocket();
     }
     else if (ws.readyState == 3){
-        console.log("Material Plane: Connection to server failed");
+        console.warn("Material Plane: Connection to server failed");
         ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.ConnectFail"));
         startWebsocket();
     }
@@ -328,5 +144,17 @@ function resetWS(){
 
 
 export function sendWS(txt){
-    if (wsOpen) ws.send(txt);
+    //console.log('ws',wsOpen,txt)
+    if (wsOpen) {
+        if (game.settings.get(moduleName,'EnMaterialServer')) {
+            const msg = {
+                target: "MPSensor",
+                data: txt
+            }
+            ws.send(JSON.stringify(msg));
+        }
+        else
+            ws.send(txt);
+    }
+    
 }

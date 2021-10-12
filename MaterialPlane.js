@@ -4,10 +4,12 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-import { registerSettings, baseSetup} from "./src/settings.js";
-import { sendWS,startWebsocket, initializeIRtokens, initializeCursors } from "./src/websocket.js";
-import { calibrationForm,calibrationProgressScreen,removeOverlay } from "./src/calibration.js";
-import { registerLayer } from "./src/misc.js";
+import { registerSettings } from "./src/Misc/settings.js";
+import { sendWS,startWebsocket } from "./src/websocket.js";
+import { calibrationForm, calibrationProgressScreen, removeOverlay } from "./src/calibration.js";
+import { registerLayer } from "./src/Misc/misc.js";
+import { baseSetup } from "./src/IRtoken/baseSetup.js";
+import { initializeIRtokens, initializeCursors, setLastBaseAddress } from "./src/analyzeIR.js";
 
 export const moduleName = "MaterialPlane";
 export let lastToken;
@@ -62,7 +64,7 @@ function checkKeys() {
         
       }
     });
-  }
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -109,6 +111,36 @@ Hooks.on('ready', ()=>{
                         tokenSel.update({x: payload.newCoords.x, y: payload.newCoords.y});
                     }
                 }
+            }
+        }
+        if (game.user.isGM) {
+            if (payload.msgType == "controlToken") {
+                lastToken = game.canvas.tokens.get(payload.tokenId);
+                lastTokenSceneName = payload.lastTokenSceneName;
+
+                if (document.getElementById("MPbaseSetup") != null) {
+                    document.getElementById("MP_lastTokenName").value=lastToken.name;
+                    document.getElementById("MP_lastTokenActorName").value=lastToken.actor.name;
+                    document.getElementById("MP_lastTokenSceneName").value=lastTokenSceneName;
+                }
+            }
+            else if (payload.msgType == "lastBaseAddress") {
+                const lastBaseAddress = payload.lastBaseAddress;
+                setLastBaseAddress(lastBaseAddress);
+                if (document.getElementById("MP_lastBaseAddress") != null) {
+                    document.getElementById("MP_lastBaseAddress").value=lastBaseAddress;
+                    for (let i=0; i<99; i++) {
+                        let base = document.getElementById("baseId-"+i);
+                        if (base != null) {
+                            if (lastBaseAddress == base.value) base.style.color="green";
+                            else base.style.color="";
+                        }
+                        
+                    }
+                }
+            }
+            else if (payload.msgType == "setOffset") {
+                game.settings.set(moduleName, 'offset',payload.offset)
             }
         }    
     });
@@ -231,6 +263,13 @@ Hooks.on('controlToken', (token,controlled) => {
 
     lastToken = token;
     lastTokenSceneName = canvas.scene.name;
+
+    const payload = {
+        msgType: "controlToken",
+        tokenId: lastToken.id,
+        lastTokenSceneName
+    }
+    game.socket.emit(`module.MaterialPlane`, payload);
 
     if (document.getElementById("MPbaseSetup") != null) {
         document.getElementById("MP_lastTokenName").value=token.name;

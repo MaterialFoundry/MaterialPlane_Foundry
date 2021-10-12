@@ -1,128 +1,5 @@
-import * as MODULE from "../MaterialPlane.js";
-import { lastBaseAddress } from "./websocket.js";
-import { lastToken, lastTokenSceneName } from "../MaterialPlane.js";
-
-export const registerSettings = function() {
-    game.settings.register(MODULE.moduleName,'baseSetup', {
-        scope: "world",
-        config: false,
-        type: Array,
-        default: []
-    });
-    
-/**
-     * Enables the module (world)
-     */
-    game.settings.register(MODULE.moduleName,'Enable', {
-        name: "MaterialPlane.Sett.En",
-        scope: "world",
-        config: true,
-        default: true,
-        type: Boolean,
-        onChange: x => window.location.reload()
-    });
-
-    /**
-     * Sets the movement method
-     */
-    game.settings.register(MODULE.moduleName,'movementMethod', {
-        name: "MaterialPlane.Sett.MovementMethod",
-        hint: "MaterialPlane.Sett.MovementMethod_Hint",
-        scope: "world",
-        config: true,
-        type:Number,
-        default:1,
-        choices:["MaterialPlane.Sett.MovementMethod_Default","MaterialPlane.Sett.MovementMethod_Live","MaterialPlane.Sett.MovementMethod_SbS"]
-    });
-
-    /**
-     * Release the token after dropping
-     */
-    game.settings.register(MODULE.moduleName,'deselect', {
-        name: "MaterialPlane.Sett.Deselect",
-        hint: "MaterialPlane.Sett.Deselect_Hint",
-        scope: "world",
-        config: true,
-        default: true,
-        type: Boolean
-    });
-
-    /**
-     * Draw movement marker
-     */
-     game.settings.register(MODULE.moduleName,'movementMarker', {
-        name: "MaterialPlane.Sett.MovementMarker",
-        hint: "MaterialPlane.Sett.MovementMarker_Hint",
-        scope: "world",
-        config: true,
-        default: true,
-        type: Boolean
-    });
-
-    /**
-     * Sets if the target client is allowed to move non-owned tokens
-     */
-    game.settings.register(MODULE.moduleName,'EnNonOwned', {
-        name: "MaterialPlane.Sett.NonownedMovement",
-        hint: "MaterialPlane.Sett.NonownedMovement_Hint",
-        scope: "world",
-        config: true,
-        default: true,
-        type: Boolean
-    });
-
-    /**
-     * Hides all elements on the target client, if that client is not a GM
-     */
-    game.settings.register(MODULE.moduleName,'HideElements', {
-        name: "MaterialPlane.Sett.HideDisplay",
-        hint: "MaterialPlane.Sett.HideDisplay_Hint",
-        scope: "world",
-        config: true,
-        default: false,
-        type: Boolean,
-        onChange: x => window.location.reload()
-    });
-
-    
-    /**
-     * Sets the name of the target client (who has the TV connected)
-     */
-     game.settings.register(MODULE.moduleName,'TargetName', {
-        name: "MaterialPlane.Sett.TargetName",
-        hint: "MaterialPlane.Sett.TargetName_Hint",
-        scope: "world",
-        config: true,
-        default: "Observer",
-        type: String,
-        onChange: x => window.location.reload()
-    });
-
-    /**
-     * Sets the name of the target client (who has the TV connected)
-     */
-    game.settings.register(MODULE.moduleName,'IP', {
-        name: "MaterialPlane.Sett.SensorIP",
-        hint: "MaterialPlane.Sett.SensorIP_Hint",
-        scope: "world",
-        config: true,
-        default: "192.168.1.189",
-        type: String,
-        onChange: x => window.location.reload()
-    });
-
-    //invisible settings
-    game.settings.register(MODULE.moduleName,'menuOpen', {
-        name: "Menu Open",
-        hint: "Menu open on GM side",
-        scope: "world",
-        config: false,
-        default: false,
-        type: Boolean
-    });
-
-
-}
+import { moduleName, lastToken, lastTokenSceneName } from "../../MaterialPlane.js";
+import { lastBaseAddress } from "../analyzeIR.js";
 
 export class baseSetup extends FormApplication {
     constructor(data, options) {
@@ -148,7 +25,7 @@ export class baseSetup extends FormApplication {
      * Provide data to the template
      */
     getData() {
-        if (this.update == false) this.baseSettings = game.settings.get(MODULE.moduleName,'baseSetup');
+        if (this.update == false) this.baseSettings = game.settings.get(moduleName,'baseSetup');
         this.update = false;
 
         let bases = [];
@@ -308,7 +185,7 @@ export class baseSetup extends FormApplication {
             this.update = true;
             this.render(true);
         }
-        game.settings.set(MODULE.moduleName,'baseSetup',settings);
+        game.settings.set(moduleName,'baseSetup',settings);
     }
   
   }

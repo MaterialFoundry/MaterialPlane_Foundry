@@ -16,8 +16,8 @@ export class calibrationForm extends FormApplication {
        this.sensitivity = 0;
        this.calibrationEn = false;
        this.offsetEn = false;
-       this.compX = 0;
-       this.compY = 0;
+       this.Xoffset = 0;
+       this.Yoffset = 0;
        this.average = 0;
 
        this.X0 = 0;
@@ -75,6 +75,9 @@ export class calibrationForm extends FormApplication {
 
     updatePoint(data) {
         if (data.point > 4) return;
+        //if (data.point == 0) console.log('data',data)
+        document.getElementById("baseId").innerHTML=data.id;
+        document.getElementById("baseCmd").innerHTML=data.command;
 
         if (data.command == 129) {
             data.x = 0;
@@ -120,7 +123,7 @@ export class calibrationForm extends FormApplication {
         }
         ctx.fillStyle = '#FF0000';
         ctx.clearRect(0, 0, 400, 250);
-
+        //console.log('coords',this.coordinates)
         for (let point of this.coordinates) {
             if (point.x > 0 && point.y < 4096) {
                 ctx.beginPath();
@@ -144,7 +147,7 @@ export class calibrationForm extends FormApplication {
     static get defaultOptions() {
         return mergeObject(super.defaultOptions, {
             id: "MaterialPlane_CalMenu",
-            title: "Material Plane: Calibration",
+            title: `Material Plane: ${game.i18n.localize("MaterialPlane.CalDialog.Calibration")}`,
             template: "./modules/MaterialPlane/templates/calibrationMenu.html",
             width: 600,
             height: 800
@@ -163,13 +166,15 @@ export class calibrationForm extends FormApplication {
         
         const diyHW = (hwVariant == "DIY_FULL" || hwVariant == "DIY_BASIC") ? 'none' : ''; 
         const prodHW = hwVariant == "BETA" ? 'none' : ''; 
+        const offset = game.settings.get(moduleName,'offset')
         setTimeout(function(){sendWS("GET SETTINGS");},500);
         return {
             settings:this.settings,
             framePeriod: 15,
             iteration: [0,1,2,3],
             diyHW,
-            prodHW
+            prodHW,
+            offset
         }
     }
 
@@ -185,6 +190,7 @@ export class calibrationForm extends FormApplication {
     activateListeners(html) {
         super.activateListeners(html);
 
+        const autoExposureButton = html.find("button[id=autoExposure]")
         const framePeriodSlider = html.find("input[id='framePeriod']");
         const framePeriodNumber = html.find("input[id='framePeriodNumber']");
         const exposureSlider = html.find("input[id='exposure']");
@@ -206,10 +212,17 @@ export class calibrationForm extends FormApplication {
         const mirrorX = html.find("input[id='mirX']");
         const mirrorY = html.find("input[id='mirY']");
         const rotation = html.find("input[id='rot']");
+        const Xoffset = html.find("input[id='xOffset']");
+        const Yoffset = html.find("input[id='yOffset']");
 
         const calBtn = html.find("button[name='calBtn']");
         const calibrationEnable = html.find("input[id='calEn']");
         const offsetEnable = html.find("input[id='offsetEn']");
+
+        autoExposureButton.on("click", event => {
+            const msg = "SET IR AUTOEXPOSE";
+            sendWS(msg);
+        });
 
         framePeriodSlider.on("change", event => {
             const msg = "SET IR FRAMEPERIOD " + event.target.value/10;
@@ -304,6 +317,32 @@ export class calibrationForm extends FormApplication {
             sendWS(msg);
         });
 
+        Xoffset.on("change", event => {
+            let offset = game.settings.get(moduleName,'offset');
+            offset.x = parseInt(event.target.value) == null ? 0 : parseInt(event.target.value);
+            if (game.user.isGM) game.settings.set(moduleName, 'offset',offset)
+            else {
+                const payload = {
+                    msgType: "setOffset",
+                    offset
+                }
+                game.socket.emit(`module.MaterialPlane`, payload);
+            }
+        })
+
+        Yoffset.on("change", event => {
+            let offset = game.settings.get(moduleName,'offset');
+            offset.y = parseInt(event.target.value) == null ? 0 : parseInt(event.target.value);
+            if (game.user.isGM) game.settings.set(moduleName, 'offset',offset)
+            else {
+                const payload = {
+                    msgType: "setOffset",
+                    offset
+                }
+                game.socket.emit(`module.MaterialPlane`, payload);
+            }
+        })
+
         calibrationEnable.on("change", event => {
             let msg = "SET CAL CALIBRATION ";
             msg += event.target.checked? "1" : "0";
@@ -342,7 +381,7 @@ export class calibrationProgressScreen extends FormApplication {
     static get defaultOptions() {
         return mergeObject(super.defaultOptions, {
             id: "MaterialPlane_CalProgMenu",
-            title: "Material Plane: Calibration",
+            title: `Material Plane: ${game.i18n.localize("MaterialPlane.CalDialog.Calibration")}`,
             template: "./modules/MaterialPlane/templates/calibrationProgressScreen.html",
             classes: ["sheet"],
             width: 400,
@@ -439,7 +478,10 @@ export class calibrationProgressScreen extends FormApplication {
             document.getElementById("noMovement").style="";
             document.getElementById("waiting").style="display:none";
             const msg = "CAL NEXT";
-            sendWS(msg);
+            let user = game.users.contents.filter(u => u.active == true && u.isGM == true)[0];
+            
+            if (game.userId == user.id) sendWS(msg);
+            else if (user == undefined && game.settings.get(moduleName,'TargetName') == game.user.name) sendWS(msg);
         }
     }
 

@@ -1,5 +1,5 @@
-import { moduleName } from "../MaterialPlane.js";
-import { findToken, tokenMarker } from "./misc.js";
+import { moduleName } from "../../MaterialPlane.js";
+import { findToken, tokenMarker } from "../Misc/misc.js";
 
 export class IRtoken {
     constructor() { 
@@ -194,23 +194,25 @@ export class IRtoken {
      /**
      * Calculate the difference between the old coordinates of the token and the last measured coordinates, and move the token there
      */
-    async dropIRtoken(){
-        
+    async dropIRtoken(release = game.settings.get(moduleName,'deselect')){
+
         //If no token is controlled, return
         if (this.token == undefined) return;
-        
 
+        //this.moveToken(this.currentPosition)
+
+        let newCoords = {
+            x: (this.currentPosition.x-canvas.scene.data.grid/2),
+            y: (this.currentPosition.y-canvas.scene.data.grid/2)
+        }
+        this.previousPosition = this.currentPosition;
+        
+        
         //Release token, if setting is enabled
-        if (game.settings.get(moduleName,'deselect')) this.token.release();
+        if (release) this.token.release();
 
         //Get the coordinates of the center of the grid closest to the coords
         if (game.settings.get(moduleName,'movementMethod') != 2) {
-            let newCoords = {
-                x: (this.currentPosition.x-canvas.scene.data.grid/2),
-                y: (this.currentPosition.y-canvas.scene.data.grid/2)
-            }
-            this.previousPosition = this.currentPosition;
-
             await this.token.document.update(newCoords);
         }
         

@@ -1,4 +1,6 @@
 
+import { moduleName } from "../../MaterialPlane.js";
+
 /**
      * Scales the coordinates received from the IR sensor so they correspond with the in-game coordinate system
      * 
@@ -16,12 +18,24 @@ export function scaleIRinput(coords){
   const horVisible = screen.width/canvas.scene._viewPosition.scale;
   const vertVisible = screen.height/canvas.scene._viewPosition.scale;
 
+  const offset = game.settings.get(moduleName,'offset');
+
   //Calculate the scaled coordinates
-  const posX = (coords.x/4093)*horVisible+canvas.scene._viewPosition.x-horVisible/2;
-  const posY = (coords.y/4093)*vertVisible+canvas.scene._viewPosition.y-vertVisible/2;
+  const posX = (coords.x/4093)*horVisible+canvas.scene._viewPosition.x-horVisible/2+offset.x;
+  const posY = (coords.y/4093)*vertVisible+canvas.scene._viewPosition.y-vertVisible/2+offset.y;
 
   //Return the value
-  return {"x":posX,"y":posY};
+  return {"x":Math.round(posX),"y":Math.round(posY)};
+}
+
+export function generateId(){
+  var result           = '';
+  var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var charactersLength = characters.length;
+  for ( var i = 0; i < 16; i++ ) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
 }
 
 export function registerLayer() {
@@ -44,7 +58,7 @@ export function registerLayer() {
   
 }
 
-class MaterialPlaneLayer extends CanvasLayer {
+export class MaterialPlaneLayer extends CanvasLayer {
   constructor() {
     super();
   }
@@ -191,19 +205,41 @@ export class cursor extends MaterialPlaneLayer {
   updateCursor(data) {
     const x = data.x - Math.floor(data.size/2);
     const y = data.y - Math.floor(data.size/2);
-    
 
     this.container.removeChildren();
 
     if (data.selected != undefined && data.selected > 0) {
-      //Draw icon
-      const texture = PIXI.Texture.from(data.icon.icon);
-      const icon = new PIXI.Sprite(texture);
-      icon.anchor.set(data.icon.anchor.x,data.icon.anchor.y);
+      //Draw pointer
       
-      icon.width = 25;
-      icon.height = 25;
-      this.container.addChild(icon); 
+      const pointerTexture = PIXI.Texture.from("modules/MaterialPlane/img/mouse-pointer-solid-blackBorder.png");
+      const pointerIcon = new PIXI.Sprite(pointerTexture);
+      pointerIcon.anchor.set(0,0);
+
+      const pointerSize = canvas.dimensions.size/3;
+      
+      pointerIcon.width = pointerSize;
+      pointerIcon.height = pointerSize;
+      this.container.addChild(pointerIcon);
+
+      if (data.selected != 1) {
+        //Draw circle
+        var circle = new PIXI.Graphics();
+        circle.lineStyle(2, 0x000000, 1);
+        circle.beginFill(0x222222);
+        circle.drawCircle(1.25*pointerSize,1.25*pointerSize,pointerSize/1.5);
+        this.container.addChild(circle);
+
+        //Draw icon
+        const texture = PIXI.Texture.from(data.icon.icon);
+        const icon = new PIXI.Sprite(texture);
+        icon.anchor.set(0.5);
+        icon.position.set(1.25*pointerSize,1.25*pointerSize)
+
+        icon.width = pointerSize*0.8;
+        icon.height = pointerSize*0.8;
+        this.container.addChild(icon); 
+      }
+      
     }
     else {
       var drawing = new PIXI.Graphics();
@@ -222,6 +258,7 @@ export class cursor extends MaterialPlaneLayer {
    */
   hide() {
     this.container.visible = false;
+    this.visible = false;
   }
 
   /*
@@ -229,6 +266,7 @@ export class cursor extends MaterialPlaneLayer {
    */
   show() {
     this.container.visible = true;
+    this.visible = true;
   }
 
   /*
