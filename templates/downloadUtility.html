@@ -1,0 +1,108 @@
+<form autocomplete="off" onsubmit="event.preventDefault()">
+    <style>
+        .columnLabel {
+            width:25%;
+            text-align: left;
+        }
+        .columnVersion {
+            width:15%;
+            text-align: left;
+        }
+        .columnOS {
+            width:15%;
+        }
+        .columnButton {
+            width:15%;
+        }
+        .btn {
+            width:100%;
+        }
+    </style>
+
+    <table style="width:100%; min-width:400px">
+        <tr>
+          <th class='columnLabel'></th>
+          <th class='columnVersion'>{{localize "MaterialPlane.DownloadUtility.Current"}}</th>
+          <th class='columnVersion'>{{localize "MaterialPlane.DownloadUtility.Minimum"}}</th>
+          <th class='columnVersion'>{{localize "MaterialPlane.DownloadUtility.Latest"}}</th>
+          <th class='columnOS'>{{localize "MaterialPlane.DownloadUtility.OS"}}</th>
+          <th class='columnButton'>{{localize "MaterialPlane.DownloadUtility.Download"}}</th>
+        </tr>
+
+        <tr>
+          <td class='columnLabel'>{{localize "MaterialPlane.DownloadUtility.Module"}}</td>
+          <td class='columnVersion'>{{localModuleVersion}}</td>
+          <td class='columnVersion'></td>
+          <td class='columnVersion' id='masterModuleVersion'>{{masterModuleVersion}}</td>
+          <td class='columnOS'></td>
+          <td class='columnButton'>
+            
+          </td>
+        </tr>
+
+        <tr>
+            <td class='columnLabel'>{{localize "MaterialPlane.DownloadUtility.SFw"}}</td>
+            <td class='columnVersion'>{{localFwVersion}}</td>
+            <td class='columnVersion'>{{minimumFwVersion}}</td>
+            <td class='columnVersion' id='masterFwVersion'>{{masterFwVersion}}</td>
+            <td class='columnOS'></td>
+            <td class='columnButton'>
+              <button type="button" class='btn' id='downloadFw' {{#if sdDlDisable}}disabled{{/if}}>
+                  <i class="fas fa-download"></i>
+              </button>
+            </td>
+          </tr>
+
+          <tr>
+            <td class='columnLabel'>{{localize "MaterialPlane.DownloadUtility.BFw"}}</td>
+            <td class='columnVersion'>{{localize "MaterialPlane.DownloadUtility.NA"}}</td>
+            <td class='columnVersion'>{{minimumBaseVersion}}</td>
+            <td class='columnVersion' id='masterBaseVersion'>{{masterBaseVersion}}</td>
+            <td class='columnOS'></td>
+            <td class='columnButton'>
+              <button type="button" class='btn' id='downloadBaseFw' {{#if sdDlDisable}}disabled{{/if}}>
+                  <i class="fas fa-download"></i>
+              </button>
+            </td>
+          </tr>
+
+          <tr>
+            <td class='columnLabel'>{{localize "MaterialPlane.DownloadUtility.PFw"}}</td>
+            <td class='columnVersion'>{{localize "MaterialPlane.DownloadUtility.NA"}}</td>
+            <td class='columnVersion'>{{minimumPenVersion}}</td>
+            <td class='columnVersion' id='masterPenVersion'>{{masterPenVersion}}</td>
+            <td class='columnOS'></td>
+            <td class='columnButton'>
+              <button type="button" class='btn' id='downloadPenFw' {{#if sdDlDisable}}disabled{{/if}}>
+                  <i class="fas fa-download"></i>
+              </button>
+            </td>
+          </tr>
+
+        <tr>
+          <td class='columnLabel'>{{localize "MaterialPlane.DownloadUtility.MS"}}</td>
+          <td class='columnVersion'>{{localMsVersion}}</td>
+          <td class='columnVersion'>{{minimumMsVersion}}</td>
+          <td class='columnVersion' id='masterMsVersion'>{{masterMsVersion}}</td>
+          <td class='columnOS'>
+            <select id="os" default="" {{#if msDlDisable}}disabled{{/if}}>
+                <option value="win">{{localize "MaterialPlane.DownloadUtility.Windows"}}</option>
+                <option value="macos">{{localize "MaterialPlane.DownloadUtility.Macos"}}</option>
+                <option value="linux">{{localize "MaterialPlane.DownloadUtility.Linux"}}</option>
+                <option value="source">{{localize "MaterialPlane.DownloadUtility.Source"}}</option>
+            </select>
+          </td>
+          <td class='columnButton'>
+            <button type="button" class='btn' id='downloadMs' {{#if msDlDisable}}disabled{{/if}}>
+                <i class="fas fa-download"></i>
+            </button>
+          </td>
+        </tr>
+      </table> 
+      
+      <button type="button" id='refresh'>
+        <i class="fas fa-redo"></i>
+        {{localize "MaterialPlane.DownloadUtility.Refresh"}}
+    </button>
+
+</form>

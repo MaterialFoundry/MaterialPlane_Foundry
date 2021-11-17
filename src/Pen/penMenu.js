@@ -155,6 +155,9 @@ export class penMenu extends CanvasLayer {
 
     pen;
 
+    visible = false;
+    open = false;
+
     setAlpha(alpha) {
         this.container.alpha = alpha;
     }
@@ -351,6 +354,7 @@ export class penMenu extends CanvasLayer {
        * Update the cursor position, size and color
        */
     drawMenu(data) {
+        this.open = true;
         const x = data.x;
         const y = data.y;
 
@@ -563,6 +567,7 @@ export class penMenu extends CanvasLayer {
     */
     hide() {
         this.container.visible = false;
+        this.visible = false;
     }
 
     /*
@@ -570,6 +575,8 @@ export class penMenu extends CanvasLayer {
     */
     show() {
         this.container.visible = true;
+        this.visible = true;
+        this.open = true;
     }
 
     /*

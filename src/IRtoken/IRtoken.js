@@ -203,10 +203,12 @@ export class IRtoken {
 
         let newCoords = {
             x: (this.currentPosition.x-canvas.scene.data.grid/2),
-            y: (this.currentPosition.y-canvas.scene.data.grid/2)
+            y: (this.currentPosition.y-canvas.scene.data.grid/2),
+            rotation: this.token.data.rotation
         }
         this.previousPosition = this.currentPosition;
         
+        this.moveToken(this.currentPosition);
         
         //Release token, if setting is enabled
         if (release) this.token.release();

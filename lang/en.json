@@ -56,7 +56,7 @@
     "MaterialPlane.Notifications.ConnectedMSS": "Connected to Material Sensor through Material Server",
     "MaterialPlane.Notifications.Disconnected": "Disconnected, attempting to reconnect",
     "MaterialPlane.Notifications.ConnectFail": "Can't connect, retrying",
-    "MaterialPlane.Notifications.SSL": "SSL is currently not supported",
+    "MaterialPlane.Notifications.SSL": "Your Foundry server is secured, you will need to use Material Server to connect to the sensor",
     "MaterialPlane.Notifications.AutoExposureDone": "Auto exposure done",
 
     "MaterialPlane.CalDialog.Singlepoint1": "Single-point calibration",
@@ -72,8 +72,8 @@
     "MaterialPlane.CalDialog.Title": "Calibrating",
     "MaterialPlane.CalDialog.Calibration": "Calibration",
     
-    "MaterialPlane.CalSett.BtnName": "Calibration Menu",
-    "MaterialPlane.CalSett.Title": "Calibration Menu",
+    "MaterialPlane.CalSett.BtnName": "Sensor Configuration",
+    "MaterialPlane.CalSett.Title": "Sensor Configuration",
     "MaterialPlane.CalSett.Coordinates": "Coordinates",
     "MaterialPlane.CalSett.Point": "Point",
     "MaterialPlane.CalSett.Intensity": "Int",
@@ -91,5 +91,23 @@
     "MaterialPlane.CalSett.CalMethod1": "Multi Point",
     "MaterialPlane.CalSett.CalMethod2": "Offset",
     "MaterialPlane.CalSett.CalBtn": "Calibrate",
-    "MaterialPlane.CalSett.Exit": "Exit"
+    "MaterialPlane.CalSett.Exit": "Exit",
+
+    "MaterialPlane.DownloadUtility.Title": "Download Utility",
+    "MaterialPlane.DownloadUtility.Current": "Current",
+    "MaterialPlane.DownloadUtility.Minimum": "Minimum",
+    "MaterialPlane.DownloadUtility.Latest": "Latest",
+    "MaterialPlane.DownloadUtility.OS": "OS",
+    "MaterialPlane.DownloadUtility.Download": "Download",
+    "MaterialPlane.DownloadUtility.Module": "Module",
+    "MaterialPlane.DownloadUtility.SFw": "Sensor Firmware",
+    "MaterialPlane.DownloadUtility.BFw": "Base Firmware",
+    "MaterialPlane.DownloadUtility.PFw": "Pen Firmware",
+    "MaterialPlane.DownloadUtility.MS": "Material Server",
+    "MaterialPlane.DownloadUtility.Windows": "Windows",
+    "MaterialPlane.DownloadUtility.Macos": "MacOS",
+    "MaterialPlane.DownloadUtility.Linux": "Linux",
+    "MaterialPlane.DownloadUtility.Source": "Source",
+    "MaterialPlane.DownloadUtility.NA": "N/A",
+    "MaterialPlane.DownloadUtility.Refresh": "Refresh"
 }

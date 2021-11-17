@@ -22,6 +22,8 @@ export let calibrationDialog;
 export let calibrationProgress;
 
 export let hwVariant;
+export let hwFirmware;
+export let msVersion;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -31,6 +33,10 @@ export let hwVariant;
 
 export function setHwVariant(v) {
     hwVariant = v;
+}
+
+export function setHwFirmware(v) {
+    hwFirmware = v;
 }
 
 /**
@@ -79,12 +85,12 @@ function checkKeys() {
 Hooks.on('ready', ()=>{
     enableModule = (game.user.name == game.settings.get(moduleName,'TargetName')) ? true : false;
     hideElements = game.settings.get(moduleName,'HideElements') && game.user.isGM == false;
-    if (game.settings.get(moduleName,'Enable') && window.location.protocol == "https:"){
+    if (game.settings.get(moduleName,'Enable') && window.location.protocol == "https:" && game.settings.get(moduleName,'EnMaterialServer') == false){
         ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.SSL"));
         enableModule = false;
         return;
     }
-    if (enableModule || game.user.isGM){
+    if ((enableModule || game.user.isGM) && game.settings.get(moduleName,'Enable')){
         startWebsocket();
 
         if (hideElements){

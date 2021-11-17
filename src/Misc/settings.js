@@ -1,4 +1,5 @@
 import * as MODULE from "../../MaterialPlane.js";
+import { downloadUtility } from "./misc.js";
 
 export const registerSettings = function() {
     game.settings.register(MODULE.moduleName,'baseSetup', {
@@ -14,13 +15,23 @@ export const registerSettings = function() {
         type: Object,
         default: {x:0,y:0}
     });
+
+    /**
+     * Download utility (button)
+     */
+    game.settings.registerMenu(MODULE.moduleName, 'downloadUtility',{
+        name: "MaterialPlane.DownloadUtility.Title",
+        label: "MaterialPlane.DownloadUtility.Title",
+        type: downloadUtility,
+        restricted: false
+    });
     
-/**
+    /**
      * Enables the module (world)
      */
     game.settings.register(MODULE.moduleName,'Enable', {
         name: "MaterialPlane.Sett.En",
-        scope: "world",
+        scope: "client",
         config: true,
         default: true,
         type: Boolean,

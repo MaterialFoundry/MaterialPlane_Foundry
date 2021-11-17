@@ -147,7 +147,7 @@ export class calibrationForm extends FormApplication {
     static get defaultOptions() {
         return mergeObject(super.defaultOptions, {
             id: "MaterialPlane_CalMenu",
-            title: `Material Plane: ${game.i18n.localize("MaterialPlane.CalDialog.Calibration")}`,
+            title: "Material Plane: Sensor Configuration",
             template: "./modules/MaterialPlane/templates/calibrationMenu.html",
             width: 600,
             height: 800

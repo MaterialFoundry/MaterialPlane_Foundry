@@ -1,4 +1,4 @@
-import { moduleName,calibrationDialog,calibrationProgress,hwVariant,setHwVariant } from "../MaterialPlane.js";
+import { moduleName,calibrationDialog,calibrationProgress,hwVariant,setHwVariant, setHwFirmware } from "../MaterialPlane.js";
 import { analyzeIR } from "./analyzeIR.js";
 
 //Websocket variables
@@ -69,6 +69,7 @@ async function analyzeWSmessage(msg,passthrough = false){
         }
         calibrationDialog.setSettings(settings);
         setHwVariant(data.hardware);
+        setHwFirmware(data.firmware);
     }
     else if (data.status == 'calibration') {
         if (data.state == 'starting') calibrationProgress.start();
@@ -82,6 +83,11 @@ async function analyzeWSmessage(msg,passthrough = false){
     else if (data.status == 'serialConnected') {
         ui.notifications.info(`Material Plane: ${game.i18n.localize("MaterialPlane.Notifications.ConnectedMSS")}: ${data.port}`);
     }
+    else if (data.status == 'IRcode') {
+
+        
+    }
+    
 };
 
 /**
@@ -122,7 +128,7 @@ export async function startWebsocket() {
     }
   
     clearInterval(wsInterval);
-    wsInterval = setInterval(resetWS, 1000);
+    wsInterval = setInterval(resetWS, 10000);
 }
 
 /**

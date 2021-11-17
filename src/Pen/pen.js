@@ -1,3 +1,4 @@
+import { moduleName } from "../../MaterialPlane.js";
 import { cursor, findToken, scaleIRinput } from "../Misc/misc.js";
 import { IRtoken } from "../IRtoken/IRtoken.js";
 import { penMenu } from "./penMenu.js";
@@ -39,6 +40,8 @@ export class Pen extends CanvasLayer {
         angle:undefined
     }
     cursorTimeout;
+    open = false;
+    visible = false;
   
     init() {
         this.cursor = new cursor();
@@ -60,6 +63,7 @@ export class Pen extends CanvasLayer {
         let parent = this;
         this.cursorTimeout = setTimeout(function(){
             if (parent.cursor.visible) parent.cursor.hide();
+            if (parent.menu.visible) parent.menu.hide();
             parent.cursorTimeout = undefined;
         },1000);
         
@@ -70,6 +74,7 @@ export class Pen extends CanvasLayer {
     }
 
     async analyze(data){
+        if (this.menu.open) this.menu.show();
         let command = data.data[0].command;
         if (command == 8) command = 'penIdle';
         else if (command == 40) command = 'penLeft';
@@ -161,7 +166,10 @@ export class Pen extends CanvasLayer {
 
         if (command == 'penFront' && status == 'click') { //draw or hide menu
             if (this.menu.container.visible) this.menu.hide();
-            else this.drawMenu(coordinates);
+            else {
+                this.drawMenu(coordinates);
+                this.menu.open = true;
+            }
             return;
         }
         else if (command == 'penRear') {
@@ -224,6 +232,45 @@ export class Pen extends CanvasLayer {
             else if (status == 'release') {
                 this.irToken.dropIRtoken(false);
             }
+        }
+        else if (command == 'penLeft'){
+            if (status == 'click') {
+                this.checkTokenClick(data,true);
+            }
+        }
+        else if (command == 'penRear') {
+            if (status == 'click') {
+                this.checkTokenClick(data);
+                this.bar = {
+                    x0:data.x,
+                    x1:data.x2,
+                    y0:data.y,
+                    y2:data.y2,
+                    length:data.length,
+                    angle:data.angle
+                }
+            }
+            else if (status == 'hold') {
+                const angleChange = data.angle - this.bar.angle;
+                this.bar = {
+                    x0:data.x,
+                    x1:data.x2,
+                    y0:data.y,
+                    y2:data.y2,
+                    length:data.length,
+                    angle:data.angle
+                }
+                let forceNew = false;
+                const coords = {x:data.x, y:data.y};
+                this.irToken.update(data.rawCoords,coords,forceNew);
+
+                this.irToken.token.data.rotation += angleChange;
+                this.irToken.token.refresh();
+                if (game.settings.get(moduleName,'movementMethod') == 1) this.irToken.token.updateSource({noUpdateFog: false});
+            }
+            else if (status == 'release') {
+                this.irToken.dropIRtoken(false);
+            }  
         }
     }
 
@@ -356,7 +403,6 @@ export class Pen extends CanvasLayer {
                         }
                     }
                     this.drawing._onMouseDraw(event);
-                
                 }
                 else {
                     const dx = data.x - this.drawing.x;
@@ -668,15 +714,18 @@ export class Pen extends CanvasLayer {
                     stopPropagation: event => {return;}
                 }
                 door.doorControl._onMouseDown(event);
-                //door.doorControl._onMouseDown({ stopPropagation: event => {return;} });
             }
         }
     }
 
-    checkTokenClick(data) {
+    checkTokenClick(data, forceRelease=false) {
         const token = findToken(data);
         if (token == undefined) {
-           
+            for (let t of canvas.tokens.controlled)
+                t.release();
+        }
+        else if (forceRelease) {
+            token.release();
         }
         else {
             if (token._controlled) token.release();
@@ -692,14 +741,14 @@ export class Pen extends CanvasLayer {
      * Hide the cursor
      */
     hide() {
-      
+        
     }
   
     /*
      * Show the cursor
      */
     show() {
-      
+        this.container.visible = true;
     }
 
     hideMenu(){

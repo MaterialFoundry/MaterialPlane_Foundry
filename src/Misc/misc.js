@@ -1,5 +1,5 @@
 
-import { moduleName } from "../../MaterialPlane.js";
+import { moduleName, hwFirmware, msVersion } from "../../MaterialPlane.js";
 
 /**
      * Scales the coordinates received from the IR sensor so they correspond with the in-game coordinate system
@@ -275,4 +275,205 @@ export class cursor extends MaterialPlaneLayer {
   remove() {
     this.container.removeChildren();
   }
+}
+
+export class downloadUtility extends FormApplication {
+  constructor(data, options) {
+      super(data, options);
+      this.masterModuleVersion;
+      this.localFirmwareVersion = hwFirmware;
+      this.masterFirmwareVersion;
+      this.localMSversion = msVersion;
+      this.masterMSversion;
+      this.masterBaseVersion;
+      this.masterPenVersion;
+      this.releaseAssets = [];
+
+      let parent = this;
+      setTimeout(function(){
+        parent.checkForUpdate('module');
+        parent.checkForUpdate('hwFw');
+        parent.checkForUpdate('MS');
+        parent.checkForUpdate('base');
+        parent.checkForUpdate('pen');
+        parent.getReleaseData();
+      },100)
+  }
+
+  /**
+   * Default Options for this FormApplication
+   */
+  static get defaultOptions() {
+      return mergeObject(super.defaultOptions, {
+          id: "MP_DownloadUtility",
+          title: "Material Plane: " + game.i18n.localize("MaterialPlane.DownloadUtility.Title"),
+          template: "./modules/MaterialPlane/templates/downloadUtility.html",
+          width: 500,
+          height: "auto"
+      });
+  }
+
+  /**
+   * Provide data to the template
+   */
+  getData() {
+      let dlDisabled = true;
+
+      if (this.localMSversion == undefined) this.localMSversion = 'unknown';
+      
+      const minimumFwVersion = game.modules.get("MaterialPlane").data.flags.minimumSensorVersion;
+      const minimumBaseVersion = game.modules.get("MaterialPlane").data.flags.minimumBaseVersion;
+      const minimumPenVersion = game.modules.get("MaterialPlane").data.flags.minimumPenVersion;
+      const minimumMsVersion = game.modules.get("MaterialPlane").data.flags.minimumMSversion;
+      const localModuleVersion = game.modules.get("MaterialPlane").data.version;
+
+
+      return {
+        localModuleVersion,
+        masterModuleVersion: this.masterModuleVersion,
+        minimumFwVersion,
+        localFwVersion: this.localFirmwareVersion,
+        masterFwVersion: this.masterFirmwareVersion,
+        minimumMsVersion,
+        localMsVersion: this.localMSversion = msVersion,
+        masterMsVersion: this.masterMSversion,
+        minimumBaseVersion,
+        masterBaseVersion: this.masterBaseVersion,
+        minimumPenVersion,
+        masterPenVersion: this.masterPenVersion
+      } 
+  }
+
+  /**
+   * Update on form submit
+   * @param {*} event 
+   * @param {*} formData 
+   */
+  async _updateObject(event, formData) {
+ 
+  }
+
+  activateListeners(html) {
+      super.activateListeners(html);
+
+      const downloadModule = html.find("button[id='downloadModule']");
+      const downloadFw = html.find("button[id='downloadFw']");
+      const downloadBaseFw = html.find("button[id='downloadBaseFw']");
+      const downloadPenFw = html.find("button[id='downloadPenFw']");
+      const downloadMs = html.find("button[id='downloadMs']");
+      const refresh = html.find("button[id='refresh']");
+
+      downloadModule.on('click', () => {
+          const url = `https://github.com/CDeenen/MaterialPlane_Foundry`;
+          open(url)
+      })
+      downloadFw.on('click', () => {
+        const version = document.getElementById('masterFwVersion').innerHTML;
+        if (version == '' || version == undefined || version == 'Error') return;
+        let url = `https://github.com/CDeenen/MaterialPlane_Hardware/releases/download/Sensor_v${version}/Sensor.zip`;
+        this.downloadURI(url)
+      })
+      downloadBaseFw.on('click', () => {
+        const version = document.getElementById('masterBaseVersion').innerHTML;
+        if (version == '' || version == undefined || version == 'Error') return;
+        let url = `https://github.com/CDeenen/MaterialPlane_Hardware/releases/download/Base_v${version}/Base.zip`;
+        this.downloadURI(url)
+      })
+      downloadPenFw.on('click', () => {
+        const version = document.getElementById('masterPenVersion').innerHTML;
+        if (version == '' || version == undefined || version == 'Error') return;
+        let url = `https://github.com/CDeenen/MaterialPlane_Hardware/releases/download/Pen_v${version}/Pen.zip`;
+        this.downloadURI(url)
+      })
+      downloadMs.on('click', () => {
+          const version = document.getElementById('masterMsVersion').innerHTML;
+          const os = document.getElementById('os').value;
+          if (version == '' || version == undefined || version == 'Error') return;
+          let name = `MaterialServer-${os}.zip`;
+          let url;
+          if (os == 'source') url = `https://github.com/CDeenen/MaterialServer/archive/refs/tags/v${version}.zip`;
+          else url = `https://github.com/CDeenen/MaterialServer/releases/download/v${version}/${name}`;
+          this.downloadURI(url,name)
+      })
+      refresh.on('click', () => {
+          this.checkForUpdate('module');
+          this.checkForUpdate('hwFw');
+          this.checkForUpdate('MS');
+          this.checkForUpdate('base');
+          this.checkForUpdate('pen');
+          this.getReleaseData();
+      })
+  }
+
+  downloadURI(uri, name) {
+      var link = document.createElement("a");
+      link.download = name;
+      link.href = uri;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    getReleaseData() {
+      let parent = this;
+      const url = 'https://api.github.com/repos/CDeenen/MaterialDeck_SD/releases/latest';
+      var request = new XMLHttpRequest();
+      request.open('GET', url, true);
+      request.send(null);
+      request.onreadystatechange = function () {
+          if (request.readyState === 4 && request.status === 200) {
+              var type = request.getResponseHeader('Content-Type');
+              const data = JSON.parse(request.responseText);
+              parent.releaseAssets = data.assets;
+              parent.render(true);
+              if (type.indexOf("text") !== 1) {
+  
+                  return;
+              }
+          }
+      }
+      request.onerror = function () {
+      }
+  }
+
+  checkForUpdate(reqType) {
+      let parent = this;
+      let url;
+      if (reqType == 'module') url = 'https://raw.githubusercontent.com/CDeenen/MaterialPlane_Foundry/master/module.json';
+      else if (reqType == 'hwFw') url = 'https://raw.githubusercontent.com/CDeenen/MaterialPlane_Hardware/master/Sensor/configuration.h';
+      else if (reqType == 'base') url = 'https://raw.githubusercontent.com/CDeenen/MaterialPlane_Hardware/master/Base/definitions.h';
+      else if (reqType == 'pen') url = 'https://raw.githubusercontent.com/CDeenen/MaterialPlane_Hardware/master/Pen/definitions.h';
+      else if (reqType == 'MS') url = 'https://raw.githubusercontent.com/CDeenen/MaterialServer/master/src/Windows/package.json';
+      const elementId = reqType == 'SD' ? 'masterSdVersion' : 'masterMsVersion';
+
+      var request = new XMLHttpRequest();
+      request.open('GET', url, true);
+      request.send(null);
+      request.onreadystatechange = function () {
+          if (request.readyState === 4 && request.status === 200) {
+              var type = request.getResponseHeader('Content-Type');
+              if (type.indexOf("text") !== 1) {
+                  if (reqType == 'module') parent.masterModuleVersion = JSON.parse(request.responseText).version;
+                  else if (reqType == 'MS') parent.masterMSversion = JSON.parse(request.responseText).version;
+                  else {
+                    const start = request.responseText.search('"', request.responseText.search('#define FIRMWARE_VERSION')) + 1;
+                    let v = "";
+                    for (let i=start; i<start+5; i++) {
+                      if (request.responseText[i] == '"') break;
+                      else v += request.responseText[i];
+                    }
+                    if (reqType == 'hwFw') parent.masterFirmwareVersion = v;
+                    else if (reqType == 'base') parent.masterBaseVersion = v;
+                    else if (reqType == 'pen') parent.masterPenVersion = v;
+                  }
+                  parent.render(true);
+                  return;
+              }
+              
+          }
+      }
+      request.onerror = function () {
+          document.getElementById(elementId).innerHTML = 'Error';
+      }
+  }     
 }

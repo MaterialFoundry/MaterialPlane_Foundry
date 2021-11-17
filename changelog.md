@@ -1,5 +1,34 @@
 # Changelog Material Plane Foundry Module
 
+### v2.1.1 - 17-11-2021
+Fixes:
+<ul>
+    <li>Foundry will now connnect to Material Server if the Foundry server is secured (for example, when using the Forge)</li>
+    <li>Moving a token around but dropping it on the gridspace it came from, no longer results in wrong token positioning</li>
+</ul>
+
+Additions:
+<ul>
+    <li>left-clicking the pen when in token control mode now deselects the token</li>
+    <li>left-clicking or right-clicking the pen when in token control mode now deselects all tokens when cursor is not above a token</li>
+    <li>center-clicking/rotating the pen when in token control mode now moves and rotates tokens</li>
+    <li>Pen menu now autohides when the pen is deactivated</li>
+    <li>Added a 'Download Utility' to the module settings from where you can check your current versions and download the latest versions of the hardware firmware and Material Server</li>
+</ul>
+
+Other:
+<ul>
+    <li>Changed 'Calibration Menu' to 'Sensor Configuration'</li>
+    <li>Made 'Enable module' setting functional. It prevents that client from trying to connect to the sensor</li>
+    <li>Reduced the rate at which the module will attempt to connect to the sensor, reducing the amount of notifications in case of connection problems</li>
+</ul>
+
+Compatible with:
+<ul>
+    <li><b>Sensor firmware: </b>v2.1.2</li>
+    <li><b>Material Server: </b>v1.0.3 (not yet released)</li>
+</ul>
+
 ### v2.1.0 - 12-10-2021
 <b>Updating the sensor firmware to v2.1.0 is required</b>
 Additions:
