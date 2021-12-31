@@ -1,5 +1,6 @@
 {
-    "MaterialPlane.Sett.En": "Enable module",
+    "MaterialPlane.Sett.Conn": "Connect to the Sensor",
+    "MaterialPlane.Sett.Conn_Hint": "Let the current client connect to the sensor",
     "MaterialPlane.Sett.MovementMethod": "Movement Method",
     "MaterialPlane.Sett.MovementMethod_Hint": "Sets the movement and vision method. 'Default' is the default Foundry behavior (vision updates after move), 'Live' updates the vision while moving, 'Step-by-Step' moves the token onto every grid you drag along, updating the vision every step",
     "MaterialPlane.Sett.MovementMethod_Default": "Default",

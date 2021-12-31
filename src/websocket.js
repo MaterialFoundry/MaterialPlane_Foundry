@@ -14,8 +14,17 @@ let wsInterval;                 //Interval timer to detect disconnections
  */
 async function analyzeWSmessage(msg,passthrough = false){
     //console.log('raw',msg);
-    let data = JSON.parse(msg);
-    //console.log('data',data)
+    let data;
+    try {
+        data = JSON.parse(msg);
+        //console.log('data',data);
+    }
+    catch (error) {
+        console.warn('could not parse JSON',error);
+        //console.log(msg);
+        return;
+    }
+    
     if (data.status == "ping") {
         //Display battery status
         //console.log('battery',data.battery.voltage,data.battery.percentage)

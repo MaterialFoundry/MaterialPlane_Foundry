@@ -123,8 +123,8 @@ export class calibrationForm extends FormApplication {
         }
         ctx.fillStyle = '#FF0000';
         ctx.clearRect(0, 0, 400, 250);
-        //console.log('coords',this.coordinates)
         for (let point of this.coordinates) {
+            if (point == undefined || point.x == undefined) continue;
             if (point.x > 0 && point.y < 4096) {
                 ctx.beginPath();
                 ctx.arc(point.x/4096*400,point.y/4096*250,3,0,2*Math.PI,false);

@@ -1,4 +1,9 @@
 # Changelog Material Plane Foundry Module
+### v2.1.2 - 30-12-2021
+<ul>
+<li>Fixed Foundry v9 compatibility</li>
+<li>In the module settings, changed setting name 'Enable module' to 'Connect to the Sensor' since that makes more sense</li>
+</ul>
 
 ### v2.1.1 - 17-11-2021
 Fixes:

@@ -1,6 +1,18 @@
 
 import { moduleName, hwFirmware, msVersion } from "../../MaterialPlane.js";
 
+export function compatibleCore(compatibleVersion){
+  let coreVersion = game.version == undefined ? game.data.version : `0.${game.version}`;
+  coreVersion = coreVersion.split(".");
+  compatibleVersion = compatibleVersion.split(".");
+  if (compatibleVersion[0] > coreVersion[0]) return false;
+  if (compatibleVersion[0] < coreVersion[0]) return true;
+  if (compatibleVersion[1] > coreVersion[1]) return false;
+  if (compatibleVersion[1] < coreVersion[1]) return true;
+  if (compatibleVersion[2] > coreVersion[2]) return false;
+  return true;
+}
+
 /**
      * Scales the coordinates received from the IR sensor so they correspond with the in-game coordinate system
      * 
@@ -39,7 +51,28 @@ export function generateId(){
 }
 
 export function registerLayer() {
+  const layers =  compatibleCore("0.9") ? {
+    materialPlane: {
+          layerClass: MaterialPlaneLayer,
+          group: "primary"
+      }
+  }
+  : {
+    materialPlane: MaterialPlaneLayer
+  }
 
+  CONFIG.Canvas.layers = foundry.utils.mergeObject(Canvas.layers, layers);
+
+    if (!Object.is(Canvas.layers, CONFIG.Canvas.layers)) {
+        const layers = Canvas.layers;
+        Object.defineProperty(Canvas, 'layers', {
+            get: function () {
+                return foundry.utils.mergeObject(layers, CONFIG.Canvas.layers)
+            }
+        })
+    }
+
+    /*
   CONFIG.Canvas.layers = foundry.utils.mergeObject(CONFIG.Canvas.layers, {
     materialPlane: MaterialPlaneLayer
   });
@@ -55,7 +88,7 @@ export function registerLayer() {
       }
     })
   }
-  
+  */
 }
 
 export class MaterialPlaneLayer extends CanvasLayer {

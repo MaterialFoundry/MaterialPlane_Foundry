@@ -25,18 +25,6 @@ export const registerSettings = function() {
         type: downloadUtility,
         restricted: false
     });
-    
-    /**
-     * Enables the module (world)
-     */
-    game.settings.register(MODULE.moduleName,'Enable', {
-        name: "MaterialPlane.Sett.En",
-        scope: "client",
-        config: true,
-        default: true,
-        type: Boolean,
-        onChange: x => window.location.reload()
-    });
 
     /**
      * Sets the movement method
@@ -122,6 +110,19 @@ export const registerSettings = function() {
         config: true,
         default: "Observer",
         type: String,
+        onChange: x => window.location.reload()
+    });
+
+    /**
+     * Let this client connect to the sensor
+     */
+     game.settings.register(MODULE.moduleName,'Enable', {
+        name: "MaterialPlane.Sett.Conn",
+        hint: "MaterialPlane.Sett.Conn_Hint",
+        scope: "client",
+        config: true,
+        default: true,
+        type: Boolean,
         onChange: x => window.location.reload()
     });
 
