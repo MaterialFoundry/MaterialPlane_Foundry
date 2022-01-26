@@ -17,6 +17,32 @@
         .expandableIcon {
             border: none;
         }
+
+        .settings {
+            display:flex; 
+            width:100%;
+        }
+        .settings label {
+            margin-right: auto;
+        }
+        .settings labelRight {
+            margin-left: auto;
+        }
+        .settings input[type="range"] {
+            width: 40%;
+        }
+        .settings input[type="text"] {
+            width: 10%;
+        }
+        .settings input[type="number"] {
+            width: 10%;
+        }
+        .settings input[type="checkbox"] {
+            margin-left: auto;
+        }
+        .settings select {
+            width: 25%;
+        }
     </style>
 
     <script>
@@ -45,24 +71,24 @@
                     <th style="width:16.6%">Point</th>
                     <th style="width:16.6%">X</th>
                     <th style="width:16.6%">Y</th> 
-                    <th style="width:16.6%">Average Brightness</th>
+                    <th style="width:16.6%;display:{{diyHW}}">Average Brightness</th>
                     <th style="width:16.6%">Maximum Brightness</th>
-                    <th style="width:16.6%">Area</th>
+                    <th style="width:16.6%;display:{{diyHW}}">Area</th>
                 </tr>
                 {{#each iteration as |i|}}
                     <tr>
                         <td id="iteration{{i}}" style="color:grey">{{i}}</td>
                         <td id="cal_x{{i}}" style="color:grey">0</td>
                         <td id="cal_y{{i}}" style="color:grey">0</td>
-                        <td id="cal_ab{{i}}" style="color:grey">0</td>
+                        <td id="cal_ab{{i}}" style="color:grey;display:{{../diyHW}}">0</td>
                         <td id="cal_mb{{i}}" style="color:grey">0</td>
-                        <td id="cal_a{{i}}" style="color:grey">0</td>
+                        <td id="cal_a{{i}}" style="color:grey;display:{{../diyHW}}">0</td>
                     </tr>
                 {{/each}}
                 </table>     
         </div>
 
-        <div class="form-group options">
+        <div class="form-group options" style="display:{{diyHW}}">
             <body>     
                 <table style="float:right;text-align:center;min-width:300px;max-width:300px">
                 <tr>
@@ -83,7 +109,7 @@
 
     <h3 class="expandable"><img src="modules/MaterialPlane/img/right.png" class="expandableIcon" style="width:15px">Exposure</h3> 
     <div class="collapsed">
-        <p class="notes" style="display:{{diyHW}}">
+        <p class="notes">
             'Auto Exposure' attempts to automatically configure the exposure settings. Place a base or the pen in a corner of the screen, and make sure the IR led is on (tilt the base, if necessary).
             The procedure can take a few seconds, the settings will automatically be updated after the procedure.
         </p>
@@ -96,7 +122,7 @@
         <p class="notes">
             'Gain' is a brightness multiplier. Higher values will increase brightness, but also noise.
         </p>
-        <div style="display:flex; width:100%; display:{{diyHW}}">
+        <div style="display:flex; width:100%">
             <label style="width:50%">Auto Exposure</label>
             <button id="autoExposure" type="button" style="width:50%">
                 <i></i> Auto Exposure
@@ -175,7 +201,8 @@
         <p class="notes">
             'Mirror X' and 'Mirror Y' will mirror the point's location in X and Y direction.<br>
             'Rotate' will rotate everything 90 degrees (X becomes Y and Y becomes X).<br>
-            'X Offset' and 'Y Offset' will shift the measured point by the set value to fix alignment issues
+            'X Offset' and 'Y Offset' will shift the measured point by the set value to fix alignment issues.<br>
+            'X Scale' and 'Y Scale' will scale the coordinate of the measured point from the center.
         </p>
         <div class="form-group options">
             <label>Mirror X</label>
@@ -189,13 +216,25 @@
             <label>Rotate</label>
             <input type="checkbox" id="rot">
         </div>
-        <div style="display:flex; width:100%">
-            <label style="min-width:50%">X Offset</label>
-            <input type="number" id="xOffset" style="width:50%" value={{offset.x}}>
+        <div class="settings">
+            <label>X Offset:</label>
+            <input type="range" min="-100" max="100" value=0 class="slider" id="xOffset">
+            <input type="number" id="xOffsetNumber" value=0>
         </div>
-        <div style="display:flex; width:100%">
-            <label style="width:50%">Y Offset</label>
-            <input type="number" id="yOffset" style="width:50%" value={{offset.y}}>
+        <div class="settings">
+            <label>Y Offset:</label>
+            <input type="range" min="-100" max="100" value=0 class="slider" id="yOffset">
+            <input type="number" id="yOffsetNumber" value=0>
+        </div>
+        <div class="settings">
+            <label>X Scale:</label>
+            <input type="range" min="0" max="2" value=1 step="0.01" class="slider" id="xScale">
+            <input type="number" id="xScaleNumber" value=1>
+        </div>
+        <div class="settings">
+            <label>Y Scale:</label>
+            <input type="range" min="0" max="2" value=1 step="0.01" class="slider" id="yScale">
+            <input type="number" id="yScaleNumber" value=1>
         </div>
     </div>
     
@@ -212,7 +251,7 @@
             <input type="checkbox" id="calEn">
         </div>
         <div class="form-group options">
-            <label>Offset Enabled</label>
+            <label>Calibration Offset Enabled</label>
             <input type="checkbox" id="offsetEn">
         </div>
     

@@ -3,7 +3,7 @@ import { moduleName, calibrationProgress, hwVariant } from "../MaterialPlane.js"
 
 let countdownCount = 5;
 let countdown;
-let overlay;
+let overlay = undefined;
 
 export class calibrationForm extends FormApplication {
     constructor(data, options) {
@@ -64,6 +64,14 @@ export class calibrationForm extends FormApplication {
             document.getElementById("mirX").checked=settings.cal.mirrorX;
             document.getElementById("mirY").checked=settings.cal.mirrorY;
             document.getElementById("rot").checked=settings.cal.rotation;
+            document.getElementById("xOffset").value=settings.cal.offsetX;
+            document.getElementById("xOffsetNumber").value=settings.cal.offsetX;
+            document.getElementById("yOffset").value=settings.cal.offsetY;
+            document.getElementById("yOffsetNumber").value=settings.cal.offsetY;
+            document.getElementById("xScale").value=settings.cal.scaleX;
+            document.getElementById("xScaleNumber").value=settings.cal.scaleX;
+            document.getElementById("yScale").value=settings.cal.scaleY;
+            document.getElementById("yScaleNumber").value=settings.cal.scaleY;
             document.getElementById("calEn").checked=settings.cal.calibrationEnable;
             document.getElementById("offsetEn").checked=settings.cal.offsetEnable;
         }
@@ -75,7 +83,6 @@ export class calibrationForm extends FormApplication {
 
     updatePoint(data) {
         if (data.point > 4) return;
-        //if (data.point == 0) console.log('data',data)
         document.getElementById("baseId").innerHTML=data.id;
         document.getElementById("baseCmd").innerHTML=data.command;
 
@@ -163,18 +170,15 @@ export class calibrationForm extends FormApplication {
      */
     getData() {
         this.menuOpen = true;
-        
-        const diyHW = (hwVariant == "DIY_FULL" || hwVariant == "DIY_BASIC") ? 'none' : ''; 
-        const prodHW = hwVariant == "BETA" ? 'none' : ''; 
-        const offset = game.settings.get(moduleName,'offset')
+        const diyHW = (hwVariant == "DIY Full" || hwVariant == "DIY_BASIC") ? 'none' : ''; 
+        const prodHW = hwVariant == "Beta" ? 'none' : ''; 
         setTimeout(function(){sendWS("GET SETTINGS");},500);
         return {
             settings:this.settings,
             framePeriod: 15,
             iteration: [0,1,2,3],
             diyHW,
-            prodHW,
-            offset
+            prodHW
         }
     }
 
@@ -204,17 +208,18 @@ export class calibrationForm extends FormApplication {
         const noiseNumber = html.find("input[id='noiseNumber']");
         const averageSlider = html.find("input[id='average']");
         const averageNumber = html.find("input[id='averageNumber']");
-        const minAreaSlider = html.find("input[id='minArea']");
-        const minAreaNumber = html.find("input[id='minAreaNumber']");
-        const maxAreaSlider = html.find("input[id='maxArea']");
-        const maxAreaNumber = html.find("input[id='maxAreaNumber']");
 
         const mirrorX = html.find("input[id='mirX']");
         const mirrorY = html.find("input[id='mirY']");
         const rotation = html.find("input[id='rot']");
         const Xoffset = html.find("input[id='xOffset']");
+        const XoffsetNumber = html.find("input[id='xOffsetNumber']");
         const Yoffset = html.find("input[id='yOffset']");
-
+        const YoffsetNumber = html.find("input[id='yOffsetNumber']");
+        const Xscale = html.find("input[id='xScale']");
+        const XscaleNumber = html.find("input[id='xScaleNumber']");
+        const Yscale = html.find("input[id='yScale']");
+        const YscaleNumber = html.find("input[id='yScaleNumber']");
         const calBtn = html.find("button[name='calBtn']");
         const calibrationEnable = html.find("input[id='calEn']");
         const offsetEnable = html.find("input[id='offsetEn']");
@@ -279,26 +284,6 @@ export class calibrationForm extends FormApplication {
             sendWS(msg);
         })
 
-        minAreaSlider.on("change", event => {
-            const msg = "SET IR MINAREA " + event.target.value;
-            sendWS(msg);
-        })
-
-        minAreaNumber.on("change", event => {
-            const msg = "SET IR MINAREA " + event.target.value;
-            sendWS(msg);
-        })
-
-        maxAreaSlider.on("change", event => {
-            const msg = "SET IR MAXAREA " + event.target.value;
-            sendWS(msg);
-        })
-
-        maxAreaNumber.on("change", event => {
-            const msg = "SET IR MAXAREA " + event.target.value;
-            sendWS(msg);
-        })
-
         mirrorX.on("change", event => {
             let msg = "SET CAL MIRRORX ";
             msg += event.target.checked? "1" : "0";
@@ -318,29 +303,43 @@ export class calibrationForm extends FormApplication {
         });
 
         Xoffset.on("change", event => {
-            let offset = game.settings.get(moduleName,'offset');
-            offset.x = parseInt(event.target.value) == null ? 0 : parseInt(event.target.value);
-            if (game.user.isGM) game.settings.set(moduleName, 'offset',offset)
-            else {
-                const payload = {
-                    msgType: "setOffset",
-                    offset
-                }
-                game.socket.emit(`module.MaterialPlane`, payload);
-            }
+            const msg = "SET CAL OFFSETX " + event.target.value;
+            sendWS(msg);
+        })
+
+        XoffsetNumber.on("change", event => {
+            const msg = "SET CAL OFFSETX " + event.target.value;
+            sendWS(msg);
         })
 
         Yoffset.on("change", event => {
-            let offset = game.settings.get(moduleName,'offset');
-            offset.y = parseInt(event.target.value) == null ? 0 : parseInt(event.target.value);
-            if (game.user.isGM) game.settings.set(moduleName, 'offset',offset)
-            else {
-                const payload = {
-                    msgType: "setOffset",
-                    offset
-                }
-                game.socket.emit(`module.MaterialPlane`, payload);
-            }
+            const msg = "SET CAL OFFSETY " + event.target.value;
+            sendWS(msg);
+        })
+
+        YoffsetNumber.on("change", event => {
+            const msg = "SET CAL OFFSETY " + event.target.value;
+            sendWS(msg);
+        })
+
+        Xscale.on("change", event => {
+            const msg = "SET CAL SCALEX " + event.target.value;
+            sendWS(msg);
+        })
+
+        XscaleNumber.on("change", event => {
+            const msg = "SET CAL SCALEX " + event.target.value;
+            sendWS(msg);
+        })
+
+        Yscale.on("change", event => {
+            const msg = "SET CAL SCALEY " + event.target.value;
+            sendWS(msg);
+        })
+
+        YscaleNumber.on("change", event => {
+            const msg = "SET CAL SCALEY " + event.target.value;
+            sendWS(msg);
         })
 
         calibrationEnable.on("change", event => {
@@ -362,7 +361,7 @@ export class calibrationForm extends FormApplication {
             else if (html.find("select[name='calMethod']")[0].value == "MultiPoint")
                 msg += "MULTI";
             else if (html.find("select[name='calMethod']")[0].value == "Offset")
-                msg = "OFFSET";
+                msg += "OFFSET";
             sendWS(msg);
         });
     }
@@ -373,6 +372,7 @@ export class calibrationProgressScreen extends FormApplication {
         super(data, options);
         this.calibrationRunning = false;
         this.pointCount = 0;
+        this.calibrationMode = 'single';
     }
 
     /**
@@ -381,7 +381,7 @@ export class calibrationProgressScreen extends FormApplication {
     static get defaultOptions() {
         return mergeObject(super.defaultOptions, {
             id: "MaterialPlane_CalProgMenu",
-            title: `Material Plane: ${game.i18n.localize("MaterialPlane.CalDialog.Calibration")}`,
+            title: `Material Plane: Calibration`,
             template: "./modules/MaterialPlane/templates/calibrationProgressScreen.html",
             classes: ["sheet"],
             width: 400,
@@ -427,20 +427,69 @@ export class calibrationProgressScreen extends FormApplication {
         this.calibrationRunning = running;
     }
 
-    start() {
+    start(calMode) {
+        this.calibrationMode = calMode;
         this.calibrationRunning = true;
         this.pointCount = 0;
         countdownCount = 5;
         this.render(true);
-        if (overlay == undefined && game.settings.get(moduleName,'TargetName') == game.user.name) {
+        
+        if (this.calibrationMode != 'multi' && overlay == undefined && game.settings.get(moduleName,'TargetName') == game.user.name) {
             overlay = new calibrationOverlay();
             canvas.stage.addChild(overlay);
             overlay.init();
         }
-        
+        let calStart = "";
+        if (this.calibrationMode == 'single') calStart = "Starting single-point calibration";
+        else if (this.calibrationMode == 'offset') calStart = "Starting offset calibration";
+        else if (this.calibrationMode == 'multi') calStart = "Starting multi-point calibration";
+
+        let calInstructions = "";
+        if (this.calibrationMode == 'single' || this.calibrationMode == 'offset') calInstructions = "To calibrate, move to one of the corners of you TV and wait a few seconds (beta hardware) or hold the button on the base for a few seconds and then wait (DIY hardware). The center of the base must align with the corner of the TV.";
+        else if (this.calibrationMode == 'multi') calInstructions = "To calibrate, make sure all 4 IR points are visible and their coordinates are shown. Then press 'Calibrate'.";
+
+        setTimeout(function(){
+            document.getElementById('calStart').innerHTML = calStart;
+            document.getElementById('calInstructions').innerHTML = calInstructions;
+            if (calMode == 'multi') {
+                document.getElementById('calNextBtn').innerHTML='Calibrate';
+                document.getElementById('calNextBtn').disabled=true;
+            }
+            else document.getElementById("noMovement").style="";
+            document.getElementById('MaterialPlane_CalProgMenu').style.height='auto';
+        },10);
+    }
+
+    setMultiPoint(data) {
+        if (this.calibrationMode != 'multi') return;
+        let points = 0;
+        for (let i=0; i<4; i++) {
+            if (data[i]?.x != undefined && data[i]?.y != undefined) {
+                points++;
+                document.getElementById("calPoint_x"+i).innerHTML=data[i].x;
+                document.getElementById("calPoint_y"+i).innerHTML=data[i].y;
+                document.getElementById("iterationPoint"+i).style.color='black';
+                document.getElementById("calPoint_x"+i).style.color='black';
+                document.getElementById("calPoint_y"+i).style.color='black';
+            }
+            else {
+                document.getElementById("calPoint_x"+i).innerHTML=0;
+                document.getElementById("calPoint_y"+i).innerHTML=0;
+                document.getElementById("iterationPoint"+i).style.color='grey';
+                document.getElementById("calPoint_x"+i).style.color='grey';
+                document.getElementById("calPoint_y"+i).style.color='grey';
+            }
+        }
+        if (points == 4) {
+            document.getElementById('calNextBtn').disabled=false;
+        }
+        else {
+            document.getElementById('calNextBtn').disabled=true;
+        }
     }
 
     setPoint(point) {
+        if (this.calibrationMode == 'multi') return;
         this.pointCount = point;
         if (point > 0) {
             point--;
@@ -451,6 +500,7 @@ export class calibrationProgressScreen extends FormApplication {
     }
 
     updatePoint(data) {
+        if (this.calibrationMode == 'multi') return;
         document.getElementById("noMovement").style="display:none";
         document.getElementById("waiting").style="";
         countdownCount = 5;
@@ -459,7 +509,7 @@ export class calibrationProgressScreen extends FormApplication {
         clearInterval(countdown);
         countdown = setInterval(this.timer,1000);
         if (data.point > 0) return;
-        if (data.x > 0 && data.y > 0) {
+        if (data.x != undefined && data.y != undefined) {
             document.getElementById("calPoint_x"+this.pointCount).innerHTML=data.x;
             document.getElementById("calPoint_y"+this.pointCount).innerHTML=data.y;
         }
@@ -477,6 +527,7 @@ export class calibrationProgressScreen extends FormApplication {
             countdownCount = 5;
             document.getElementById("noMovement").style="";
             document.getElementById("waiting").style="display:none";
+            document.getElementById('MaterialPlane_CalProgMenu').style.height='auto';
             const msg = "CAL NEXT";
             let user = game.users.contents.filter(u => u.active == true && u.isGM == true)[0];
             
@@ -493,7 +544,7 @@ export class calibrationProgressScreen extends FormApplication {
         document.getElementById("calCloseBtn").style="";
         document.getElementById("noMovement").style="display:none";
         document.getElementById("waiting").style="display:none";
-        
+        document.getElementById('MaterialPlane_CalProgMenu').style.height='auto';
     }
 
     cancel() {
@@ -510,6 +561,7 @@ export class calibrationProgressScreen extends FormApplication {
 
 export function removeOverlay(){
     if (game.settings.get(moduleName,'TargetName') != game.user.name) return;
+    if (overlay == undefined) return;
     canvas.stage.removeChild(overlay);
     overlay.remove();
     overlay = undefined;

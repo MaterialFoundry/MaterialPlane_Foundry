@@ -9,11 +9,11 @@ export const registerSettings = function() {
         default: []
     });
 
-    game.settings.register(MODULE.moduleName,'offset', {
+    game.settings.register(MODULE.moduleName,'remoteSetup', {
         scope: "world",
         config: false,
-        type: Object,
-        default: {x:0,y:0}
+        type: Array,
+        default: []
     });
 
     /**

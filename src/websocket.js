@@ -1,4 +1,4 @@
-import { moduleName,calibrationDialog,calibrationProgress,hwVariant,setHwVariant, setHwFirmware } from "../MaterialPlane.js";
+import { moduleName,calibrationDialog,calibrationProgress,hwVariant,setHwVariant, setHwFirmware, irRemote } from "../MaterialPlane.js";
 import { analyzeIR } from "./analyzeIR.js";
 
 //Websocket variables
@@ -66,7 +66,7 @@ async function analyzeWSmessage(msg,passthrough = false){
         ui.notifications.info("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.AutoExposureDone"));
     }
     else if (data.status == 'IR data') {
-        if (calibrationProgress?.calibrationRunning) {}
+        if (calibrationProgress?.calibrationRunning) {calibrationProgress.setMultiPoint(data.data)}
         else if (calibrationDialog?.menuOpen) { calibrationDialog.drawCalCanvas(); }
         analyzeIR(data);
         return;
@@ -81,7 +81,7 @@ async function analyzeWSmessage(msg,passthrough = false){
         setHwFirmware(data.firmware);
     }
     else if (data.status == 'calibration') {
-        if (data.state == 'starting') calibrationProgress.start();
+        if (data.state == 'starting') calibrationProgress.start(data.mode);
         else if (data.state == 'done') calibrationProgress.done();
         else if (data.state == 'cancelled') calibrationProgress.cancel();
         else calibrationProgress.setPoint(data.state);
@@ -93,8 +93,7 @@ async function analyzeWSmessage(msg,passthrough = false){
         ui.notifications.info(`Material Plane: ${game.i18n.localize("MaterialPlane.Notifications.ConnectedMSS")}: ${data.port}`);
     }
     else if (data.status == 'IRcode') {
-
-        
+        irRemote.newCode(data.data);
     }
     
 };

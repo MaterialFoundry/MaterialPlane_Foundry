@@ -1,4 +1,23 @@
 # Changelog Material Plane Foundry Module
+### v2.1.3 - 26-01-2021
+Fixes:
+<ul>
+    <li>Fixed X and Y Offset in 'Sensor Configuration'</li>
+</ul>
+
+Additions:
+<ul>
+    <li>Added X and Y Scaling to 'Sensor Configuration'</li>
+    <li>Multi-point and offset calibration are again implemented. Check the wiki for more info on how to use this: https://github.com/CDeenen/MaterialPlane/wiki/Beta-Hardware-Guide#sensor-calibration</li>
+    <li>Added support for executing macros using an IR remote control (beta HW only). More info here: https://github.com/CDeenen/MaterialPlane/wiki/Beta-Hardware-Guide#ir-remote-setup</li>
+</ul>
+
+Other:
+<ul>
+    <li>Moved the 'Base Setup' button to the 'Game Settings' tab, so all MP buttons are located at the same place</li>
+    <li>The 'Target' account now also has access to 'Base Setup'</li>
+</ul>
+
 ### v2.1.2 - 30-12-2021
 <ul>
 <li>Fixed Foundry v9 compatibility</li>

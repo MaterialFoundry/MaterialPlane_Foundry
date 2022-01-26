@@ -10,6 +10,7 @@ import { calibrationForm, calibrationProgressScreen, removeOverlay } from "./src
 import { registerLayer } from "./src/Misc/misc.js";
 import { baseSetup } from "./src/IRtoken/baseSetup.js";
 import { initializeIRtokens, initializeCursors, setLastBaseAddress } from "./src/analyzeIR.js";
+import { remoteSetup, IRremote } from "./src/IRremote/IRremote.js";
 
 export const moduleName = "MaterialPlane";
 export let lastToken;
@@ -24,6 +25,8 @@ export let calibrationProgress;
 export let hwVariant;
 export let hwFirmware;
 export let msVersion;
+
+export let irRemote = new IRremote();
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -145,9 +148,6 @@ Hooks.on('ready', ()=>{
                     }
                 }
             }
-            else if (payload.msgType == "setOffset") {
-                game.settings.set(moduleName, 'offset',payload.offset)
-            }
         }    
     });
     
@@ -164,40 +164,40 @@ Hooks.on("renderSidebarTab", (app, html) => {
     //Create labels and buttons in sidebar
     if (app.options.id == 'settings') {
         const label = $(
-            `<h2>Material Plane</h2>`
-        );
-        const btnCal = $(
-            `<button id="MaterialPlane_Calibration" data-action="MaterialPlane_Cal" title="Calibration Menu">
-                <i></i> ${game.i18n.localize("MaterialPlane.CalSett.BtnName")}
-            </button>`
-        );
-    
-        const setupButton = html.find("div[id='settings-game']");
-        setupButton.after(label);
-        label.after(btnCal);
-    
-        btnCal.on("click", event => {
-            calibrationDialog.render(true)
-        });
-    }
-    else if (app.options.id == 'actors') {
-        
-        if (game.user.isGM == false) return;
+            `<div id="MP-section">
+            <h2>Material Plane</h2>
 
-        const btnBaseSetup = $(
-            `
-            <div class="header-actions action-buttons flexrow">
-                <button id="MaterialPlane_BaseSetup">
+            <button id="MaterialPlane_Calibration" title="Sensor Configuration">
+                <i></i> ${game.i18n.localize("MaterialPlane.CalSett.BtnName")}
+            </button>
+            
+            <button id="MaterialPlane_BaseSetup" title="Base Setup">
                     <i></i> ${game.i18n.localize("MaterialPlane.BaseSetup.BtnName")}
-                </button>
+            </button>
+
+            <button id="MaterialPlane_RemoteSetup" title="Remote Setup">
+                    <i></i> ${game.i18n.localize("MaterialPlane.RemoteSetup.BtnName")}
+            </button>
             </div>
             `
         );
-        html.find(".directory-header").prepend(btnBaseSetup);
-        btnBaseSetup.on("click",event => {
+        const setupButton = html.find("div[id='settings-game']");
+        setupButton.after(label);
+
+        document.getElementById("MaterialPlane_Calibration").addEventListener("click", event => {
+            calibrationDialog.render(true)
+        });
+
+        document.getElementById("MaterialPlane_BaseSetup").addEventListener("click",event => {
             let dialog = new baseSetup();
             dialog.render(true);
         });
+        
+        document.getElementById("MaterialPlane_RemoteSetup").addEventListener("click",event => {
+            let dialog = new remoteSetup();
+            dialog.render(true);
+        });
+        
     }
 });
 

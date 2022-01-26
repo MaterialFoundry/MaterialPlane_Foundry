@@ -2,11 +2,13 @@
     
     <h2><b>Calibration</b></h2>  
 
-    Starting calibration procedure.<br>
-    Make sure the Foundry screen is positioned the way you want to use it. For example, make it full screen (F11).
-    If the Foundry window is moved, resized, or made full screen, please restart the calibration.
-    The four corners of the Foundry window are the calibration points. To calibrate, move to one of the corners and wait a few seconds (beta hardware) or hold the button on the base for a few seconds and then wait (DIY hardware).<br>
-    
+    <div id="calStart"></div>
+    <div>
+        Make sure the Foundry screen is positioned the way you want to use it. For example, make it full screen (F11).
+        If the Foundry window is moved, resized, or made full screen, please restart the calibration.
+    </div>
+    <div id="calInstructions"></div>
+     
     <br>
     <h3><b>Calibration Points</b></h3> 
 
@@ -25,8 +27,9 @@
         {{/each}}
     </table>
 
-    <p id="noMovement">
-        <b>Move a base to the calibration point and wait a few seconds.</b>
+
+    <p id="noMovement" style="display:none">
+        <b>Move a base to a calibration point and wait a few seconds.</b>
     </p>
 
     <p id="waiting" style="display:none">
@@ -34,7 +37,7 @@
     </p>
 
     <p id="calDone" style="display:none">
-        <b>Calibration done. You can close this window.</b>
+        <b>Calibration done. You can close this window or wait 5 seconds.</b>
     </p>
 
     <p id="calCancel" style="display:none">

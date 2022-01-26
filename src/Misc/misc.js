@@ -30,11 +30,9 @@ export function scaleIRinput(coords){
   const horVisible = screen.width/canvas.scene._viewPosition.scale;
   const vertVisible = screen.height/canvas.scene._viewPosition.scale;
 
-  const offset = game.settings.get(moduleName,'offset');
-
   //Calculate the scaled coordinates
-  const posX = (coords.x/4093)*horVisible+canvas.scene._viewPosition.x-horVisible/2+offset.x;
-  const posY = (coords.y/4093)*vertVisible+canvas.scene._viewPosition.y-vertVisible/2+offset.y;
+  const posX = (coords.x/4093)*horVisible+canvas.scene._viewPosition.x-horVisible/2;
+  const posY = (coords.y/4093)*vertVisible+canvas.scene._viewPosition.y-vertVisible/2;
 
   //Return the value
   return {"x":Math.round(posX),"y":Math.round(posY)};
