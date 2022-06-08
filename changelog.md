@@ -1,5 +1,28 @@
 # Changelog Material Plane Foundry Module
-### v2.1.3 - 26-01-2021
+### v2.1.4 - 05-05-2022
+Fixes:
+<ul>
+    <li>Invisible non-owned tokens can no longer be moved, even if 'Non-Owned Movement' is enabled</li>
+    <li>If 'Non-Owned Movement' is disabled, non-owned tokens no longer take priority over owned tokens when searching for the nearest token</li>
+    <li>Fixed pen menu not showing up properly</li>
+    <li>Fixed scale x/y slider, it now allows for floats and allows values between 0 and 2</li>
+    <li>The target player can now change settings (the GM needs to be logged in)</li>
+</ul>
+
+Additions:
+<ul>
+    <li>Added support for touch screens</li>
+    <li>Added an experimental token collision detection to prevent a moving token from ending up on a space already occupied by another token. Can be enabled in the module settings.</li>
+    <li>Added a 'Restart Sensor' button to the sensor configuration</li>
+    <li>Displayed points in the sensor configuration are now colored and numbered</li>
+</ul>
+
+Other:
+<ul>
+    <li>Revamped the configuration of everything. All configuration, including module settings, base configuration, etc, is done through a single configuration menu.</li>
+</ul>
+
+### v2.1.3 - 26-01-2022
 Fixes:
 <ul>
     <li>Fixed X and Y Offset in 'Sensor Configuration'</li>

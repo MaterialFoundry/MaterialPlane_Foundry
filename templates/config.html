@@ -1,0 +1,990 @@
+<form autocomplete="off" onsubmit="event.preventDefault()">
+    <style>
+        .mpConfigTab {
+            overflow: hidden;
+            display:flex;
+        }
+
+        .mpConfigTab button {
+            background-color: #ccc;
+            float: left;
+            border: 1px solid black;
+            outline: none;
+            cursor: pointer;
+            transition: 0.3s;
+            border-radius: 5px 5px 0px 0px;
+        }
+
+        .mpConfigTab button:hover {
+            background-color: #ddd;
+ 
+        }
+
+        .mpConfigTab button.active {
+            background-color: inherit;
+            border: 1px solid black;
+            border-bottom: none;
+        }
+
+        .mpConfigTabContent {
+            padding: 6px 12px;
+            border: 1px solid black;
+            border-top: none;
+            max-height: 700px;
+            overflow: auto;
+        } 
+
+        .mpContentSensor {
+            height: 500px;
+            max-height: 500px;
+            overflow: hidden;
+        } 
+
+        .mpConfigFormElements{
+            width: 100%;
+            display: flex;
+            margin-bottom: 1px;
+            align-items: center;
+        }
+
+        .mpConfigFormElements label {
+            width: 50%;
+        }
+
+        .mpConfigFormElements .mpConfigFormVal,
+        .mpConfigFormElements .mpConfigFormValRange,
+        .mpConfigFormElements .mpConfigFormBtn {
+            position: relative;
+            display: flex;
+            justify-content: flex-end;
+            width: 50%;
+        }
+
+        .mpConfigFormElements .mpConfigFormVal input[type='text'],
+        .mpConfigFormElements .mpConfigFormVal input[type='number'],
+        .mpConfigFormElements .mpConfigFormVal select,
+        .mpConfigFormElements .mpConfigFormValRange input[type='range'] {
+            flex-grow: 4;
+        }
+
+        .mpConfigFormElements .mpConfigFormValRange input[type='number'] {
+            width: 25%;
+            margin-left: 5px;
+        }
+
+        .mpConfigFormElements .mpConfigFormBtn button {
+            width: 100%;
+            margin-left: 5px;
+        }
+
+        .mpConfigFormElements .mpConfigFormBtn select {
+            min-width: 50%;
+            transform: translateY(10%);
+        }
+        
+        .mpConfigNotes {
+            font-size: 0.85em;
+            font-style: italic;
+            color: grey;
+            margin-bottom: 5px;
+        }
+        
+        .mpNotes {
+            font-size: 0.9em;
+            color: black;
+            margin-bottom: 5px;
+        }
+
+        .mpBaseTableId {
+            flex: 0 0 10%;
+        }
+        .mpBaseTableName {
+            flex: 0 0 20%;
+        }
+        .mpBaseTableLink {
+            text-align: center;
+            flex: 0 0 7%;
+        }
+        header.mpBaseTableHeader {
+            background: rgba(0, 0, 0, 0.5);
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #191813;
+            text-align: left;
+            font-weight: bold;
+            color: #f0f0e0;
+            font-weight: bold;
+            text-shadow: 1px 1px #000;
+        }
+        .mpIrTableName {
+            flex: 0 0 25%;
+        }
+
+        .mpIrTableProtocol{
+            flex: 0 0 12.5%
+        }
+
+        .mpIrTableCode{
+            flex: 0 0 15%;
+        }
+
+        .mpIrTableMacro{
+            flex: 0 0 15%;
+        }
+
+        .mpIrTableArgument{
+            flex: 0 0 12.5%;
+        }
+
+        .mpIrTableDelay{
+            flex: 0 0 7.5%;
+        }
+
+        .mpIrTableLink{
+            flex: 0 0 5%;
+        }
+
+        table, th, td {
+          border: 1px solid black;
+        }
+        canvas {
+            border: 2px solid rgb(151, 149, 149);
+        }
+        .expandable {
+            cursor: pointer;
+        }
+        .collapsed {
+            display:none;
+        }
+        .expandableIcon {
+            border: none;
+        }
+
+        .settings {
+            display:flex; 
+            width:100%;
+        }
+        .settings label {
+            margin-right: auto;
+        }
+        .settings labelRight {
+            margin-left: auto;
+        }
+        .settings input[type="range"] {
+            width: 40%;
+        }
+        .settings input[type="text"] {
+            width: 10%;
+        }
+        .settings input[type="number"] {
+            width: 10%;
+        }
+        .settings input[type="checkbox"] {
+            margin-left: auto;
+        }
+        .settings select {
+            width: 25%;
+        }
+
+        .mpConfigColumn {
+            float: left;
+            width: 48%;
+            margin: 1%;
+        }
+
+        .mpConfigColumnLeft {
+            height: 425px;
+            overflow: auto;
+        }
+
+        .mpConfigColumn  label {
+            width: 35%;
+        }
+
+        .mpConfigColumn .mpConfigFormVal,
+        .mpConfigColumn .mpConfigFormValRange,
+        .mpConfigColumn .mpConfigFormBtn {
+            width: 65%;
+        }
+
+        /* Clear floats after the columns */
+        .mpConfigRow:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .mpDownloadsTable,
+        .mpDownloadsTable th,
+        .mpDownloadsTable td {
+            border: none;   
+        }
+
+        .mpDownloadsColumnLabel {
+            width:25%;
+            text-align: left;
+        }
+        .mpDownloadsColumnVersion {
+            width:15%;
+            text-align: center;
+        }
+        .mpDownloadsColumnOS {
+            width:15%;
+            text-align: center;
+        }
+        .mpDownloadsColumnButton {
+            width:15%;
+            text-align: center;
+        }
+        .mpDownloadsBtn {
+            width:50%;
+        }
+
+        
+
+    </style>
+
+    <script>
+        function openTab(evt, tabName) {
+            // Declare all variables
+            var i, tabcontent, tablinks;
+
+            // Get all elements with class="tabcontent" and hide them
+            tabcontent = document.getElementsByClassName("mpConfigTabContent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+
+            // Get all elements with class="tablinks" and remove the class "active"
+            tablinks = document.getElementsByClassName("mpConfigTabLinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+
+            // Show the current tab, and add an "active" class to the button that opened the tab
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+
+            // Resize window height to autofit
+            document.getElementById('MaterialPlane_Config').style.height='auto';
+        } 
+
+        for (let element of document.getElementsByClassName("expandable")) {
+            element.addEventListener("click",(event) => {
+                let thisElement = event.target;
+                if (event.target.className == "expandableIcon") thisElement = event.target.parentElement;
+                let nextElement = thisElement.nextElementSibling;
+                const collapse = nextElement.className == "collapsed" ? false : true;
+                nextElement.className = collapse ? "collapsed" : "";
+                thisElement.children[0].src = collapse ? "modules/MaterialPlane/img/right.png" : "modules/MaterialPlane/img/down.png";
+            })
+        }
+
+        setTimeout(()=>{document.getElementById('MaterialPlane_Config').style.height='auto';},10);
+
+    </script>
+
+    <div class="mpConfigTab">
+        <button type="button" class="mpConfigTabLinks active" onclick="openTab(event, 'mpConfigGeneral')">{{localize "MaterialPlane.Config.General"}}</button>
+        <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigConnection')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.Connection"}}</button>
+        <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigSensor')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.Sensor"}}</button>
+        <button type="button" class="mpConfigTabLinks mpBeta" onclick="openTab(event, 'mpConfigBase')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}{{#ifNCond hwVariant 'Beta'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.BaseSetup"}}</button>
+        <button type="button" class="mpConfigTabLinks mpBeta" onclick="openTab(event, 'mpConfigRC')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}{{#ifNCond hwVariant 'Beta'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.RC"}}</button>
+        <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigTouch')" {{#ifNCond device 'touch'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.Touch"}}</button>
+        <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigDownloads')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.Downloads"}}</button>
+    </div>
+      
+    <div id="mpConfigGeneral" class="mpConfigTabContent">
+
+        <p class="mpNotes">{{localize "MaterialPlane.Config.General_Hint"}}</p>
+        <p class="mpNotes">* {{localize "MaterialPlane.Config.Refresh_Hint"}}</p>
+
+        <hr>
+
+        <!-- Target -->
+        <div class="mpConfigFormElements">
+            <label for="mpTargetName">{{localize "MaterialPlane.Config.TargetName"}}*</label>
+            <div class="mpConfigFormVal">
+                <input type="text" id="mpTargetName" value="{{targetName}}">
+            </div>
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.TargetName_Hint"}}</p>
+
+        <!-- Device Select -->
+        <div class="mpConfigFormElements">
+            <label for="mpDevice">{{localize "MaterialPlane.Config.Device"}}*</label>
+            <div class="mpConfigFormVal">
+                <select id="mpDevice">
+                    <option value="sensor" {{#ifCond device 'sensor'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.Device_Sensor"}}</option>
+                    <option value="touch" {{#ifCond device 'touch'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.Device_Touch"}}</option>
+                </select>
+            </div>    
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.Device_Hint"}}</p>
+
+        <!-- Movement Method Select -->
+        <div class="mpConfigFormElements">
+            <label for="mpMovementMethod">{{localize "MaterialPlane.Config.MovementMethod"}}</label>
+            <div class="mpConfigFormVal">
+                <select id="mpMovementMethod">
+                    <option value="default" {{#ifCond movementMethod 'default'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.MovementMethod_Default"}}</option>
+                    <option value="stepByStep" {{#ifCond movementMethod 'stepByStep'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.MovementMethod_SbS"}}</option>
+                    <option value="live" {{#ifCond movementMethod 'live'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.MovementMethod_Live"}}</option>
+                </select>
+            </div>
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.MovementMethod_Hint"}}</p>
+
+        <!-- Deselect Token After Drop -->
+        <div class="mpConfigFormElements">
+            <label for="mpDeselect">{{localize "MaterialPlane.Config.Deselect"}}</label>
+            <div class="mpConfigFormVal">
+                <input type="checkbox" id="mpDeselect" {{#if deselect}}checked{{/if}}>
+            </div>
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.Deselect_Hint"}}</p>
+
+        <!-- Hide Display Elements -->
+        <div class="mpConfigFormElements">
+            <label for="mpMovementMarker">{{localize "MaterialPlane.Config.MovementMarker"}}</label>
+            <div class="mpConfigFormVal">
+                <input type="checkbox" id="mpMovementMarker" {{#if movementMarker}}checked{{/if}}>
+            </div>
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.MovementMarker_Hint"}}</p>
+
+        <!-- Non Owned Movement -->
+        <div class="mpConfigFormElements">
+            <label for="mpNonOwned">{{localize "MaterialPlane.Config.NonownedMovement"}}</label>
+            <div class="mpConfigFormVal">
+                <input type="checkbox" id="mpNonOwned" {{#if nonOwnedMovement}}checked{{/if}}>
+            </div>
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.NonownedMovement_Hint"}}</p>
+
+        <!-- Collision Prevention -->
+        <div class="mpConfigFormElements">
+            <label for="mpCollision">{{localize "MaterialPlane.Config.CollisionPrevention"}}</label>
+            <div class="mpConfigFormVal">
+                <input type="checkbox" id="mpCollision"  {{#if collision}}checked{{/if}}>
+            </div>
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.CollisionPrevention_Hint"}}</p>
+
+        <!-- Hide Display Elements -->
+        <div class="mpConfigFormElements">
+            <label for="mpHideDisplay">{{localize "MaterialPlane.Config.HideDisplay"}}*</label>
+            <div class="mpConfigFormVal">
+                <input type="checkbox" id="mpHideDisplay"  {{#if hideElements}}checked{{/if}}>
+            </div>
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.HideDisplay_Hint"}}</p>
+
+        <!-- Pen Menu Size -->
+        <div  class="mpBeta" {{#ifCond device 'touch'}}style="display:none"{{/ifCond}}{{#ifNCond hwVariant 'Beta'}}style="display:none"{{/ifNCond}}>
+            <div class="mpConfigFormElements">
+                <label for="mpPenMenu">{{localize "MaterialPlane.Config.MenuSize"}}</label>
+                <div class="mpConfigFormValRange">
+                    <input type="range" id="mpPenMenu" min=0 max=5 step=0.1 value={{penMenu}}>
+                    <input type="number" id="mpPenMenuNumber" value={{penMenu}}>
+                </div>
+            </div>
+            <p class="mpConfigNotes">{{localize "MaterialPlane.Config.MenuSize_Hint"}}</p>
+        </div>
+        
+        <!-- Block Interaction -->
+        <div class="mpConfigFormElements">
+            <label for="mpBlockInteraction">{{localize "MaterialPlane.Config.BlockInteraction"}}</label>
+            <div class="mpConfigFormVal">
+                <input type="checkbox" id="mpBlockInteraction"  {{#if blockInteraction}}checked{{/if}}>
+            </div>
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.BlockInteraction_Hint"}}</p>
+
+    </div>
+      
+    <div id="mpConfigConnection" class="mpConfigTabContent" style="display: none">
+
+        <p class="mpNotes">{{localize "MaterialPlane.Config.Connection_Hint"}}</p>
+        <p class="mpNotes">* {{localize "MaterialPlane.Config.Refresh_Hint"}}</p>
+
+        <hr>
+
+        <!-- Connect to Sensor -->
+        <div class="mpConfigFormElements">
+            <label for="mpConnect">{{localize "MaterialPlane.Config.Connect"}}*</label>
+            <div class="mpConfigFormVal">
+                <input type="checkbox" id="mpConnect"  {{#if connectToSensor}}checked{{/if}}>
+            </div>
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.Connect_Hint"}}</p>
+
+        <!-- Sensor Module IP Address -->
+        <div class="mpConfigFormElements">
+            <label for="mpSensorIP">{{localize "MaterialPlane.Config.SensorIP"}}*</label>
+            <div class="mpConfigFormVal">
+                <input type="text" id="mpSensorIP" value="{{sensorIP}}">
+            </div>
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.SensorIP_Hint"}}</p>
+
+        <!-- Connect Through Material Server -->
+        <div class="mpConfigFormElements">
+            <label for="mpEnMaterialServer">{{localize "MaterialPlane.Config.EnMaterialServer"}}*</label>
+            <div class="mpConfigFormVal">
+                <input type="checkbox" id="mpEnMaterialServer"  {{#if connectThroughMS}}checked{{/if}}>
+            </div>
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.EnMaterialServer_Hint"}}</p>
+
+        <!-- Material Server IP Address -->
+        <div class="mpConfigFormElements">
+            <label for="mpMaterialServerIP">{{localize "MaterialPlane.Config.MaterialServerIP"}}*</label>
+            <div class="mpConfigFormVal">
+                <input type="text" id="mpMaterialServerIP" value="{{materialServerIP}}">
+            </div>
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.MaterialServerIP_Hint"}}</p>
+        
+    </div>
+      
+    <div id="mpConfigSensor" class="mpConfigTabContent mpContentSensor" style="display: none">
+        <p class="mpNotes">{{localize "MaterialPlane.Config.Sensor_Hint"}}</p>
+
+        <hr>
+
+        <div class="mpConfigRow">
+            <div class="mpConfigColumn mpConfigColumnLeft">
+                <h3 class="expandable"><img src="modules/MaterialPlane/img/right.png" class="expandableIcon" style="width:15px">{{localize "MaterialPlane.Config.Exp"}}</h3> 
+                <div class="collapsed">
+                    <!-- Auto Exposure -->
+                    <div class="mpConfigFormElements">
+                        <label for="mpAutoExposure">{{localize "MaterialPlane.Config.AutoExpose"}}</label>
+                        <div class="mpConfigFormBtn">
+                            <button id="mpAutoExposure" type="button"><i></i>{{localize "MaterialPlane.Config.AutoExpose"}}</button>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes">{{localize "MaterialPlane.Config.AutoExpose_Hint"}}</p>
+
+                    <!-- Exposure -->
+                    <div class="mpConfigFormElements mpBeta">
+                        <label for="mpSensorExposure">{{localize "MaterialPlane.Config.Exposure"}}</label>
+                        <div class="mpConfigFormValRange">
+                            <input type="range" id="mpSensorExposure" min=0.02 max=13 step=0.01 value={{sensor.ir.exposure}}>
+                            <input type="number" id="mpSensorExposureNumber" value={{sensor.ir.exposure}}>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes mpBeta">{{localize "MaterialPlane.Config.Exposure_Hint"}}</p>
+
+                    <!-- Frame Period -->
+                    <div class="mpConfigFormElements">
+                        <label for="mpSensorFramePeriod">{{localize "MaterialPlane.Config.FramePeriod"}}</label>
+                        <div class="mpConfigFormValRange">
+                            <input type="range" id="mpSensorFramePeriod" min=5 max=100 step=0.1 value={{sensor.ir.framePeriod}}>
+                            <input type="number" id="mpSensorFramePeriodNumber" value={{sensor.ir.framePeriod}}>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes">{{localize "MaterialPlane.Config.FramePeriod_Hint"}}</p>
+
+                    <!-- Gain -->
+                    <div class="mpConfigFormElements">
+                        <label for="mpSensorGain">{{localize "MaterialPlane.Config.Gain"}}</label>
+                        <div class="mpConfigFormValRange">
+                            <input type="range" id="mpSensorGain" min=1 max=8 step=0.1 value={{sensor.ir.gain}}>
+                            <input type="number" id="mpSensorGainNumber" value={{sensor.ir.gain}}>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes">{{localize "MaterialPlane.Config.Gain_Hint"}}</p>
+                    
+                    <hr>
+                </div>
+                <h3 class="expandable"><img src="modules/MaterialPlane/img/right.png" class="expandableIcon" style="width:15px">{{localize "MaterialPlane.Config.NoiseFilter"}}</h3> 
+                <div class="collapsed">
+                    <!-- Average Count -->
+                    <div class="mpConfigFormElements">
+                        <label for="mpSensorAverage">{{localize "MaterialPlane.Config.Average"}}</label>
+                        <div class="mpConfigFormValRange">
+                            <input type="range" id="mpSensorAverage" min=1 max=20 value={{sensor.ir.averageCount}}>
+                            <input type="number" id="mpSensorAverageNumber" value={{sensor.ir.averageCount}}>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes">{{localize "MaterialPlane.Config.Average_Hint"}}</p>
+
+                    <!-- Average Count -->
+                    <div class="mpConfigFormElements">
+                        <label for="mpSensorDropDelay">{{localize "MaterialPlane.Config.DropDelay"}}</label>
+                        <div class="mpConfigFormValRange">
+                            <input type="range" id="mpSensorDropDelay" min=0 max=2500 step=10 value={{sensor.ir.dropDelay}}>
+                            <input type="number" id="mpSensorDropDelayNumber" value={{sensor.ir.dropDelay}}>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes">{{localize "MaterialPlane.Config.DropDelay_Hint"}}</p>
+
+                    <!-- Minimum Brightness -->
+                    <div class="mpConfigFormElements">
+                        <label for="mpSensorMinBrightness">{{localize "MaterialPlane.Config.MinBrightness"}}</label>
+                        <div class="mpConfigFormValRange">
+                            <input type="range" id="mpSensorMinBrightness" min=0 max=255 value={{sensor.ir.brightness}}>
+                            <input type="number" id="mpSensorMinBrightnessNumber" value={{sensor.ir.brightness}}>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes">{{localize "MaterialPlane.Config.MinBrightness_Hint"}}</p>
+
+                    <!-- Noise Threshold -->
+                    <div class="mpConfigFormElements mpBeta">
+                        <label for="mpSensorNoise">{{localize "MaterialPlane.Config.NoiseThreshold"}}</label>
+                        <div class="mpConfigFormValRange">
+                            <input type="range" id="mpSensorNoise" min=0 max=255 value={{sensor.ir.noise}}>
+                            <input type="number" id="mpSensorNoiseNumber" value={{sensor.ir.noise}}>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes mpBeta">{{localize "MaterialPlane.Config.NoiseThreshold_Hint"}}</p>
+                    
+                    
+            
+                    <hr>
+                </div>
+                
+                <h3 class="expandable"><img src="modules/MaterialPlane/img/right.png" class="expandableIcon" style="width:15px">{{localize "MaterialPlane.Config.Transform"}}</h3>  
+                <div class="collapsed">
+                    <!-- Mirror X -->
+                    <div class="mpConfigFormElements">
+                        <label for="mpSensorMirrorX">{{localize "MaterialPlane.Config.MirrorX"}}</label>
+                        <div class="mpConfigFormVal">
+                            <input type="checkbox" id="mpSensorMirrorX" {{#if sensor.cal.mirrorX}}checked{{/if}}>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes">{{localize "MaterialPlane.Config.MirrorX_Hint"}}</p>
+
+                    <!-- Mirror Y -->
+                    <div class="mpConfigFormElements">
+                        <label for="mpSensorMirrorY">{{localize "MaterialPlane.Config.MirrorY"}}</label>
+                        <div class="mpConfigFormVal">
+                            <input type="checkbox" id="mpSensorMirrorY" {{#if sensor.cal.mirrorY}}checked{{/if}}>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes">{{localize "MaterialPlane.Config.MirrorY_Hint"}}</p>
+
+                    <!-- Rotate -->
+                    <div class="mpConfigFormElements">
+                        <label for="mpSensorRotate">{{localize "MaterialPlane.Config.Rotate"}}</label>
+                        <div class="mpConfigFormVal">
+                            <input type="checkbox" id="mpSensorRotate" {{#if sensor.cal.rotate}}checked{{/if}}>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes">{{localize "MaterialPlane.Config.Rotate_Hint"}}</p>
+
+                    <!-- X Offset -->
+                    <div class="mpConfigFormElements">
+                        <label for="mpSensorOffsetX">{{localize "MaterialPlane.Config.OffsetX"}}</label>
+                        <div class="mpConfigFormValRange">
+                            <input type="range" id="mpSensorOffsetX" min=-100 max=100 value={{sensor.cal.offsetX}}>
+                            <input type="number" id="mpSensorOffsetXNumber" value={{sensor.cal.offsetX}}>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes">{{localize "MaterialPlane.Config.OffsetX_Hint"}}</p>
+
+                    <!-- Y Offset -->
+                    <div class="mpConfigFormElements">
+                        <label for="mpSensorOffsetY">{{localize "MaterialPlane.Config.OffsetY"}}</label>
+                        <div class="mpConfigFormValRange">
+                            <input type="range" id="mpSensorOffsetY" min=-100 max=100 value={{sensor.cal.offsetY}}>
+                            <input type="number" id="mpSensorOffsetYNumber" value={{sensor.cal.offsetY}}>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes">{{localize "MaterialPlane.Config.OffsetY_Hint"}}</p>
+
+                    <!-- X Scale -->
+                    <div class="mpConfigFormElements">
+                        <label for="mpSensorScaleX">{{localize "MaterialPlane.Config.ScaleX"}}</label>
+                        <div class="mpConfigFormValRange">
+                            <input type="range" id="mpSensorScaleX" min=0 max=2 step=0.01 value={{sensor.cal.scaleX}}>
+                            <input type="number" id="mpSensorScaleXNumber" value={{sensor.cal.scaleX}}>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes">{{localize "MaterialPlane.Config.ScaleX_Hint"}}</p>
+
+                    <!-- Y Scale -->
+                    <div class="mpConfigFormElements">
+                        <label for="mpSensorScaleY">{{localize "MaterialPlane.Config.ScaleY"}}</label>
+                        <div class="mpConfigFormValRange">
+                            <input type="range" id="mpSensorScaleY" min=0 max=2 step=0.01 value={{sensor.cal.scaleY}}>
+                            <input type="number" id="mpSensorScaleYNumber" value={{sensor.cal.scaleY}}>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes">{{localize "MaterialPlane.Config.ScaleY_Hint"}}</p>
+
+                    <hr>
+                </div>
+                
+                <h3 class="expandable"><img src="modules/MaterialPlane/img/right.png" class="expandableIcon" style="width:15px">{{localize "MaterialPlane.Config.Calibration"}}</h3>  
+                <div class="collapsed">
+                    <!-- Calibration Enabled -->
+                    <div class="mpConfigFormElements">
+                        <label for="mpSensorCalEn">{{localize "MaterialPlane.Config.CalibrationEnabled"}}</label>
+                        <div class="mpConfigFormVal">
+                            <input type="checkbox" id="mpSensorCalEn" {{#if sensor.cal.calibrationEnable}}checked{{/if}}>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes">{{localize "MaterialPlane.Config.CalibrationEnabled_Hint"}}</p>
+
+                    <!-- Offset Enabled -->
+                    <div class="mpConfigFormElements">
+                        <label for="mpSensorOffsetEn">{{localize "MaterialPlane.Config.OffsetEnabled"}}</label>
+                        <div class="mpConfigFormVal">
+                            <input type="checkbox" id="mpSensorOffsetEn" {{#if sensor.cal.offsetEnable}}checked{{/if}}>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes">{{localize "MaterialPlane.Config.OffsetEnabled_Hint"}}</p>
+
+                    <!-- Calibrate -->
+                    <div class="mpConfigFormElements">
+                        <label for="mpCalMethod">{{localize "MaterialPlane.Config.Calibrate"}}</label>
+                        <div class="mpConfigFormBtn">
+                            <select id="mpCalMethod">
+                                <option value="SinglePoint">{{localize "MaterialPlane.Config.SinglePoint"}}</option>
+                                <option value="MultiPoint">{{localize "MaterialPlane.Config.MultiPoint"}}</option>
+                                <option value="Offset">{{localize "MaterialPlane.Config.Offset"}}</option>
+                            </select> 
+                            <button id="mpConfigPerformCal" type="button"><i></i>{{localize "MaterialPlane.Config.Calibrate"}}</button>
+                        </div>
+                    </div>
+                    <p class="mpConfigNotes">{{localize "MaterialPlane.Config.Calibrate_Hint"}}</p>
+
+                    <hr>
+                </div>
+
+                <!-- Auto Exposure -->
+                <div class="mpConfigFormElements">
+                    <label for="mpRestartSensor">{{localize "MaterialPlane.Config.RestartSensor"}}</label>
+                    <div class="mpConfigFormBtn">
+                        <button id="mpRestartSensor" type="button"><i></i>{{localize "MaterialPlane.Config.Restart"}}</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mpConfigColumn">
+                <canvas id="mpConfigCoordinatesStage" height="200" width="300"></canvas>
+                <div class="form-group options">
+                    <body>     
+                        <table style="float:right;text-align:center;width:100%">
+                        <tr>
+                            <th style="width:16.6%">{{localize "MaterialPlane.Config.Point"}}</th>
+                            <th style="width:16.6%">X</th>
+                            <th style="width:16.6%">Y</th> 
+                            <th class="mpBeta" style="width:16.6%">{{localize "MaterialPlane.Config.AvgBrightness"}}</th>
+                            <th style="width:16.6%">{{localize "MaterialPlane.Config.MaxBrightness"}}</th>
+                            <th class="mpBeta" style="width:16.6%">{{localize "MaterialPlane.Config.Area"}}</th>
+                        </tr>
+                        {{#each coordinates as |i|}}
+                            <tr>
+                                <td id="mpCoordsPoint-{{i}}" style="color:grey">{{i}}</td>
+                                <td id="mpCoordsX-{{i}}" style="color:grey">0</td>
+                                <td id="mpCoordsY-{{i}}" style="color:grey">0</td>
+                                <td class="mpBeta" id="mpCoordsAvgBrightness-{{i}}" style="color:grey">0</td>
+                                <td id="mpCoordsMaxBrightness-{{i}}" style="color:grey">0</td>
+                                <td class="mpBeta" id="mpCoordsArea-{{i}}" style="color:grey">0</td>
+                            </tr>
+                        {{/each}}
+                        </table>     
+                </div>
+    
+                <div class="form-group options mpBeta">
+                    <body>     
+                        <table style="float:right;text-align:center;width:100%">
+                            <tr>
+                                <th style="width:50%">{{localize "MaterialPlane.Config.Id"}}</th>
+                                <th style="width:50%">{{localize "MaterialPlane.Config.Command"}}</th>
+                            </tr>
+    
+                            <tr>
+                                <td id="mpCoordsBaseId" style="color:grey">0</td>
+                                <td id="mpCoordsBaseCmd" style="color:grey">0</td>
+                            </tr>
+    
+                        </table>     
+                </div>
+            </div>
+
+        </div>
+
+        </div>
+
+    <div id="mpConfigBase" class="mpConfigTabContent" style="display: none">
+        
+        <p class="mpNotes">{{localize "MaterialPlane.Config.BaseSetup_Hint"}}</p>
+        
+        <hr>
+
+        <h3>{{localize "MaterialPlane.Config.MostRecentData"}}</h3>
+        <p class="mpNotes">{{localize "MaterialPlane.Config.MostRecentData_Hint"}}</p>
+
+        <div class="mpConfigFormElements">
+            <label for="mpLastBaseAddress">{{localize "MaterialPlane.Config.BaseId"}}</label>
+            <div class="mpConfigFormVal">
+                <input type="number" id="mpLastBaseAddress" disabled>
+            </div>    
+        </div>
+
+        <div class="mpConfigFormElements">
+            <label for="mpLastTokenName">{{localize "MaterialPlane.Config.TokenName"}}</label>
+            <div class="mpConfigFormVal">
+                <input type="text" id="mpLastTokenName" disabled>
+            </div>    
+        </div>
+
+        <div class="mpConfigFormElements">
+            <label for="mpLastTokenSceneName">{{localize "MaterialPlane.Config.TokenScene"}}</label>
+            <div class="mpConfigFormVal">
+                <input type="text" id="mpLastTokenSceneName" disabled>
+            </div>    
+        </div>
+
+        <div class="mpConfigFormElements">
+            <label for="mpLastTokenActorName">{{localize "MaterialPlane.Config.ActorName"}}</label>
+            <div class="mpConfigFormVal">
+                <input type="text" id="mpLastTokenActorName" disabled>
+            </div>    
+        </div>
+
+        <hr>
+
+        <header class="mpBaseTableHeader flexrow" style="margin-bottom:5px;width:100%">
+            <label class="mpBaseTableId">{{localize "MaterialPlane.Config.BaseId"}}</label>
+            <label class="mpBaseTableName">{{localize "MaterialPlane.Config.TokenName"}}</label>
+            <label class="mpBaseTableName">{{localize "MaterialPlane.Config.TokenScene"}}</label>
+            <label class="mpBaseTableName">{{localize "MaterialPlane.Config.ActorName"}}</label>
+            <label class="mpBaseTableLink">{{localize "MaterialPlane.Config.LinkActor"}}</label>
+            <label class="mpBaseTableLink">{{localize "MaterialPlane.Config.Id"}}</label>
+            <label class="mpBaseTableLink">{{localize "MaterialPlane.Config.Data"}}</label>
+            <label class="mpBaseTableLink">{{localize "MaterialPlane.Config.Delete"}}</label>
+        </header>
+    
+        <div id="mpBaseList">
+        </div>
+    
+        <button type="button" name="addBaseConfig" style="width:5%; float:right; margin-right:3.8%"><i class="fas fa-plus"></i></button>
+
+        <br><br>
+        <hr>
+        <div class="notes">
+            <b>{{localize "MaterialPlane.Config.BaseId"}}:</b> {{localize "MaterialPlane.Config.BaseId_Hint"}}<br>
+            <b>{{localize "MaterialPlane.Config.TokenName"}}:</b> {{localize "MaterialPlane.Config.TokenName_Hint"}}<br>
+            <b>{{localize "MaterialPlane.Config.TokenScene"}}:</b> {{localize "MaterialPlane.Config.TokenScene_Hint"}}<br>
+            <b>{{localize "MaterialPlane.Config.ActorName"}}:</b> {{localize "MaterialPlane.Config.ActorName_Hint"}}<br>
+            <b>{{localize "MaterialPlane.Config.LinkActor"}}:</b> {{localize "MaterialPlane.Config.LinkActor_Hint"}}<br>
+            <b>{{localize "MaterialPlane.Config.IdBtn"}}:</b> {{localize "MaterialPlane.Config.Id_Hint"}}<br>
+            <b>{{localize "MaterialPlane.Config.DataBtn"}}:</b> {{localize "MaterialPlane.Config.Data_Hint"}}<br>
+            <b>{{localize "MaterialPlane.Config.DeleteBtn"}}:</b> {{localize "MaterialPlane.Config.Delete_Hint"}}<br>
+            <b>{{localize "MaterialPlane.Config.PlusBtn"}}:</b> {{localize "MaterialPlane.Config.PlusBtn_Hint"}}<br>
+        </div>
+            
+        
+    </div>
+
+    <div id="mpConfigRC" class="mpConfigTabContent" style="display: none">
+        <p class="mpNotes">{{localize "MaterialPlane.Config.RC_Hint"}}</p>
+
+        <hr>
+
+        <h3><h3>{{localize "MaterialPlane.Config.MostRecentData"}}</h3></h3>
+        <div class="mpConfigFormElements">
+            <label for="mpLastIrProtocol">{{localize "MaterialPlane.Config.Protocol"}}</label>
+            <div class="mpConfigFormVal">
+                <input type="text" id="mpLastIrProtocol" disabled>
+            </div>    
+        </div>
+        <div class="mpConfigFormElements">
+            <label for="mpLastIrCode">{{localize "MaterialPlane.Config.Code"}}</label>
+            <div class="mpConfigFormVal">
+                <input type="number" id="mpLastIrCode" disabled>
+            </div>    
+        </div>
+
+        <hr>
+
+        <header class="mpBaseTableHeader flexrow" style="margin-bottom:5px;width:100%">
+            <label class="mpIrTableName">{{localize "MaterialPlane.Config.Name"}}</label>
+            <label class="mpIrTableProtocol">{{localize "MaterialPlane.Config.Protocol"}}</label>
+            <label class="mpIrTableCode">{{localize "MaterialPlane.Config.Code"}}</label>
+            <label class="mpIrTableMacro">{{localize "MaterialPlane.Config.Macro"}}</label>
+            <label class="mpIrTableArgument">{{localize "MaterialPlane.Config.Argument"}}</label>
+            <label class="mpIrTableDelay">{{localize "MaterialPlane.Config.Delay"}}</label>
+            <label class="mpIrTableLink">{{localize "MaterialPlane.Config.Data"}}</label>
+            <label class="mpIrTableLink">{{localize "MaterialPlane.Config.Delete"}}</label>
+        </header>
+        
+        <div id="mpRemoteList"></div>
+        <button type="button" name="addIrConfig" style="width:5%; float:right; margin-right:1.6%"><i class="fas fa-plus"></i></button>
+
+        <br><br>
+        <hr>
+        <div class="notes">
+            <b>{{localize "MaterialPlane.Config.Name"}}:</b> {{localize "MaterialPlane.Config.Name_Hint"}}<br>
+            <b>{{localize "MaterialPlane.Config.Protocol"}}:</b> {{localize "MaterialPlane.Config.Protocol_Hint"}}<br>
+            <b>{{localize "MaterialPlane.Config.Code"}}:</b> {{localize "MaterialPlane.Config.Code_Hint"}}<br>
+            <b>{{localize "MaterialPlane.Config.Macro"}}:</b> {{localize "MaterialPlane.Config.Macro_Hint"}}<br>
+            <b>{{localize "MaterialPlane.Config.Argument"}}:</b> {{localize "MaterialPlane.Config.Argument_Hint"}}<br>
+            <b>{{localize "MaterialPlane.Config.Delay"}}:</b> {{localize "MaterialPlane.Config.Delay_Hint"}}<br>
+            <b>{{localize "MaterialPlane.Config.Data"}}:</b> {{localize "MaterialPlane.Config.Data_Hint"}}<br>
+            <b>{{localize "MaterialPlane.Config.Delete"}}:</b> {{localize "MaterialPlane.Config.Delete_Hint"}}<br>
+            <b>{{localize "MaterialPlane.Config.PlusButton"}}:</b> {{localize "MaterialPlane.Config.PlusButton_Hint"}}<br>
+        </div>     
+    </div>
+
+    <div id="mpConfigTouch" class="mpConfigTabContent" style="display: none">
+        
+        <p class="mpNotes">{{localize "MaterialPlane.Config.Touch_Hint"}}</p>
+
+        <hr>
+
+        <!-- Tap Mode -->
+        <div class="mpConfigFormElements">
+            <label for="mpTapMode">{{localize "MaterialPlane.Config.TapMode"}}</label>
+            <div class="mpConfigFormVal">
+                <select id="mpTapMode">
+                    <option value="disable" {{#ifCond tapMode 'disable'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.TapMode_Disable"}}</option>
+                    <option value="tapTimeout" {{#ifCond tapMode 'tapTimeout'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.TapMode_TapTimeout"}}</option>
+                    <option value="raiseMini" {{#ifCond tapMode 'raiseMini'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.TapMode_RaiseMini"}}</option>
+                </select>
+            </div>    
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.Device_Hint"}}</p>
+
+        <!-- Touch Timeout -->
+        <div class="mpConfigFormElements">
+            <label for="mpTouchTimeout">{{localize "MaterialPlane.Config.TouchTimeout"}}</label>
+            <div class="mpConfigFormValRange">
+                <input type="range" id="mpTouchTimeout" min=500 max=5000 step=100 value={{touchTimeout}}>
+                <input type="number" id="mpTouchTimeoutNumber" value={{touchTimeout}}>
+            </div>
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.TouchTimeout_Hint"}}</p>
+
+        <!-- Tap Timeout -->
+        <div class="mpConfigFormElements">
+            <label for="mpTapTimeout">{{localize "MaterialPlane.Config.TapTimeout"}}</label>
+            <div class="mpConfigFormValRange">
+                <input type="range" id="mpTapTimeout" min=100 max=5000 step=100 value={{tapTimeout}}>
+                <input type="number" id="mpTapTimeoutNumber" value={{tapTimeout}}>
+            </div>
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.TapTimeout_Hint"}}</p>
+    </div>
+
+    <div id="mpConfigDownloads" class="mpConfigTabContent" style="display: none">
+        <p class="mpNotes">{{localize "MaterialPlane.Config.Downloads_Hint"}}</p>
+
+        <hr>
+
+        <table class='mpDownloadsTable' style="width:100%; min-width:400px">
+            <tr>
+              <th class='mpDownloadsColumnLabel'></th>
+              <th class='mpDownloadsColumnVersion'>{{localize "MaterialPlane.Config.Current"}}</th>
+              <th class='mpDownloadsColumnVersion'>{{localize "MaterialPlane.Config.Minimum"}}</th>
+              <th class='mpDownloadsColumnVersion'>{{localize "MaterialPlane.Config.Latest"}}</th>
+              <th class='mpDownloadsColumnOS'>{{localize "MaterialPlane.Config.OS"}}</th>
+              <th class='mpDownloadsColumnButton'>{{localize "MaterialPlane.Config.Download"}}</th>
+            </tr>
+    
+            <tr>
+              <td class='mpDownloadsColumnLabel'>{{localize "MaterialPlane.Config.Module"}}</td>
+              <td class='mpDownloadsColumnVersion' id='mpConfigLocalModuleVersion'>{{localModuleVersion}}</td>
+              <td class='mpDownloadsColumnVersion'></td>
+              <td class='mpDownloadsColumnVersion' id='mpConfigMasterModuleVersion'>{{masterVersions.module}}</td>
+              <td class='mpDownloadsColumnOS'></td>
+              <td class='mpDownloadsColumnButton'>
+                
+              </td>
+            </tr>
+    
+            <tr>
+                <td class='mpDownloadsColumnLabel'>{{localize "MaterialPlane.Config.SFw"}}</td>
+                <td class='mpDownloadsColumnVersion' id='mpConfigLocalFwVersion'>{{localFwVersion}}</td>
+                <td class='mpDownloadsColumnVersion' id='mpConfigMinimumFwVersion'>{{minimumFwVersion}}</td>
+                <td class='mpDownloadsColumnVersion' id='mpConfigMasterFwVersion'>{{masterVersions.sensorFW}}</td>
+                <td class='mpDownloadsColumnOS'>
+                    <select id="mpConfigFwVer" default="" style="width:100%">
+                        <option value="beta">{{localize "MaterialPlane.Config.Beta"}}</option>
+                        <option value="diy_full">{{localize "MaterialPlane.Config.DIYFull"}}</option>
+                        <option value="diy_basic">{{localize "MaterialPlane.Config.DIYBasic"}}</option>
+                        <option value="source">{{localize "MaterialPlane.Config.Source"}}</option>
+                    </select>
+                </td>
+                <td class='mpDownloadsColumnButton'>
+                  <button type="button" class='mpDownloadsBtn' id='mpConfigDownloadFw'>
+                      <i class="fas fa-download"></i>
+                  </button>
+                </td>
+            </tr>
+
+            <tr>
+                <td class='mpDownloadsColumnLabel'>{{localize "MaterialPlane.Config.SWs"}}</td>
+                <td class='mpDownloadsColumnVersion' id='mpConfigLocalSWsVersion'>{{localSWsVersion}}</td>
+                <td class='mpDownloadsColumnVersion' id='mpConfigMinimumSWsVersion'>{{minimumWsVersion}}</td>
+                <td class='mpDownloadsColumnVersion' id='mpConfigMasterSWsVersion'>{{masterVersions.sensorWs}}</td>
+                <td class='mpDownloadsColumnOS'></td>
+                <td class='mpDownloadsColumnButton'>
+                  <button type="button" class='mpDownloadsBtn' id='mpConfigDownloadSWs'>
+                      <i class="fas fa-download"></i>
+                  </button>
+                </td>
+            </tr>
+    
+              <tr>
+                <td class='mpDownloadsColumnLabel'>{{localize "MaterialPlane.Config.BFw"}}</td>
+                <td class='mpDownloadsColumnVersion' id='mpConfigLocalBaseVersion'>{{localize "MaterialPlane.Config.NA"}}</td>
+                <td class='mpDownloadsColumnVersion' id='mpConfigMinimumBaseVersion'>{{minimumBaseVersion}}</td>
+                <td class='mpDownloadsColumnVersion' id='mpConfigMasterBaseVersion'>{{masterVersions.baseFW}}</td>
+                <td class='mpDownloadsColumnOS'></td>
+                <td class='mpDownloadsColumnButton'>
+                  <button type="button" class='mpDownloadsBtn' id='mpConfigDownloadBaseFw'>
+                      <i class="fas fa-download"></i>
+                  </button>
+                </td>
+              </tr>
+    
+              <tr>
+                <td class='mpDownloadsColumnLabel'>{{localize "MaterialPlane.Config.PFw"}}</td>
+                <td class='mpDownloadsColumnVersion' id='mpConfigLocalPenVersion'>{{localize "MaterialPlane.Config.NA"}}</td>
+                <td class='mpDownloadsColumnVersion' id='mpConfigMinimumPenVersion'>{{minimumPenVersion}}</td>
+                <td class='mpDownloadsColumnVersion' id='mpConfigMasterPenVersion'>{{masterVersions.penFW}}</td>
+                <td class='mpDownloadsColumnOS'></td>
+                <td class='mpDownloadsColumnButton'>
+                  <button type="button" class='mpDownloadsBtn' id='mpConfigDownloadPenFw'>
+                      <i class="fas fa-download"></i>
+                  </button>
+                </td>
+              </tr>
+    
+            <tr>
+              <td class='mpDownloadsColumnLabel'>{{localize "MaterialPlane.Config.MS"}}</td>
+              <td class='mpDownloadsColumnVersion' id='mpConfigLocalMsVersion'>{{localMsVersion}}</td>
+              <td class='mpDownloadsColumnVersion' id='mpConfigMinimumMsVersion'>{{minimumMsVersion}}</td>
+              <td class='mpDownloadsColumnVersion' id='mpConfigMasterMsVersion'>{{masterVersions.ms}}</td>
+              <td class='mpDownloadsColumnOS'>
+                <select id="mpConfigOS" default="" style="width:100%">
+                    <option value="win32-x64">{{localize "MaterialPlane.Config.Windows"}}</option>
+                    <option value="macos-x64">{{localize "MaterialPlane.Config.MacosIntel"}}</option>
+                    <option value="macos-arm64">{{localize "MaterialPlane.Config.MacosM1"}}</option>
+                    <option value="linux-x64">{{localize "MaterialPlane.Config.Linux"}}</option>
+                    <option value="source">{{localize "MaterialPlane.Config.Source"}}</option>
+                </select>
+              </td>
+              <td class='mpDownloadsColumnButton'>
+                <button type="button" class='mpDownloadsBtn' id='mpConfigDownloadMs'>
+                    <i class="fas fa-download"></i>
+                </button>
+              </td>
+            </tr>
+          </table> 
+          
+          <button type="button" id='mpConfigRefresh'>
+            <i class="fas fa-redo"></i>
+            {{localize "MaterialPlane.Config.Refresh"}}
+        </button>
+    </div>
+
+    
+</form>
+

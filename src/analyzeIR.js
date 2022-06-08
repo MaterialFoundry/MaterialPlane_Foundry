@@ -1,4 +1,4 @@
-import { moduleName,calibrationDialog,calibrationProgress } from "../MaterialPlane.js";
+import { moduleName,configDialog,calibrationProgress } from "../MaterialPlane.js";
 import { IRtoken } from "./IRtoken/IRtoken.js";
 import { cursor, scaleIRinput } from "./Misc/misc.js";
 import { Pen } from "./Pen/pen.js";
@@ -47,6 +47,8 @@ export async function analyzeIR(data) {
 
     const targetUser = game.settings.get(moduleName,'TargetName');
 
+    if (configDialog?.configOpen) configDialog.drawIrCoordinates(data.data);
+
     if (data.data.length == 0) {
         if (game.user.name != targetUser) return;
         for (let token of IRtokens) token.dropIRtoken(); 
@@ -55,7 +57,7 @@ export async function analyzeIR(data) {
     }
    
     foundBases = data.points;
-    if (data.data[0].command > 2 && data.data[0].command != 129 && calibrationDialog?.menuOpen == false && calibrationProgress?.calibrationRunning == false) {
+    if (data.data[0].command > 2 && data.data[0].command != 129 && configDialog?.configOpen == false && calibrationProgress?.calibrationRunning == false) {
         if (game.user.name != targetUser) return;
         pen.analyze(data);
     }
@@ -67,10 +69,13 @@ export async function analyzeIR(data) {
                 calibrationProgress.updatePoint(point);
                 continue;
             }
-            else if (calibrationDialog?.menuOpen) {
-                calibrationDialog.updatePoint(point);
+            /*
+            else if (configDialog?.configOpen) {
+                console.log('dialogOpen')
+                //configDialog.updateIrPoint(point);
                 continue;
             }
+            */
             if (game.user.name != targetUser) return;
             
             let forceNew = false;
@@ -78,31 +83,30 @@ export async function analyzeIR(data) {
             let scaledCoords = scaleIRinput(coords);
 
             if (foundBases == 1) {
-                if (point.id != 0) {
-                    if (point.id != lastBaseAddress || IRtokens[point.point].token == undefined) {
-                        const token = getTokenByID(point.id);
-                        if (token != undefined) IRtokens[point.point].token = token;
-                        forceNew = true;
-                    }
-                }
                 lastBaseAddress = point.id;
                 const payload = {
                     msgType: "lastBaseAddress",
                     lastBaseAddress
                 }
                 game.socket.emit(`module.MaterialPlane`, payload);
-                if (document.getElementById("MP_lastBaseAddress") != null) {
-                    document.getElementById("MP_lastBaseAddress").value=point.id;
-                    for (let i=0; i<99; i++) {
+                if (document.getElementById("MaterialPlane_Config") != null) {
+                    document.getElementById("mpLastBaseAddress").value=point.id;
+                    for (let i=0; i<999; i++) {
                         let base = document.getElementById("baseId-"+i);
-                        if (base != null) {
-                            if (point.id == base.value) base.style.color="green";
-                            else base.style.color="";
-                        }
-                        
+                        if (base == null) break;
+                        if (point.id == base.value) base.style.color="green";
+                        else base.style.color="";
+                    }
+                }
+                if (point.id != 0 && !(configDialog?.configOpen && configDialog?.blockInteraction)) {
+                    if (point.id != lastBaseAddress || IRtokens[point.point].token == undefined) {
+                        const token = getTokenByID(point.id);
+                        if (token != undefined) IRtokens[point.point].token = token;
+                        forceNew = true;
                     }
                 }
             }
+            if (configDialog?.configOpen  && configDialog?.blockInteraction) return;
             
             if (point.command < 2) {   //move token
                 if (await IRtokens[point.point].update(coords,scaledCoords,forceNew) == false) {

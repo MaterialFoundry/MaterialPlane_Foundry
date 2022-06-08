@@ -375,7 +375,7 @@ export class penMenu extends CanvasLayer {
             const templateAngleSteps = 2*Math.PI/nrOfTemplateIcons;
             const angleOffset = -0.5*Math.PI-templateAngleSteps/2;
             for (let i=0; i<nrOfTemplateIcons; i++) {
-                let section = new PIXI.Graphics();
+                let section = new PIXI.LegacyGraphics();
                 if (this.selectedTemplate == i+1) section.beginFill(0x666666);
                 else section.beginFill(0x000000);
                 
@@ -407,7 +407,7 @@ export class penMenu extends CanvasLayer {
             const drawingAngleSteps = Math.PI/nrOfDrawingIcons;
             let angleOffset = -0.5*Math.PI;
             for (let i=0; i<nrOfDrawingIcons; i++) {
-                let section = new PIXI.Graphics();
+                let section = new PIXI.LegacyGraphics();
                 if (this.selectedDrawingTool == i+1) section.beginFill(0x666666);
                 else section.beginFill(0x000000);
                 
@@ -440,7 +440,7 @@ export class penMenu extends CanvasLayer {
             for (let i=0; i<nrOfColors; i++) {
                 const sel = (i<this.colors.length) ? i : i-this.colors.length;
                 
-                let section = new PIXI.Graphics();
+                let section = new PIXI.LegacyGraphics();
                 if (this.colors[sel].int != 'none') section.beginFill(this.colors[sel].int);
 
                 section.lineStyle(2, 0xFFFFFF);
@@ -508,16 +508,18 @@ export class penMenu extends CanvasLayer {
         const nrOfIcons = this.options.length;
         const angleSteps = 2*Math.PI/nrOfIcons;
         const angleOffset = -0.5*Math.PI-angleSteps/2;
+
         for (let i=0; i<nrOfIcons; i++) {
-            let section = new PIXI.Graphics();
+            let section = new PIXI.LegacyGraphics();
             if (this.selected == i+1) section.beginFill(0x666666);
             else section.beginFill(0x000000);
             
             section.lineStyle(2, 0xFFFFFF);
-
-            section.arc(0,0,size/2,angleOffset+angleSteps*(i), angleOffset+angleSteps*(i+1));
-            section.arc(0,0,0.5*size/2, angleOffset+angleSteps*(i+1),angleOffset+angleSteps*(i), true);
-            section.lineTo(size/2*Math.cos(angleOffset+angleSteps*(i)),size/2*Math.sin(angleOffset+angleSteps*(i)));
+            let arcStartAngle = angleOffset+angleSteps*(i);
+            let arcEndAngle = angleOffset+angleSteps*(i+1);
+            section.arc(0,0,size/2,arcStartAngle, arcEndAngle);
+            section.arc(0,0,0.5*size/2, arcEndAngle,arcStartAngle, true);
+            section.lineTo(size/2*Math.cos(arcStartAngle),size/2*Math.sin(arcStartAngle));
             section.name="section";
             section.sectionName=this.options[i].name;
             this.container.addChild(section);
@@ -561,7 +563,7 @@ export class penMenu extends CanvasLayer {
     drawTemplateRing() {
 
     }
-      
+
     /*
     * Hide the cursor
     */

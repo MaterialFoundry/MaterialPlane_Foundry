@@ -166,10 +166,7 @@ export class Pen extends CanvasLayer {
 
         if (command == 'penFront' && status == 'click') { //draw or hide menu
             if (this.menu.container.visible) this.menu.hide();
-            else {
-                this.drawMenu(coordinates);
-                this.menu.open = true;
-            }
+            else this.drawMenu(coordinates);
             return;
         }
         else if (command == 'penRear') {
@@ -266,7 +263,7 @@ export class Pen extends CanvasLayer {
 
                 this.irToken.token.data.rotation += angleChange;
                 this.irToken.token.refresh();
-                if (game.settings.get(moduleName,'movementMethod') == 1) this.irToken.token.updateSource({noUpdateFog: false});
+                if (game.settings.get(moduleName,'movementMethod') == 'live') this.irToken.token.updateSource({noUpdateFog: false});
             }
             else if (status == 'release') {
                 this.irToken.dropIRtoken(false);
