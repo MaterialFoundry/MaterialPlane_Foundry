@@ -1,4 +1,11 @@
 # Changelog Material Plane Foundry Module
+### v2.1.5 - 13-06-2022
+Fixes:
+<ul>
+    <li>In the previous update, I accidentally pointed the download and manifest URL to the wrong branch. This meant that it wouldn't update to the correct version</li>
+    <li>Touch Frames should now work on secured servers</li>
+</ul>
+
 ### v2.1.4 - 05-05-2022
 Fixes:
 <ul>

@@ -123,14 +123,26 @@ Hooks.on('ready', ()=>{
     //configDialog.setConfigOpen(true);
     //configDialog.render(true);
 
-    checkForUpdate('module');
-    checkForUpdate('hwFw');
-    checkForUpdate('SWs');
-    checkForUpdate('MS');
-    checkForUpdate('base');
-    checkForUpdate('pen');
+    if (game.user.isGM && game.settings.get(moduleName, 'showUpdateDialog_215')) {
+        const updateDialogContent = `Material Plane has been updated to v2.1.5.<br><br>
+        Please note that all configuration settings have been moved from the module settings to a new configuration screen.<br><br>
+        This screen can be accessed by pressing the 'Material Plane Configuration' button in the 'Game Settings' sidebar tab.<br><br>`;
+        new Dialog({
+            title: "Material Plane Update Notification",
+            content: updateDialogContent,
+            buttons: {
+                ok: {
+                    label: "Ok"
+                },
+                dontShow: {
+                    label: "Don't show again",
+                    callback: () => {game.settings.set(moduleName, 'showUpdateDialog_215', false)}
+                }
+            }
+        }).render(true);
+    }
 
-    enableModule = (game.user.name == game.settings.get(moduleName,'TargetName')) ? true : false;
+    enableModule = game.user.name == game.settings.get(moduleName,'TargetName');
     hideElements = game.settings.get(moduleName,'HideElements') && game.user.isGM == false;
     if (game.settings.get(moduleName,'device') == 'sensor' && game.settings.get(moduleName,'Enable') && window.location.protocol == "https:" && game.settings.get(moduleName,'EnMaterialServer') == false){
         ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.SSL"));
@@ -157,6 +169,15 @@ Hooks.on('ready', ()=>{
             checkKeys();
         }
     }
+
+    if (!enableModule && !game.user.isGM) return;
+
+    checkForUpdate('module');
+    checkForUpdate('hwFw');
+    checkForUpdate('SWs');
+    checkForUpdate('MS');
+    checkForUpdate('base');
+    checkForUpdate('pen');
 
     game.socket.on(`module.MaterialPlane`, (payload) =>{
         //console.log(payload);
@@ -208,8 +229,8 @@ Hooks.on('ready', ()=>{
 });
 
 Hooks.on("renderSidebarTab", (app, html) => {
-    enableModule = (game.user.name == game.settings.get(moduleName,'TargetName')) ? true : false;
-    if (enableModule == false && game.user.isGM == false) return;
+    enableModule = game.user.name == game.settings.get(moduleName,'TargetName');
+    if (!enableModule && !game.user.isGM) return;
 
     if (app.options.id == 'settings') {
         const label = $(
@@ -300,6 +321,8 @@ Hooks.on('canvasReady', (canvas) => {
 
 Hooks.on('controlToken', (token,controlled) => {
     if (!controlled) return;
+    enableModule = game.user.name == game.settings.get(moduleName,'TargetName');
+    if (!enableModule && !game.user.isGM) return;
 
     lastToken = token;
     lastTokenSceneName = canvas.scene.name;

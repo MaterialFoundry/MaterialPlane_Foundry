@@ -3,6 +3,14 @@ import { lastBaseAddress } from "../analyzeIR.js";
 import { sendWS } from "../websocket.js";
 
 export const registerSettings = function() {
+
+    game.settings.register(moduleName,'showUpdateDialog_215', {
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: true
+    });
+
     game.settings.register(moduleName,'baseSetup', {
         scope: "world",
         config: false,
@@ -504,7 +512,8 @@ export class mpConfig extends FormApplication {
     }
 
     async setSettings(settingId,val,refresh=false) {
-        if (game.user.isGM)
+        const sett = game.settings.settings.get(`${moduleName}.${settingId}`);
+        if (sett.scope == 'client' || game.user.isGM)
             return await game.settings.set(moduleName,settingId,val);
         else {
             const payload = {
