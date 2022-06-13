@@ -141,6 +141,11 @@ Hooks.on('ready', ()=>{
             }
         }).render(true);
     }
+    if (game.user.isGM) {
+        const device = game.settings.get(moduleName,'device');
+        if (device != 'sensor' && device != 'touch')
+            game.settings.set(moduleName,'device','sensor');
+    }
 
     enableModule = game.user.name == game.settings.get(moduleName,'TargetName');
     hideElements = game.settings.get(moduleName,'HideElements') && game.user.isGM == false;

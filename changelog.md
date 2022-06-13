@@ -4,6 +4,7 @@ Fixes:
 <ul>
     <li>In the previous update, I accidentally pointed the download and manifest URL to the wrong branch. This meant that it wouldn't update to the correct version</li>
     <li>Touch Frames should now work on secured servers</li>
+    <li>Fixed issue where the config would not be displayed properly if 'Device' hadn't been changed since the last update</li>
 </ul>
 
 ### v2.1.4 - 05-05-2022
