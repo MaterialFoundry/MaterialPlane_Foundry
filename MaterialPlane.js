@@ -154,8 +154,8 @@ Hooks.on('ready', ()=>{
 
         let movementMethod = game.settings.get(moduleName,'movementMethod');
         if (movementMethod == 0) movementMethod = 'default';
-        else if (movementMethod == 1) movementMethod = 'stepByStep';
-        else if (movementMethod == 2) movementMethod = 'live';
+        else if (movementMethod == 1) movementMethod = 'live';
+        else if (movementMethod == 2) movementMethod = 'stepByStep';
         game.settings.set(moduleName, 'movementMethod', movementMethod);
 
         let tapMode = game.settings.get(moduleName,'tapMode');
