@@ -11,6 +11,13 @@ export const registerSettings = function() {
         default: true
     });
 
+    game.settings.register(moduleName,'migrate_215', {
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: true
+    });
+
     game.settings.register(moduleName,'baseSetup', {
         scope: "world",
         config: false,
@@ -48,6 +55,9 @@ export const registerSettings = function() {
         type: String
     });
 
+    /**
+     * Tap mode
+     */
     game.settings.register(moduleName,'tapMode', {
         scope: "world",
         config: false,
@@ -67,6 +77,9 @@ export const registerSettings = function() {
         
     });
 
+    /**
+     * Tap timeout
+     */
     game.settings.register(moduleName, 'tapTimeout', {
         default: 500,
         type: Number,

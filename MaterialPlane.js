@@ -123,6 +123,7 @@ Hooks.on('ready', ()=>{
     //configDialog.setConfigOpen(true);
     //configDialog.render(true);
 
+    //Update dialog
     if (game.user.isGM && game.settings.get(moduleName, 'showUpdateDialog_215')) {
         const updateDialogContent = `Material Plane has been updated to v2.1.5.<br><br>
         Please note that all configuration settings have been moved from the module settings to a new configuration screen.<br><br>
@@ -141,10 +142,30 @@ Hooks.on('ready', ()=>{
             }
         }).render(true);
     }
-    if (game.user.isGM) {
-        const device = game.settings.get(moduleName,'device');
-        if (device != 'sensor' && device != 'touch')
-            game.settings.set(moduleName,'device','sensor');
+
+    //Settings migration
+    if (game.user.isGM && game.settings.get(moduleName, 'migrate_215')) {
+        console.log('Migrating MP settings to v2.1.5');
+
+        let device = game.settings.get(moduleName,'device');
+        if (device == 0) device = 'sensor';
+        else if (device == 1) device = 'touch';
+        game.settings.set(moduleName,'device',device);
+
+        let movementMethod = game.settings.get(moduleName,'movementMethod');
+        if (movementMethod == 0) movementMethod = 'default';
+        else if (movementMethod == 1) movementMethod = 'stepByStep';
+        else if (movementMethod == 2) movementMethod = 'live';
+        game.settings.set(moduleName, 'movementMethod', movementMethod);
+
+        let tapMode = game.settings.get(moduleName,'tapMode');
+        if (tapMode == 0) tapMode = 'disable';
+        else if (tapMode == 1) tapMode = 'tapTimeout';
+        else if (tapMode == 2) tapMode = 'raiseMini';
+        game.settings.set(moduleName,'tapMode',tapMode);
+
+        game.settings.set(moduleName, 'migrate_215', false);
+        console.log('MP settings migration done');
     }
 
     enableModule = game.user.name == game.settings.get(moduleName,'TargetName');

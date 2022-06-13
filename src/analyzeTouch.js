@@ -41,7 +41,7 @@ export async function analyzeTouch(type,data) {
         const tapMode = game.settings.get('MaterialPlane','tapMode');
         
         
-        if (tapMode == 0) {             //Tap disabled
+        if (tapMode == 'disable') {             //Tap disabled
             if (type == 'end')
                 dropToken(id);
             else {
