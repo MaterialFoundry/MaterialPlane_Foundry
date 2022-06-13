@@ -1,4 +1,10 @@
 # Changelog Material Plane Foundry Module
+### v2.1.6 - 13-06-2022
+Fixes:
+<ul>
+    <li>Fixed some settings migration issues</li>
+</ul>
+
 ### v2.1.5 - 13-06-2022
 Fixes:
 <ul>
