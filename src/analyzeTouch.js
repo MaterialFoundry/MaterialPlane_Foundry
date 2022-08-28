@@ -1,3 +1,4 @@
+import { moduleName } from "../MaterialPlane.js";
 import { IRtokens } from "./analyzeIR.js";
 import { debug } from "./Misc/misc.js";
 
@@ -9,7 +10,7 @@ let touches = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
 let pauseTimeoutCheck = false;
 
 export async function analyzeTouch(type,data) {
-    //console.log('data',data)
+    //console.log('data',type,data)
     //debug('touchDetect',{type,data});
 
     if (game.paused) {
@@ -40,7 +41,6 @@ export async function analyzeTouch(type,data) {
         const forceNew = type == 'start';
         const tapMode = game.settings.get('MaterialPlane','tapMode');
         
-        
         if (tapMode == 'disable') {             //Tap disabled
             if (type == 'end')
                 dropToken(id);
@@ -52,7 +52,7 @@ export async function analyzeTouch(type,data) {
                 await moveToken(id,coordinates,scaledCoordinates,forceNew);
             }    
         }
-        else if (tapMode == 1) {        //Tap Timeout
+        else if (tapMode == 'tapTimeout') {        //Tap Timeout
             if (type == 'end') {
                 clearTimeout(tapTimeout[id]);
                 if (!tokenActive[id]) 
@@ -69,7 +69,7 @@ export async function analyzeTouch(type,data) {
             }
 
         }
-        else if (tapMode == 2) {        //Raise Mini
+        else if (tapMode == 'raiseMini') {        //Raise Mini
             if (type == 'end') {
                 if (!tokenActive[id]) genericTouch(type,coordinates,scaledCoordinates);
                 //else {
@@ -110,7 +110,7 @@ export async function analyzeTouch(type,data) {
                             const dx =  Math.abs(raiseData[i].scaledCoordinates.x - scaledCoordinates.x);
                             const dy = Math.abs(raiseData[i].scaledCoordinates.y - scaledCoordinates.y);
                             const distance = Math.sqrt( dx*dx + dy*dy );
-                            if (distance < canvas.scene.data.grid) {
+                            if (distance < canvas.dimensions.size) {
                                 raiseDetected = true;
                                 raiseData.splice(i,1);
                                 break;
@@ -165,8 +165,8 @@ function dropToken(id=0) {
 
 function scaleTouchInput(coords) {
     //Calculate the amount of pixels that are visible on the screen
-    const horVisible = screen.width/canvas.scene._viewPosition.scale;
-    const vertVisible = screen.height/canvas.scene._viewPosition.scale;
+    const horVisible = game.settings.get(moduleName, 'touchScaleX')*screen.width/canvas.scene._viewPosition.scale;
+    const vertVisible = game.settings.get(moduleName, 'touchScaleY')*screen.height/canvas.scene._viewPosition.scale;
 
     //Calculate the scaled coordinates
     const posX = (coords.x/screen.width)*horVisible+canvas.scene._viewPosition.x-horVisible/2;

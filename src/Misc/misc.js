@@ -27,11 +27,12 @@ export function debug(type, message) {
 export function compareVersions(checkedVersion, requiredVersion) {
   requiredVersion = requiredVersion.split(".");
   checkedVersion = checkedVersion.split(".");
+  
   for (let i=0; i<3; i++) {
       requiredVersion[i] = isNaN(parseInt(requiredVersion[i])) ? 0 : parseInt(requiredVersion[i]);
       checkedVersion[i] = isNaN(parseInt(checkedVersion[i])) ? 0 : parseInt(checkedVersion[i]);
   }
-
+  
   if (checkedVersion[0] > requiredVersion[0]) return false;
   if (checkedVersion[0] < requiredVersion[0]) return true;
   if (checkedVersion[1] > requiredVersion[1]) return false;
@@ -41,6 +42,8 @@ export function compareVersions(checkedVersion, requiredVersion) {
 }
 
 export function compatibleCore(compatibleVersion){
+  const split = compatibleVersion.split(".");
+  if (split.length == 2) compatibleVersion = `0.${compatibleVersion}`;
   let coreVersion = game.version == undefined ? game.data.version : `0.${game.version}`;
   return compareVersions(compatibleVersion, coreVersion);
 }
@@ -125,6 +128,10 @@ export class MaterialPlaneLayer extends CanvasLayer {
     return this;
   }
 
+  async _draw() {
+
+  }
+
   async draw() {
     super.draw();
   }
@@ -136,7 +143,11 @@ export class MaterialPlaneLayer extends CanvasLayer {
      * @param {*} position Coordinates
      * @return {*} Token closest to the coordinates
      */
- export function findToken(coords, spacing=canvas.scene.data.grid, currentToken){
+ export function findToken(coords, spacing, currentToken){
+
+  if (spacing == undefined) {
+    spacing = compatibleCore('10.0') ? canvas.scene.grid.size : canvas.scene.data.grid;
+  }
 
   //For all tokens on the canvas: get the distance between the token and the coordinate. Get the closest token. If the distance is smaller than the hitbox of the token, 'token' is returned
   let closestToken = undefined;
@@ -180,6 +191,10 @@ export class tokenMarker extends CanvasLayer {
       this.addChild(this.container);
     }
   
+    async _draw() {
+
+    }
+
     async draw() {
       super.draw();
     }

@@ -1,5 +1,5 @@
 import { moduleName } from "../../MaterialPlane.js";
-import { debug, findToken, tokenMarker } from "../Misc/misc.js";
+import { debug, findToken, tokenMarker, compatibleCore } from "../Misc/misc.js";
 
 export class IRtoken {
     constructor() { 
@@ -38,7 +38,7 @@ export class IRtoken {
                 return false;
             }
             debug('updateMovement',`Found token ${this.token.name}`)
-            this.currentPosition = {x:this.token.x+canvas.scene.data.grid/2, y:this.token.y+canvas.scene.data.grid/2}
+            this.currentPosition = {x:this.token.x+canvas.dimensions.size/2, y:this.token.y+canvas.dimensions.size/2}
             this.previousPosition = this.currentPosition;
             this.controlledToken = this.token;
             this.originPosition = {x:this.token.x, y:this.token.y};
@@ -59,9 +59,17 @@ export class IRtoken {
      */
     async moveToken(coords) {
         //Compensate for the difference between the center of the token and the top-left of the token, and compensate for token size
-        coords.x -= this.token.hitArea.width/2 +(this.token.data.width - 1)*canvas.scene.data.grid/2;
-        coords.y -= this.token.hitArea.height/2 -(this.token.data.height - 1)*canvas.scene.data.grid/2;
-        if (Math.abs(coords.x-this.token.data.x) < 5 && Math.abs(coords.y-this.token.data.y) < 5) return;
+        if (compatibleCore('10.0')) {
+            coords.x -= this.token.hitArea.width/2;
+            coords.y -= this.token.hitArea.height/2;
+            if (Math.abs(coords.x-this.token.x) < 5 && Math.abs(coords.y-this.token.y) < 5) return;
+        }
+        else {
+            coords.x -= this.token.hitArea.width/2 +(this.token.data.width - 1)*canvas.dimensions.size/2;
+            coords.y -= this.token.hitArea.height/2 -(this.token.data.height - 1)*canvas.dimensions.size/2;
+            if (Math.abs(coords.x-this.token.data.x) < 5 && Math.abs(coords.y-this.token.data.y) < 5) return;
+        }
+        
 
         let cp = canvas.grid.getCenter(coords.x+canvas.dimensions.size/2,coords.y+canvas.dimensions.size/2);
         let currentPos = {x:cp[0], y:cp[1]};
@@ -84,8 +92,8 @@ export class IRtoken {
             if (collision == false) {
                 this.currentPosition = currentPos;
                 let newCoords = {
-                    x: (this.currentPosition.x-canvas.scene.data.grid/2),
-                    y: (this.currentPosition.y-canvas.scene.data.grid/2)
+                    x: (this.currentPosition.x-canvas.dimensions.size/2),
+                    y: (this.currentPosition.y-canvas.dimensions.size/2)
                 }
                 
                 this.previousPosition = this.currentPosition;
@@ -119,27 +127,50 @@ export class IRtoken {
                     if (!collisions[2] && !collisions[3]) moveY = true;
                     
                     if (moveX && moveY) {
-                        this.token.data.x = coords.x;
-                        this.token.data.y = coords.y;
+                        if (compatibleCore('10.0')) {
+                            this.token.document.x = coords.x;
+                            this.token.document.y = coords.y;
+                        }
+                        else {
+                            this.token.data.x = coords.x;
+                            this.token.data.y = coords.y;
+                        }
+                        
                         //this.currentPosition = currentPos;
                     }
                     //movement in X is allowed, Y is not
                     else if (!surroundingGridCollisions[0] && !surroundingGridCollisions[1]) {
-                        this.token.data.x = coords.x;
-                        this.token.data.y = currentPos.y - Math.floor(canvas.dimensions.size/2);
-                        //this.currentPosition = currentPos;
+                        if (compatibleCore('10.0')) {
+                            this.token.document.x = coords.x;
+                            this.token.document.y = currentPos.y - Math.floor(canvas.dimensions.size/2);
+                        }
+                        else {
+                            this.token.data.x = coords.x;
+                            this.token.data.y = currentPos.y - Math.floor(canvas.dimensions.size/2);
+                        }
                     }
                     //movement in Y is allowed, X is not
                     else if (!surroundingGridCollisions[2] && !surroundingGridCollisions[3]) {
-                        this.token.data.x = currentPos.x - Math.floor(canvas.dimensions.size/2);
-                        this.token.data.y = coords.y;
-                        
+                        if (compatibleCore('10.0')) {
+                            this.token.document.x = currentPos.x - Math.floor(canvas.dimensions.size/2);
+                            this.token.document.y = coords.y;
+                        }
+                        else {
+                            this.token.data.x = currentPos.x - Math.floor(canvas.dimensions.size/2);
+                            this.token.data.y = coords.y;
+                        } 
                     }
                     this.currentPosition = currentPos;
                 }
                 else {
-                    this.token.data.x = coords.x;
-                    this.token.data.y = coords.y;
+                    if (compatibleCore('10.0')) {
+                        this.token.document.x = coords.x;
+                        this.token.document.y = coords.y;
+                    }
+                    else {
+                        this.token.data.x = coords.x;
+                        this.token.data.y = coords.y;
+                    }
                     this.currentPosition = currentPos;
                 }
                 
@@ -169,19 +200,24 @@ export class IRtoken {
      * Check for wall collisions
      */
     checkCollision(token,origin,destination) {
-        // Create a Ray for the attempted move
-        let ray = new Ray({x: origin.x, y: origin.y}, {x: destination.x, y: destination.y});
+        if (compatibleCore('10.0')) {
+            return token.checkCollision(destination, {origin:origin});
+        }
+        else {
+            // Create a Ray for the attempted move
+            let ray = new Ray({x: origin.x, y: origin.y}, {x: destination.x, y: destination.y});
 
-        // Shift the origin point by the prior velocity
-        ray.A.x -= token._velocity.sx;
-        ray.A.y -= token._velocity.sy;
+            // Shift the origin point by the prior velocity
+            ray.A.x -= token._velocity.sx;
+            ray.A.y -= token._velocity.sy;
 
-        // Shift the destination point by the requested velocity
-        ray.B.x -= Math.sign(ray.dx);
-        ray.B.y -= Math.sign(ray.dy);
+            // Shift the destination point by the requested velocity
+            ray.B.x -= Math.sign(ray.dx);
+            ray.B.y -= Math.sign(ray.dy);
 
-        // Check for a wall collision
-        return canvas.walls.checkCollision(ray);
+            // Check for a wall collision
+            return canvas.walls.checkCollision(ray);
+        }
     }
 
     /*
@@ -211,7 +247,7 @@ export class IRtoken {
      * @param {} coords 
      */
     findNearestEmptySpace(coords) {
-        const spacer = canvas.scene.data.gridType === CONST.GRID_TYPES.SQUARE ? 1.41 : 1;
+        const spacer = (compatibleCore('10.0') ? canvas.scene.gridType : canvas.scene.data.gridType) === CONST.GRID_TYPES.SQUARE ? 1.41 : 1;
         //If space is already occupied
         if (findToken(this.token.getCenter(coords.x,coords.y),(spacer * Math.min(canvas.grid.w, canvas.grid.h))/2,this.token) != undefined) {
             ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.SpaceOccupied"));
@@ -274,20 +310,25 @@ export class IRtoken {
         if (this.token == undefined) return false;
         
         //this.moveToken(this.currentPosition)
-
         let newCoords = {
-            x: (this.currentPosition.x-canvas.scene.data.grid/2),
-            y: (this.currentPosition.y-canvas.scene.data.grid/2),
-            rotation: this.token.data.rotation
+            x: (this.currentPosition.x-canvas.dimensions.size/2),
+            y: (this.currentPosition.y-canvas.dimensions.size/2),
+            rotation: compatibleCore('10.0') ? this.token.document.rotation : this.token.data.rotation
         }
+
+        
 
         if (game.settings.get(moduleName,'collisionPrevention')) {
             newCoords = this.findNearestEmptySpace(newCoords);
         
-            this.currentPosition = {
-                x: (newCoords.x+canvas.scene.data.grid/2),
-                y: (newCoords.y+canvas.scene.data.grid/2),
-                rotation: this.token.data.rotation
+            if (compatibleCore('10.0')) {
+            }
+            else {
+                this.currentPosition = {
+                    x: (newCoords.x+canvas.dimensions.size/2),
+                    y: (newCoords.y+canvas.dimensions.size/2),
+                    rotation: compatibleCore('10.0') ? this.token.document.rotation : this.token.data.rotation
+                }
             }
         }
         
@@ -302,6 +343,7 @@ export class IRtoken {
         if (game.settings.get(moduleName,'movementMethod') != 'stepByStep') {
             if (this.token.can(game.user,"control")) {
                 await this.token.document.update(newCoords);
+                if (compatibleCore('10.0')) CanvasAnimation.terminateAnimation(this.token.animationName);
                 debug('dropToken',`Token ${this.token.name}, Dropping at (${newCoords.x}, ${newCoords.y})`)
             }
             else {

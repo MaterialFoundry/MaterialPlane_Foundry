@@ -126,7 +126,7 @@ export class penMenu extends CanvasLayer {
         {
             name: "none",
             int: "none",
-            hex: "none"
+            hex: "#000000"
         } 
     ]
 

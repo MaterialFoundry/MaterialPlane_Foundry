@@ -48,7 +48,7 @@ export async function analyzeIR(data) {
     const targetUser = game.settings.get(moduleName,'TargetName');
 
     if (configDialog?.configOpen) configDialog.drawIrCoordinates(data.data);
-
+//console.log('data',data)
     if (data.data.length == 0) {
         if (game.user.name != targetUser) return;
         for (let token of IRtokens) token.dropIRtoken(); 

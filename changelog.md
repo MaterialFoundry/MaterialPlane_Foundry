@@ -1,4 +1,16 @@
 # Changelog Material Plane Foundry Module
+### v2.1.7 - 28-08-2022
+Additions:
+<ul>
+    <li>Added scaling for touch, to fix alignment issues</li>
+</ul>
+
+Other:
+<ul>
+    <li>Unusable options removed from config menu for the DIY sensor</li>
+    <li>Made compatible with Foundry v10, removed compatibility with v8</li>
+</ul>
+
 ### v2.1.6 - 13-06-2022
 Fixes:
 <ul>

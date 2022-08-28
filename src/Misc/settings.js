@@ -1,6 +1,7 @@
 import { moduleName, hwVariant, hwFirmware, hwWebserver, msVersion, masterVersions, checkForUpdate } from "../../MaterialPlane.js";
 import { lastBaseAddress } from "../analyzeIR.js";
 import { sendWS } from "../websocket.js";
+import { compatibleCore } from "./misc.js";
 
 export const registerSettings = function() {
 
@@ -74,7 +75,6 @@ export const registerSettings = function() {
         scope: 'world',
         range: { min: 500, max: 5000, step: 100 },
         config: false,
-        
     });
 
     /**
@@ -85,8 +85,29 @@ export const registerSettings = function() {
         type: Number,
         scope: 'world',
         range: { min: 100, max: 5000, step: 100 },
+        config: false, 
+    });
+
+    /**
+     * Touch Scale X
+     */
+     game.settings.register(moduleName, 'touchScaleX', {
+        default: 1,
+        type: Number,
+        scope: 'world',
+        range: { min: 0, max: 2, step: 0.01 },
         config: false,
-        
+    });
+
+    /**
+     * Touch Scale Y
+     */
+     game.settings.register(moduleName, 'touchScaleY', {
+        default: 1,
+        type: Number,
+        scope: 'world',
+        range: { min: 0, max: 2, step: 0.01 },
+        config: false,
     });
 
     /**
@@ -266,6 +287,7 @@ export class mpConfig extends FormApplication {
     getData() {
         this.baseSettings = game.settings.get(moduleName, 'baseSetup');
         this.irCodes = game.settings.get(moduleName,'remoteSetup');
+
         let data = {
             hwVariant,
             blockInteraction: this.blockInteraction,
@@ -288,6 +310,8 @@ export class mpConfig extends FormApplication {
             tapMode: game.settings.get(moduleName,'tapMode'),
             touchTimeout: game.settings.get(moduleName,'touchTimeout'),
             tapTimeout: game.settings.get(moduleName,'tapTimeout'),
+            touchScaleX: game.settings.get(moduleName,'touchScaleX'),
+            touchScaleY: game.settings.get(moduleName,'touchScaleY'),
 
             baseSetup: this.baseSettings,
 
@@ -297,12 +321,12 @@ export class mpConfig extends FormApplication {
 
             sensor: this.sensorSettings,
 
-            minimumFwVersion: game.modules.get("MaterialPlane").data.flags.minimumSensorVersion,
-            minimumWsVersion: game.modules.get("MaterialPlane").data.flags.minimumSensorWsVersion,
-            minimumBaseVersion: game.modules.get("MaterialPlane").data.flags.minimumBaseVersion,
-            minimumPenVersion: game.modules.get("MaterialPlane").data.flags.minimumPenVersion,
-            minimumMsVersion: game.modules.get("MaterialPlane").data.flags.minimumMSversion,
-            localModuleVersion: game.modules.get("MaterialPlane").data.version,
+            minimumFwVersion: compatibleCore('10.0') ? game.modules.get("MaterialPlane").flags.minimumSensorVersion : game.modules.get("MaterialPlane").data.flags.minimumSensorVersion,
+            minimumWsVersion: compatibleCore('10.0') ? game.modules.get("MaterialPlane").flags.minimumSensorWsVersion : game.modules.get("MaterialPlane").data.flags.minimumSensorWsVersion,
+            minimumBaseVersion: compatibleCore('10.0') ? game.modules.get("MaterialPlane").flags.minimumBaseVersion : game.modules.get("MaterialPlane").data.flags.minimumBaseVersion,
+            minimumPenVersion: compatibleCore('10.0') ? game.modules.get("MaterialPlane").flags.minimumPenVersion : game.modules.get("MaterialPlane").data.flags.minimumPenVersion,
+            minimumMsVersion: compatibleCore('10.0') ? game.modules.get("MaterialPlane").flags.minimumMSversion : game.modules.get("MaterialPlane").data.flags.minimumMSversion,
+            localModuleVersion: compatibleCore('10.0') ? game.modules.get("MaterialPlane").version : game.modules.get("MaterialPlane").data.version,
             localFwVersion: hwFirmware,
             localSWsVersion: hwWebserver,
             localMsVersion: msVersion,
@@ -315,7 +339,12 @@ export class mpConfig extends FormApplication {
         this.buildBaseTable();
         this.buildRcTable();
 
-        
+        if (hwVariant != 'Beta') {
+            const mpBetaElements = document.getElementsByClassName('mpBeta');
+            for (let elmnt of mpBetaElements) {
+                elmnt.style.display = 'none';
+            }
+        }
 
         //Refresh browser window on close if required
         document.getElementById('MaterialPlane_Config').getElementsByClassName('header-button close')[0].addEventListener('click', async event => { 
@@ -397,6 +426,22 @@ export class mpConfig extends FormApplication {
             html.find("input[id=mpTapTimeout]")[0].value = val;
             html.find("input[id=mpTapTimeoutNumber]")[0].value = val;
             this.setSettings('tapTimeout',val);
+        });
+        html.find("input[id=mpTouchScaleX]").on('change', event => {
+            html.find("input[id=mpTouchScaleXNumber]")[0].value = event.target.value;
+            this.setSettings('touchScaleX', event.target.value);
+        });
+        html.find("input[id=mpTouchScaleXNumber]").on('change', event => {
+            html.find("input[id=mpTouchScaleX]")[0].value = event.target.value;
+            this.setSettings('touchScaleX', event.target.value);
+        });
+        html.find("input[id=mpTouchScaleY]").on('change', event => {
+            html.find("input[id=mpTouchScaleYNumber]")[0].value = event.target.value;
+            this.setSettings('touchScaleY', event.target.value);
+        });
+        html.find("input[id=mpTouchScaleYNumber]").on('change', event => {
+            html.find("input[id=mpTouchScaleY]")[0].value = event.target.value;
+            this.setSettings('touchScaleY', event.target.value);
         });
 
         // --- Base Setup settings, more in buildBaseTable() ---

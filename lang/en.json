@@ -21,7 +21,7 @@
     "MaterialPlane.Config.Device": "Device",
     "MaterialPlane.Config.Device_Hint": "Select what kind of device is used to detect mini movement.",
     "MaterialPlane.Config.Device_Sensor": "Material Plane Sensor",
-    "MaterialPlane.Config.Device_Touch": "Touch Frame",
+    "MaterialPlane.Config.Device_Touch": "Touch Screen",
     "MaterialPlane.Config.MovementMethod": "Movement Method",
     "MaterialPlane.Config.MovementMethod_Hint": "Sets the movement and vision method. 'Default' is the default Foundry behavior (vision updates after move), 'Live' updates the vision while moving, 'Step-by-Step' moves the token onto every grid you drag along, updating the vision every step.",
     "MaterialPlane.Config.MovementMethod_Default": "Default",

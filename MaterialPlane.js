@@ -7,7 +7,7 @@
 import { registerSettings, mpConfig, onHwVariantChange } from "./src/Misc/settings.js";
 import { sendWS,startWebsocket } from "./src/websocket.js";
 import { calibrationProgressScreen, removeOverlay } from "./src/calibration.js";
-import { registerLayer, configureDebug, compareVersions } from "./src/Misc/misc.js";
+import { registerLayer, configureDebug, compareVersions, compatibleCore } from "./src/Misc/misc.js";
 import { initializeIRtokens, initializeCursors, setLastBaseAddress } from "./src/analyzeIR.js";
 import { IRremote } from "./src/IRremote/IRremote.js";
 import { analyzeTouch } from "./src/analyzeTouch.js";
@@ -124,6 +124,7 @@ Hooks.on('ready', ()=>{
     //configDialog.render(true);
 
     //Update dialog
+    /*
     if (game.user.isGM && game.settings.get(moduleName, 'showUpdateDialog_215')) {
         const updateDialogContent = `Material Plane has been updated to v2.1.5.<br><br>
         Please note that all configuration settings have been moved from the module settings to a new configuration screen.<br><br>
@@ -141,7 +142,7 @@ Hooks.on('ready', ()=>{
                 }
             }
         }).render(true);
-    }
+    }*/
 
     //Settings migration
     if (game.user.isGM && game.settings.get(moduleName, 'migrate_215')) {
@@ -414,6 +415,7 @@ export function checkForUpdate(reqType) {
                     if (request.responseText[i] == '"') break;
                     else v += request.responseText[i];
                   }
+                  
                   if (reqType == 'hwFw') masterVersions.sensorFW = v;
                   else if (reqType == 'base') masterVersions.baseFW = v;
                   else if (reqType == 'pen') masterVersions.penFW = v;

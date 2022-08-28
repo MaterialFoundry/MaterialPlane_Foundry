@@ -288,8 +288,8 @@
         <button type="button" class="mpConfigTabLinks active" onclick="openTab(event, 'mpConfigGeneral')">{{localize "MaterialPlane.Config.General"}}</button>
         <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigConnection')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.Connection"}}</button>
         <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigSensor')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.Sensor"}}</button>
-        <button type="button" class="mpConfigTabLinks mpBeta" onclick="openTab(event, 'mpConfigBase')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}{{#ifNCond hwVariant 'Beta'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.BaseSetup"}}</button>
-        <button type="button" class="mpConfigTabLinks mpBeta" onclick="openTab(event, 'mpConfigRC')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}{{#ifNCond hwVariant 'Beta'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.RC"}}</button>
+        <button type="button" class="mpConfigTabLinks mpBeta" onclick="openTab(event, 'mpConfigBase')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.BaseSetup"}}</button>
+        <button type="button" class="mpConfigTabLinks mpBeta" onclick="openTab(event, 'mpConfigRC')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.RC"}}</button>
         <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigTouch')" {{#ifNCond device 'touch'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.Touch"}}</button>
         <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigDownloads')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.Downloads"}}</button>
     </div>
@@ -381,7 +381,7 @@
         <p class="mpConfigNotes">{{localize "MaterialPlane.Config.HideDisplay_Hint"}}</p>
 
         <!-- Pen Menu Size -->
-        <div  class="mpBeta" {{#ifCond device 'touch'}}style="display:none"{{/ifCond}}{{#ifNCond hwVariant 'Beta'}}style="display:none"{{/ifNCond}}>
+        <div  class="mpBeta" {{#ifCond device 'touch'}}style="display:none"{{/ifCond}}>
             <div class="mpConfigFormElements">
                 <label for="mpPenMenu">{{localize "MaterialPlane.Config.MenuSize"}}</label>
                 <div class="mpConfigFormValRange">
@@ -873,6 +873,26 @@
             </div>
         </div>
         <p class="mpConfigNotes">{{localize "MaterialPlane.Config.TapTimeout_Hint"}}</p>
+
+        <!-- X Scale -->
+        <div class="mpConfigFormElements">
+            <label for="mpTouchScaleX">{{localize "MaterialPlane.Config.ScaleX"}}</label>
+            <div class="mpConfigFormValRange">
+                <input type="range" id="mpTouchScaleX" min=0 max=2 step=0.01 value={{touchScaleX}}>
+                <input type="number" id="mpTouchScaleXNumber" value={{touchScaleX}}>
+            </div>
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.ScaleX_Hint"}}</p>
+
+        <!-- Y Scale -->
+        <div class="mpConfigFormElements">
+            <label for="mpTouchScaleY">{{localize "MaterialPlane.Config.ScaleY"}}</label>
+            <div class="mpConfigFormValRange">
+                <input type="range" id="mpTouchScaleY" min=0 max=2 step=0.01 value={{touchScaleY}}>
+                <input type="number" id="mpTouchScaleYNumber" value={{touchScaleY}}>
+            </div>
+        </div>
+        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.ScaleY_Hint"}}</p>
     </div>
 
     <div id="mpConfigDownloads" class="mpConfigTabContent" style="display: none">
