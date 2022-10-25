@@ -1,4 +1,10 @@
 # Changelog Material Plane Foundry Module
+### v2.1.8_p (pre-release) - 
+Fixes:
+<ul>
+    <li>Registered handlebar helpers under a unique name to prevent incompatibilities with other modules</li>
+</ul>
+
 ### v2.1.7 - 28-08-2022
 Additions:
 <ul>

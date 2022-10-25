@@ -31,14 +31,14 @@ export let masterVersions = {};
 
 export let irRemote = new IRremote();
 
-Handlebars.registerHelper('ifCond', function(v1, v2, options) {
+Handlebars.registerHelper('ifCondMP', function(v1, v2, options) {
     if(v1 === v2) {
       return options.fn(this);
     }
     return options.inverse(this);
 });
 
-Handlebars.registerHelper('ifNCond', function(v1, v2, options) {
+Handlebars.registerHelper('ifNCondMP', function(v1, v2, options) {
     if(v1 === v2) {
         return options.inverse(this);
     }

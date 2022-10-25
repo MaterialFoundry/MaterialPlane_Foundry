@@ -286,12 +286,12 @@
 
     <div class="mpConfigTab">
         <button type="button" class="mpConfigTabLinks active" onclick="openTab(event, 'mpConfigGeneral')">{{localize "MaterialPlane.Config.General"}}</button>
-        <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigConnection')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.Connection"}}</button>
-        <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigSensor')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.Sensor"}}</button>
-        <button type="button" class="mpConfigTabLinks mpBeta" onclick="openTab(event, 'mpConfigBase')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.BaseSetup"}}</button>
-        <button type="button" class="mpConfigTabLinks mpBeta" onclick="openTab(event, 'mpConfigRC')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.RC"}}</button>
-        <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigTouch')" {{#ifNCond device 'touch'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.Touch"}}</button>
-        <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigDownloads')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.Downloads"}}</button>
+        <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigConnection')" {{#ifNCondMP device 'sensor'}}style="display:none"{{/ifNCondMP}}>{{localize "MaterialPlane.Config.Connection"}}</button>
+        <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigSensor')" {{#ifNCondMP device 'sensor'}}style="display:none"{{/ifNCondMP}}>{{localize "MaterialPlane.Config.Sensor"}}</button>
+        <button type="button" class="mpConfigTabLinks mpBeta" onclick="openTab(event, 'mpConfigBase')" {{#ifNCondMP device 'sensor'}}style="display:none"{{/ifNCondMP}}>{{localize "MaterialPlane.Config.BaseSetup"}}</button>
+        <button type="button" class="mpConfigTabLinks mpBeta" onclick="openTab(event, 'mpConfigRC')" {{#ifNCondMP device 'sensor'}}style="display:none"{{/ifNCondMP}}>{{localize "MaterialPlane.Config.RC"}}</button>
+        <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigTouch')" {{#ifNCondMP device 'touch'}}style="display:none"{{/ifNCondMP}}>{{localize "MaterialPlane.Config.Touch"}}</button>
+        <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigDownloads')" {{#ifNCondMP device 'sensor'}}style="display:none"{{/ifNCondMP}}>{{localize "MaterialPlane.Config.Downloads"}}</button>
     </div>
       
     <div id="mpConfigGeneral" class="mpConfigTabContent">
@@ -315,8 +315,8 @@
             <label for="mpDevice">{{localize "MaterialPlane.Config.Device"}}*</label>
             <div class="mpConfigFormVal">
                 <select id="mpDevice">
-                    <option value="sensor" {{#ifCond device 'sensor'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.Device_Sensor"}}</option>
-                    <option value="touch" {{#ifCond device 'touch'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.Device_Touch"}}</option>
+                    <option value="sensor" {{#ifCondMP device 'sensor'}}selected{{/ifCondMP}}>{{localize "MaterialPlane.Config.Device_Sensor"}}</option>
+                    <option value="touch" {{#ifCondMP device 'touch'}}selected{{/ifCondMP}}>{{localize "MaterialPlane.Config.Device_Touch"}}</option>
                 </select>
             </div>    
         </div>
@@ -327,9 +327,9 @@
             <label for="mpMovementMethod">{{localize "MaterialPlane.Config.MovementMethod"}}</label>
             <div class="mpConfigFormVal">
                 <select id="mpMovementMethod">
-                    <option value="default" {{#ifCond movementMethod 'default'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.MovementMethod_Default"}}</option>
-                    <option value="stepByStep" {{#ifCond movementMethod 'stepByStep'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.MovementMethod_SbS"}}</option>
-                    <option value="live" {{#ifCond movementMethod 'live'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.MovementMethod_Live"}}</option>
+                    <option value="default" {{#ifCondMP movementMethod 'default'}}selected{{/ifCondMP}}>{{localize "MaterialPlane.Config.MovementMethod_Default"}}</option>
+                    <option value="stepByStep" {{#ifCondMP movementMethod 'stepByStep'}}selected{{/ifCondMP}}>{{localize "MaterialPlane.Config.MovementMethod_SbS"}}</option>
+                    <option value="live" {{#ifCondMP movementMethod 'live'}}selected{{/ifCondMP}}>{{localize "MaterialPlane.Config.MovementMethod_Live"}}</option>
                 </select>
             </div>
         </div>
@@ -381,7 +381,7 @@
         <p class="mpConfigNotes">{{localize "MaterialPlane.Config.HideDisplay_Hint"}}</p>
 
         <!-- Pen Menu Size -->
-        <div  class="mpBeta" {{#ifCond device 'touch'}}style="display:none"{{/ifCond}}>
+        <div  class="mpBeta" {{#ifCondMP device 'touch'}}style="display:none"{{/ifCondMP}}>
             <div class="mpConfigFormElements">
                 <label for="mpPenMenu">{{localize "MaterialPlane.Config.MenuSize"}}</label>
                 <div class="mpConfigFormValRange">
@@ -843,9 +843,9 @@
             <label for="mpTapMode">{{localize "MaterialPlane.Config.TapMode"}}</label>
             <div class="mpConfigFormVal">
                 <select id="mpTapMode">
-                    <option value="disable" {{#ifCond tapMode 'disable'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.TapMode_Disable"}}</option>
-                    <option value="tapTimeout" {{#ifCond tapMode 'tapTimeout'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.TapMode_TapTimeout"}}</option>
-                    <option value="raiseMini" {{#ifCond tapMode 'raiseMini'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.TapMode_RaiseMini"}}</option>
+                    <option value="disable" {{#ifCondMP tapMode 'disable'}}selected{{/ifCondMP}}>{{localize "MaterialPlane.Config.TapMode_Disable"}}</option>
+                    <option value="tapTimeout" {{#ifCondMP tapMode 'tapTimeout'}}selected{{/ifCondMP}}>{{localize "MaterialPlane.Config.TapMode_TapTimeout"}}</option>
+                    <option value="raiseMini" {{#ifCondMP tapMode 'raiseMini'}}selected{{/ifCondMP}}>{{localize "MaterialPlane.Config.TapMode_RaiseMini"}}</option>
                 </select>
             </div>    
         </div>
