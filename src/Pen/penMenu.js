@@ -1,4 +1,5 @@
 import { moduleName } from "../../MaterialPlane.js";
+import { activateControl } from "../Misc/misc.js";
 
 export class penMenu extends CanvasLayer {
     constructor() {
@@ -9,29 +10,81 @@ export class penMenu extends CanvasLayer {
     options = [
         {
             name: "pointer",
-            icon: "modules/MaterialPlane/img/mouse-pointer-solid.png"
+            icon: "modules/MaterialPlane/img/mouse-pointer-solid.png",
+            label: "Canvas",
+            buttons: [
+                { button: "A", label: "Pan Canvas" },
+                { button: "B", label: "Zoom Canvas" },
+                { button: "C", label: "Pen Menu" },
+                { button: "D", label: "Click Canvas" }
+            ]
         },
         {
             name: "token",
-            icon: "modules/MaterialPlane/img/user-solid.png"
+            icon: "modules/MaterialPlane/img/user-solid.png",
+            label: "Token",
+            buttons: [
+                { button: "A", label: "Pan" },
+                { button: "B", label: "Rotate Token" },
+                { button: "C", label: "Pen Menu" },
+                { button: "D", label: "Move Token" }
+            ]
         },
         {
             name: "ruler",
-            icon: "modules/MaterialPlane/img/ruler-solid.png"
+            icon: "modules/MaterialPlane/img/ruler-solid.png",
+            label: "Ruler",
+            buttons: [
+                { button: "A", label: "Undo Last Point" },
+                { button: "B", label: "Clear All Points" },
+                { button: "C", label: "Pen Menu" },
+                { button: "D", label: "New Point" }
+            ]
         },
         {
             name: "target",
-            icon: "modules/MaterialPlane/img/bullseye-solid.png"
+            icon: "modules/MaterialPlane/img/bullseye-solid.png",
+            label: "Target",
+            buttons: [
+                { button: "C", label: "Pen Menu" },
+                { button: "D", label: "Target Token" }
+            ]
         },
         {
             name: "draw",
-            icon: "modules/MaterialPlane/img/pencil-alt-solid.png"
+            icon: "modules/MaterialPlane/img/pencil-alt-solid.png",
+            label: "Drawings",
+            buttons: [
+                { button: "A", label: "Move Drawing" },
+                { button: "B", label: "Rotate Drawing" },
+                { button: "C", label: "Pen Menu" },
+                { button: "D", label: "Draw Shape" }
+            ]
         },
         {
             name: "template",
-            icon: "modules/MaterialPlane/img/ruler-combined-solid.png"
+            icon: "modules/MaterialPlane/img/ruler-combined-solid.png",
+            label: "Templates",
+            buttons: [
+                { button: "A", label: "Move Template" },
+                { button: "B", label: "Rotate Template" },
+                { button: "C", label: "Pen Menu" },
+                { button: "D", label: "Draw Template" }
+            ]
+        },
+        {
+            name: "info",
+            icon: "modules/MaterialPlane/img/circle-info-solid.png"
         }
     ];
+
+    deleteOptions = {
+        label: "Delete",
+        buttons: [
+            { button: "C", label: "Pen Menu" },
+            { button: "D", label: "Delete" }
+        ]
+    }
 
     templateOptions = [
         {
@@ -157,6 +210,8 @@ export class penMenu extends CanvasLayer {
 
     visible = false;
     open = false;
+    infoVisible = false;
+    infoMenu;
 
     setAlpha(alpha) {
         this.container.alpha = alpha;
@@ -258,8 +313,93 @@ export class penMenu extends CanvasLayer {
             this.moveMenu(data);
             this.drag = true;
         }
+        else if (selected == 7) {
+            this.showInfoMenu();
+        }
         else 
             this.setSelected(selected,secondRing,data)
+    }
+
+    blockInfoVisible = false;
+    showInfoMenu() {
+        if (this.blockInfoVisible) return;
+        if (this.infoVisible) {
+            this.infoVisible = false;
+        }
+        else {
+            this.infoVisible = true;
+        }
+        this.drawMenu(this.location);
+
+        this.blockInfoVisible = true;
+        setTimeout(()=>this.blockInfoVisible = false,500)
+    }
+
+    drawInfoMenu(selected, selectedDrawing, selectedTemplate) {
+        if (!this.infoVisible) return;
+
+        let option = this.options.find(o => o.name == selected);
+        if (selected == 'draw' && selectedDrawing != undefined) {
+            if (this.drawingOptions[selectedDrawing] == undefined) {
+                option = this.deleteOptions;
+            }
+            
+        }
+        if (selected == 'template' && selectedTemplate != undefined) {
+            if (this.templateOptions[selectedTemplate] == undefined) {
+                option = this.deleteOptions;
+            }
+        }
+        
+        const buttons = option.buttons;
+        const buttonSize = {
+            width: 25,
+            height: 15,
+            radius: 5,
+            lineWidth: 1,
+            verticalSpacing: 5,
+            horizontalSpacing: 5,
+            xLeft: this.location.radius*1.1 + 5
+        }
+
+        const height = (1+buttons.length)*(buttonSize.verticalSpacing + buttonSize.height) + 2*buttonSize.verticalSpacing;
+    
+        let infoMenu = new PIXI.Container();
+        
+        let background = new PIXI.LegacyGraphics();
+        background.lineStyle(1, 0xFFFFFF);
+        let maxWidth = 0;
+
+        
+        for (let i=0; i<buttons.length; i++) {
+            const button = buttons[i];
+            const y = -height/2 + buttonSize.verticalSpacing + (buttonSize.verticalSpacing+buttonSize.height)*(i+1);
+            background.drawRoundedRect(buttonSize.xLeft, y, buttonSize.width, buttonSize.height, buttonSize.radius);
+            var label = new PIXI.Text(`${button.button}    ${button.label}`, {fontFamily : 'Arial', fontSize: 12, fill : '#FFFFFF', align : 'center'});
+            label.position.set(this.location.radius*1.1 +buttonSize.width/ 2, y);
+            label._zIndex = 1;
+            label.resolution = 5;
+            if (label.width > maxWidth) maxWidth = label.width;
+            background.addChild(label);
+        }
+
+        const width = maxWidth+4*buttonSize.horizontalSpacing;
+        var label = new PIXI.Text(option.label, {fontFamily : 'Arial', fontSize: 12, fill : '#FFFFFF', align : 'left'});
+        label.position.set(buttonSize.xLeft, -height/2 + buttonSize.verticalSpacing);
+        label._zIndex = 1;
+        label.resolution = 5;
+        //if (label.width > maxWidth) maxWidth = label.widt h;
+        background.addChild(label);
+
+        
+        background.lineStyle(0, 0);
+        background.beginFill(0x000000);
+        background.drawRoundedRect(this.location.radius*1.1, -height/2, width, height,10);
+        background.endFill();
+        infoMenu.addChild(background);
+        infoMenu.name = 'infoMenu';
+        
+        this.container.addChild(infoMenu);
     }
 
     setSelected(selected,secondRing,data={x:this.location.x, y:this.location.y}) {
@@ -281,21 +421,21 @@ export class penMenu extends CanvasLayer {
             let control;
             
             if (this.selectedName == 'template') {
+                activateControl('measure');
+                this.selectedTemplate = 1;
+                this.selectedTemplateName = this.templateOptions[0].name;
+                /*
                 ui.controls.activeControl = 'measure';
                 ui.controls.render();
                 canvas.layers.find(layer => layer.name == "TemplateLayer").activate();
-                this.selectedTemplate = 1;
-                this.selectedTemplateName = this.templateOptions[0].name;
+                
+                */
             }
             else if (this.selectedName == 'draw') {
-                ui.controls.activeControl = 'drawings';
-                ui.controls.render();
-                canvas.layers.find(layer => layer.name == "DrawingsLayer").activate();
+                activateControl('drawings');
             }
             else {
-                ui.controls.activeControl = 'token';
-                ui.controls.render();
-                canvas.layers.find(layer => layer.name == "TokenLayer").activate();
+                activateControl('token');
             }
 
             if (control != undefined) {
@@ -511,7 +651,8 @@ export class penMenu extends CanvasLayer {
 
         for (let i=0; i<nrOfIcons; i++) {
             let section = new PIXI.LegacyGraphics();
-            if (this.selected == i+1) section.beginFill(0x666666);
+            if (this.options[i].name == 'info' && this.infoVisible) section.beginFill(0x333333);
+            else if (this.selected == i+1) section.beginFill(0x666666);
             else section.beginFill(0x000000);
             
             section.lineStyle(2, 0xFFFFFF);
@@ -553,7 +694,8 @@ export class penMenu extends CanvasLayer {
         logo.height = size*0.50;
         logo.name="logo";
         this.container.addChild(logo); 
-           
+        
+        this.drawInfoMenu(this.selectedName, this.selectedDrawingTool, this.selectedTemplate)
        
         this.container.setTransform(x, y);
         this.container.visible = true;

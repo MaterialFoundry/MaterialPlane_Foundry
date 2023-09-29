@@ -27,7 +27,7 @@ export class IRremote {
         if (this.argumentsEnabled == undefined) {
             let argumentsEnabled = false;
             let furnace = game.modules.get("furnace");
-            if (furnace != undefined && furnace.active && compatibleCore("0.8.1")==false) argumentsEnabled = true;
+            if (furnace != undefined && furnace.active) argumentsEnabled = true;
             else {
                 let advancedMacros = game.modules.get("advanced-macros");
                 if (advancedMacros != undefined && advancedMacros.active) argumentsEnabled = true;

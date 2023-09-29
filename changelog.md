@@ -1,4 +1,10 @@
 # Changelog Material Plane Foundry Module
+### v3.0.0 - 30-09-2023
+This release is only meant for the production hardware (requiring firmware v3.0.0+). DIY hardware is currently not supported.<br>
+The communication between the sensor and module has been overhauled, which is why it only works with the latest firmware. Besides that, a lot of minor changes and fixes have been made.<br>
+<br>
+Touch functionality is currently broken in Foundry V11.
+
 ### v2.1.7 - 28-08-2022
 Additions:
 <ul>

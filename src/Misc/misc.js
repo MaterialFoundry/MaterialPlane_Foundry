@@ -12,6 +12,66 @@ let debugSettings = {
   dropToken: false
 };
 
+export function activateControl(controlName) {
+  if (ui.controls.activeControl == controlName) return;
+  const control = ui.controls.controls.find(c => c.name == controlName);
+  ui.controls.initialize({layer:control.layer});
+  canvas.layers.find(l => l.options.name == control.layer).activate();
+  ui.controls.render(); 
+}
+
+export function updatePowerState(data) {
+  let battery = data.percentage;
+  let batteryColor = "#FFFFFF";
+  const chargingState = data.chargingState;
+
+  if (battery > 100) battery = 100;
+  if (battery < 0) battery = 0;
+  let icon;
+
+  if (battery >= 80) {
+      icon = 'fas fa-battery-full';
+      batteryColor = "#00FF00";
+  }
+  else if (battery >= 60 && battery < 80) {
+      icon = 'fas fa-battery-three-quarters';
+      batteryColor = "#B9FF00";
+  }
+  else if (battery >= 40 && battery < 60) {
+      icon = 'fas fa-battery-half';
+      batteryColor = "#F0FF00";
+  }
+  else if (battery >= 20 && battery < 40) {
+      icon = 'fas fa-battery-quarter';
+      batteryColor = "#FF9000";
+  }
+  else if (battery < 20) {
+      icon = 'fas fa-battery-empty';
+      batteryColor = "#FF0000";
+  }
+
+  if (chargingState == 1) {   //charging
+      icon = 'fas fa-battery-bolt';
+  }
+  
+  if (document.getElementById("batteryLabel") == null) {
+      const playersElement = document.getElementsByClassName("players-mode")[0];
+      let batteryIcon = document.createElement("i");
+      batteryIcon.id = "batteryIcon";
+      batteryIcon.style.fontSize = "0.75em";
+      let batteryLabel = document.createElement("bat");
+      batteryLabel.id = "batteryLabel";
+      batteryLabel.style.fontSize = "1em";
+
+      playersElement.after(batteryLabel);
+      playersElement.after(batteryIcon);
+  }
+  
+  document.getElementById("batteryLabel").innerHTML = `${battery}%`;
+  document.getElementById("batteryIcon").className = icon; 
+  document.getElementById("batteryIcon").style.color = batteryColor;
+}
+
 export function configureDebug(data) {
   for (const [key,value] of Object.entries(data)) {
     debugSettings[key] = value;
@@ -84,14 +144,11 @@ export function generateId(){
 }
 
 export function registerLayer() {
-  const layers =  compatibleCore("0.9") ? {
+  const layers =  {
     materialPlane: {
           layerClass: MaterialPlaneLayer,
           group: "primary"
       }
-  }
-  : {
-    materialPlane: MaterialPlaneLayer
   }
 
   CONFIG.Canvas.layers = foundry.utils.mergeObject(Canvas.layers, layers);
@@ -104,6 +161,40 @@ export function registerLayer() {
             }
         })
     }
+}
+
+export class MovingAverage {
+  val = [];
+  count = 0;
+  size = 10;
+  complete=false;
+
+  constructor(size = 10) {
+    this.size = size;
+  }
+
+  reset() {
+    this.count = 0;
+    this.complete = false;
+  }
+
+  newValue(val) {
+    this.val[this.count] = val;
+    this.count++;
+    if (this.count > this.size) {
+      this.count -= this.size + 1;
+      this.complete = true;
+    }
+
+    let newVal = 0;
+    const len = this.complete ? this.size : this.count;
+    for (let i=0; i<len; i++) {
+      newVal += this.val[i];
+    }
+
+    return newVal/len
+  }
+
 }
 
 export class MaterialPlaneLayer extends CanvasLayer {
@@ -146,7 +237,7 @@ export class MaterialPlaneLayer extends CanvasLayer {
  export function findToken(coords, spacing, currentToken){
 
   if (spacing == undefined) {
-    spacing = compatibleCore('10.0') ? canvas.scene.grid.size : canvas.scene.data.grid;
+    spacing = canvas.scene.grid.size;
   }
 
   //For all tokens on the canvas: get the distance between the token and the coordinate. Get the closest token. If the distance is smaller than the hitbox of the token, 'token' is returned
@@ -158,9 +249,11 @@ export class MaterialPlaneLayer extends CanvasLayer {
     if (!token.can(game.user,"control")) {
       if (!game.settings.get(moduleName,'EnNonOwned') || !token.visible) continue;
     }
+
     let coordsCenter = token.getCenter(token.x,token.y); 
-    const dx =  Math.abs(coordsCenter.x - coords.x);
-    const dy = Math.abs(coordsCenter.y - coords.y);
+    const dx =  Math.abs(coordsCenter.x - coords.x + (token.document.width-1)*spacing/2);
+    const dy = Math.abs(coordsCenter.y - coords.y - (token.document.height-1)*spacing/2);
+
     const distance = Math.sqrt( dx*dx + dy*dy );
   
     if (distance < minDistance) {
@@ -168,8 +261,9 @@ export class MaterialPlaneLayer extends CanvasLayer {
         minDistance = distance;
     }
   }
-
-  debug('nearestToken',`Token: ${closestToken.name}, Position: (${closestToken.x}, ${closestToken.y}), Distance: ${minDistance}, Min Distance: ${spacing}, Control: ${minDistance<spacing}`)
+  if (closestToken == undefined) return undefined;
+  
+  debug('nearestToken',`Token: ${closestToken?.name}, Position: (${closestToken.x}, ${closestToken.y}), Distance: ${minDistance}, Min Distance: ${spacing}, Control: ${minDistance<spacing}`)
 
   if (minDistance < spacing) 
     return closestToken;      

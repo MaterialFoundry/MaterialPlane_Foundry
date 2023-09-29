@@ -1,5 +1,7 @@
 import { moduleName } from "../../MaterialPlane.js";
-import { debug, findToken, tokenMarker, compatibleCore } from "../Misc/misc.js";
+import { debug, findToken, tokenMarker } from "../Misc/misc.js";
+
+let pausedMessage = false;
 
 export class IRtoken {
     constructor() { 
@@ -8,6 +10,7 @@ export class IRtoken {
         this.token = undefined;
         this.rawCoordinates;
         this.previousPosition;
+        this.scaledCoords;
 
         this.marker = new tokenMarker();
         canvas.stage.addChild(this.marker);
@@ -18,14 +21,27 @@ export class IRtoken {
      * New IR coordinates were received. Coordinates will be scaled. If a token is near the scaled coordinate
      * @param {*} coords 
      */
-    async update(data,scaledCoords,forceNew=false){
-        if (data.x == undefined || data.y == undefined) return false;
-        let coords = {x:data.x,y:data.y}
-        this.rawCoordinates = coords;
-
+    async update(data,scaledCoords,forceNew=false,moveToken=true){
+        if (data == undefined && this.token == undefined) return;
+        if (game.paused) {
+            if (!pausedMessage) {
+                pausedMessage = true;
+                ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.GamePaused"));
+                setTimeout(()=> pausedMessage = false, 5000);
+            }
+            return true;
+        }
+        if (data != undefined) {
+            let coords = {x:data.x,y:data.y}
+            this.rawCoordinates = coords;
+        }
+        if (scaledCoords != undefined) {
+            this.scaledCoords = scaledCoords;
+        }
+        
         if (this.token == undefined || forceNew) {
             //Find the nearest token to the scaled coordinates
-            if (this.token == undefined) this.token = findToken( scaledCoords );
+            if (this.token == undefined) this.token = findToken( this.scaledCoords );
             
             if (this.token == undefined) {
                 debug('updateMovement','No token found')
@@ -46,7 +62,7 @@ export class IRtoken {
         if (this.token.can(game.user,"control"))
             this.token.control({releaseOthers:false});
         
-        this.moveToken(scaledCoords);
+        if (moveToken) this.moveToken(this.scaledCoords);
 
         if (game.settings.get(moduleName,'movementMarker') && this.marker != undefined && this.token != undefined) this.marker.show();
         return true;
@@ -59,18 +75,10 @@ export class IRtoken {
      */
     async moveToken(coords) {
         //Compensate for the difference between the center of the token and the top-left of the token, and compensate for token size
-        if (compatibleCore('10.0')) {
-            coords.x -= this.token.hitArea.width/2;
-            coords.y -= this.token.hitArea.height/2;
-            if (Math.abs(coords.x-this.token.x) < 5 && Math.abs(coords.y-this.token.y) < 5) return;
-        }
-        else {
-            coords.x -= this.token.hitArea.width/2 +(this.token.data.width - 1)*canvas.dimensions.size/2;
-            coords.y -= this.token.hitArea.height/2 -(this.token.data.height - 1)*canvas.dimensions.size/2;
-            if (Math.abs(coords.x-this.token.data.x) < 5 && Math.abs(coords.y-this.token.data.y) < 5) return;
-        }
+        coords.x -= (this.token.document.width - 0.5)*canvas.dimensions.size;
+        coords.y -= canvas.dimensions.size/2;
+        if (Math.abs(coords.x-this.token.x) < 5 && Math.abs(coords.y-this.token.y) < 5) return;
         
-
         let cp = canvas.grid.getCenter(coords.x+canvas.dimensions.size/2,coords.y+canvas.dimensions.size/2);
         let currentPos = {x:cp[0], y:cp[1]};
 
@@ -107,7 +115,6 @@ export class IRtoken {
         //Default foundry movement method: update position after dropping token. Or live movement method: update vision live, update position when dropping token
         else {
             if (collision == false) {
-                
                 if (movementMethod == 'live') this.previousPosition = currentPos;
 
                 if (this.token.can(game.user,"control")) {
@@ -119,58 +126,30 @@ export class IRtoken {
                     if (surroundingGridCollisions[6]) {collisions[1]=true; collisions[2]=true}
                     if (surroundingGridCollisions[7]) {collisions[1]=true; collisions[3]=true}
 
-                    //if (!surroundingGridCollisions[0] && !surroundingGridCollisions[1]) this.token.data.x = coords.x;
-                    //if (!surroundingGridCollisions[2] && !surroundingGridCollisions[3]) this.token.data.y = coords.y;
                     let moveX = false;
                     let moveY = false;
                     if (!collisions[0] && !collisions[1]) moveX = true;
                     if (!collisions[2] && !collisions[3]) moveY = true;
                     
                     if (moveX && moveY) {
-                        if (compatibleCore('10.0')) {
-                            this.token.document.x = coords.x;
-                            this.token.document.y = coords.y;
-                        }
-                        else {
-                            this.token.data.x = coords.x;
-                            this.token.data.y = coords.y;
-                        }
-                        
-                        //this.currentPosition = currentPos;
+                        this.token.document.x = coords.x;
+                        this.token.document.y = coords.y;
                     }
                     //movement in X is allowed, Y is not
                     else if (!surroundingGridCollisions[0] && !surroundingGridCollisions[1]) {
-                        if (compatibleCore('10.0')) {
-                            this.token.document.x = coords.x;
-                            this.token.document.y = currentPos.y - Math.floor(canvas.dimensions.size/2);
-                        }
-                        else {
-                            this.token.data.x = coords.x;
-                            this.token.data.y = currentPos.y - Math.floor(canvas.dimensions.size/2);
-                        }
+                        this.token.document.x = coords.x;
+                        this.token.document.y = currentPos.y - Math.floor(canvas.dimensions.size/2);
                     }
                     //movement in Y is allowed, X is not
                     else if (!surroundingGridCollisions[2] && !surroundingGridCollisions[3]) {
-                        if (compatibleCore('10.0')) {
-                            this.token.document.x = currentPos.x - Math.floor(canvas.dimensions.size/2);
-                            this.token.document.y = coords.y;
-                        }
-                        else {
-                            this.token.data.x = currentPos.x - Math.floor(canvas.dimensions.size/2);
-                            this.token.data.y = coords.y;
-                        } 
+                        this.token.document.x = currentPos.x - Math.floor(canvas.dimensions.size/2);
+                        this.token.document.y = coords.y;
                     }
                     this.currentPosition = currentPos;
                 }
                 else {
-                    if (compatibleCore('10.0')) {
-                        this.token.document.x = coords.x;
-                        this.token.document.y = coords.y;
-                    }
-                    else {
-                        this.token.data.x = coords.x;
-                        this.token.data.y = coords.y;
-                    }
+                    this.token.document.x = coords.x+(this.token.document.width-1)*canvas.dimensions.size/2;
+                    this.token.document.y = coords.y+(this.token.document.height-1)*canvas.dimensions.size/2;
                     this.currentPosition = currentPos;
                 }
                 
@@ -187,10 +166,10 @@ export class IRtoken {
             const color = collision ? "0xFF0000" : "0x00FF00"
             if (this.currentPosition != undefined && this.token != undefined)
                 this.marker.updateMarker({
-                    x: currentPos.x,
-                    y: currentPos.y,
-                    width: canvas.dimensions.size,
-                    height: canvas.dimensions.size,
+                    x: currentPos.x+(this.token.document.width-1)*canvas.dimensions.size/2,
+                    y: currentPos.y+(this.token.document.height-1)*canvas.dimensions.size/2,
+                    width: canvas.dimensions.size*this.token.document.width,
+                    height: canvas.dimensions.size*this.token.document.height,
                     color: color
                 })
         }
@@ -200,24 +179,7 @@ export class IRtoken {
      * Check for wall collisions
      */
     checkCollision(token,origin,destination) {
-        if (compatibleCore('10.0')) {
             return token.checkCollision(destination, {origin:origin});
-        }
-        else {
-            // Create a Ray for the attempted move
-            let ray = new Ray({x: origin.x, y: origin.y}, {x: destination.x, y: destination.y});
-
-            // Shift the origin point by the prior velocity
-            ray.A.x -= token._velocity.sx;
-            ray.A.y -= token._velocity.sy;
-
-            // Shift the destination point by the requested velocity
-            ray.B.x -= Math.sign(ray.dx);
-            ray.B.y -= Math.sign(ray.dy);
-
-            // Check for a wall collision
-            return canvas.walls.checkCollision(ray);
-        }
     }
 
     /*
@@ -247,7 +209,7 @@ export class IRtoken {
      * @param {} coords 
      */
     findNearestEmptySpace(coords) {
-        const spacer = (compatibleCore('10.0') ? canvas.scene.gridType : canvas.scene.data.gridType) === CONST.GRID_TYPES.SQUARE ? 1.41 : 1;
+        const spacer = canvas.scene.gridType === CONST.GRID_TYPES.SQUARE ? 1.41 : 1;
         //If space is already occupied
         if (findToken(this.token.getCenter(coords.x,coords.y),(spacer * Math.min(canvas.grid.w, canvas.grid.h))/2,this.token) != undefined) {
             ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.SpaceOccupied"));
@@ -313,37 +275,24 @@ export class IRtoken {
         let newCoords = {
             x: (this.currentPosition.x-canvas.dimensions.size/2),
             y: (this.currentPosition.y-canvas.dimensions.size/2),
-            rotation: compatibleCore('10.0') ? this.token.document.rotation : this.token.data.rotation
+            rotation: this.token.document.rotation
         }
 
         
 
         if (game.settings.get(moduleName,'collisionPrevention')) {
             newCoords = this.findNearestEmptySpace(newCoords);
-        
-            if (compatibleCore('10.0')) {
-            }
-            else {
-                this.currentPosition = {
-                    x: (newCoords.x+canvas.dimensions.size/2),
-                    y: (newCoords.y+canvas.dimensions.size/2),
-                    rotation: compatibleCore('10.0') ? this.token.document.rotation : this.token.data.rotation
-                }
-            }
         }
         
         this.previousPosition = this.currentPosition;
         
-        this.moveToken(this.currentPosition);
-
-        //Release token, if setting is enabled
-        if (release) this.token.release();
+       // this.moveToken(this.currentPosition);
 
         //Get the coordinates of the center of the grid closest to the coords
         if (game.settings.get(moduleName,'movementMethod') != 'stepByStep') {
             if (this.token.can(game.user,"control")) {
                 await this.token.document.update(newCoords);
-                if (compatibleCore('10.0')) CanvasAnimation.terminateAnimation(this.token.animationName);
+                CanvasAnimation.terminateAnimation(this.token.animationName);
                 debug('dropToken',`Token ${this.token.name}, Dropping at (${newCoords.x}, ${newCoords.y})`)
             }
             else {
@@ -352,6 +301,9 @@ export class IRtoken {
             }
         }
         
+        //Release token, if setting is enabled
+        if (release) this.token.release();
+
         this.token = undefined;
         this.marker.hide();
         return true;

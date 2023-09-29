@@ -1,5 +1,5 @@
 import { moduleName } from "../../MaterialPlane.js";
-import { cursor, findToken, scaleIRinput, compatibleCore } from "../Misc/misc.js";
+import { cursor, findToken, scaleIRinput, MovingAverage } from "../Misc/misc.js";
 import { IRtoken } from "../IRtoken/IRtoken.js";
 import { penMenu } from "./penMenu.js";
 
@@ -42,6 +42,14 @@ export class Pen extends CanvasLayer {
     cursorTimeout;
     open = false;
     visible = false;
+    canvasPosition;
+    canvasMoveOrigin = {x:0,y:0}
+    canvasAverage = {
+        x: new MovingAverage(10),
+        y: new MovingAverage(10),
+        scale: new MovingAverage(10)
+    }
+    drawingRotation;
   
     init() {
         this.cursor = new cursor();
@@ -74,15 +82,20 @@ export class Pen extends CanvasLayer {
     }
 
     async analyze(data){
+        //console.log('penData',data)
         if (this.menu.open) this.menu.show();
-        let command = data.data[0].command;
-        if (command == 8) command = 'penIdle';
-        else if (command == 40) command = 'penLeft';
-        else if (command == 24) command = 'penRight';
-        else if (command == 94) command = 'penFront';
-        else if (command == 72) command = 'penRear';
+        let command = data.command;
+        if (command == 2) command = 'penIdle';
+        else if (command == 3) command = 'penA';
+        else if (command == 6) command = 'penD';
+        else if (command == 4) command = 'penB';
+        else if (command == 5) command = 'penC';
+        else if (command == 7) command = 'penFront';
+        else if (command == 8) command = 'penRear';
         
-        const point = data.data[0];
+        //console.log('command',command)
+
+        const point = data.irPoints[0];
         const coords = {x:point.x, y:point.y};
         let scaledCoords = scaleIRinput(coords);
         let status = 'click';
@@ -102,7 +115,7 @@ export class Pen extends CanvasLayer {
                     status = 'release';
                     this.holdTime = undefined;
                 }
-                else if (this.drawing != undefined && (compatibleCore('10.0') ? this.drawing.type : this.drawing.data.type) == CONST.DRAWING_TYPES.POLYGON && this.newDrawing) {
+                else if (this.drawing != undefined && this.drawing.type && this.newDrawing) {
                     const event = {
                         data: {
                             destination: {
@@ -138,7 +151,7 @@ export class Pen extends CanvasLayer {
         if (status == 'hold') {
             if (this.holdTime == undefined) this.holdTime = Date.now();
 
-            if (command == 'penRight' && this.menu.drag) {
+            if (command == 'penC' && this.menu.drag) {
                 this.menu.moveMenu(coordinates);
                 return;
             }
@@ -152,7 +165,7 @@ export class Pen extends CanvasLayer {
             })
             this.setCursorTimeout();
 
-            if (command == 'penRight' && this.menu.location.x != undefined && this.menu.inMenu(coordinates)) {
+            if ((command == 'penC' || command == 'penD') && this.menu.location.x != undefined && this.menu.inMenu(coordinates)) {
                 this.menu.getPoint(coordinates);
                 return;
             }
@@ -165,13 +178,13 @@ export class Pen extends CanvasLayer {
         else
             this.oldCommand = command;
 
-        if (command == 'penFront' && status == 'click') { //draw or hide menu
-            if (this.menu.container.visible) this.menu.hide();
+        if (command == 'penC' && status == 'click') { //draw or hide menu
+            if (this.menu.visible) this.menu.hide();
             else this.drawMenu(coordinates);
             return;
         }
-        else if (command == 'penRear') {
-            const point2 = data.data[1];
+        else if (command == 'penB') {
+            const point2 = data.irPoints[1];
             if (status == 'release' && (point2 == undefined || point2.x == undefined)) {
                 coordinates.x2 = this.bar.x1;
                 coordinates.y2 = this.bar.x1;
@@ -203,7 +216,7 @@ export class Pen extends CanvasLayer {
     }
 
     pointerFunction(command,data,status) {
-        if (command == 'penRight' && status == 'click') {
+        if (command == 'penD' && status == 'click') {
             const x = data.rawCoords.x / 4096 * window.innerWidth;
             const y = data.rawCoords.y / 4096 * window.innerHeight;
 
@@ -215,28 +228,62 @@ export class Pen extends CanvasLayer {
                 this.checkDoorClick(data);
             }
         }
+        else if (command == 'penA' && status == 'click') {
+            this.canvasPosition = JSON.parse(JSON.stringify(canvas.scene._viewPosition));
+            this.canvasMoveOrigin = {x:data.x, y:data.y};
+            this.canvasAverage.x.reset();
+            this.canvasAverage.y.reset();
+        }
+        else if (command == 'penB' && status == 'click') {
+            this.canvasPosition = JSON.parse(JSON.stringify(canvas.scene._viewPosition));
+            this.canvasAverage.scale.reset();
+
+            this.bar = {
+                x0:data.x,
+                x1:data.x2,
+                y0:data.y,
+                y2:data.y2,
+                length:data.length,
+                angle:data.angle,
+                rawCoords: data.rawCoords
+            }
+        }
+        else if (command == 'penA' && status == 'hold') {
+            const x = this.canvasAverage.x.newValue(data.x);
+            const y = this.canvasAverage.y.newValue(data.y);
+            
+            const moved = {
+                x: this.canvasMoveOrigin.x - x,
+                y: this.canvasMoveOrigin.y - y
+            }
+
+            canvas.animatePan({x: this.canvasPosition.x + moved.x, y: this.canvasPosition.y + moved.y, duration: 50})
+        }
+        else if (command == 'penB' && status == 'hold') {
+            const angle = this.canvasAverage.scale.newValue(this.bar.angle-data.angle);
+            canvas.animatePan({scale: this.canvasPosition.scale + angle*0.02, duration:50});
+        }
     }
 
     tokenFunction(command,data,status) {
-        if (command == 'penRight'){
+        if (command == 'penD'){
             if (status == 'click') {
                 this.checkTokenClick(data);
             }
             else if (status == 'hold') {
-                let forceNew = false;
-                const coords = {x:data.x, y:data.y};
-                this.irToken.update(data.rawCoords,coords,forceNew)
+                this.irToken.update(data.rawCoords,{x:data.x, y:data.y},false)
             }  
             else if (status == 'release') {
-                this.irToken.dropIRtoken(false);
+                this.irToken.update(data.rawCoords,{x:data.x, y:data.y},false)
+                this.irToken.dropIRtoken();
             }
         }
-        else if (command == 'penLeft'){
+        else if (command == 'penA'){
             if (status == 'click') {
                 this.checkTokenClick(data,true);
             }
         }
-        else if (command == 'penRear') {
+        else if (command == 'penB') {
             if (status == 'click') {
                 this.checkTokenClick(data);
                 this.bar = {
@@ -245,24 +292,29 @@ export class Pen extends CanvasLayer {
                     y0:data.y,
                     y2:data.y2,
                     length:data.length,
-                    angle:data.angle
+                    angle:data.angle,
+                    rawCoords: data.rawCoords
                 }
             }
             else if (status == 'hold') {
                 const angleChange = data.angle - this.bar.angle;
-                this.bar = {
-                    x0:data.x,
-                    x1:data.x2,
-                    y0:data.y,
-                    y2:data.y2,
-                    length:data.length,
-                    angle:data.angle
+                if (command == 'penB') {
+                    this.bar = {
+                        x0:data.x,
+                        x1:data.x2,
+                        y0:data.y,
+                        y2:data.y2,
+                        length:data.length,
+                        angle:data.angle
+                    }
+                } else {
+                    this.bar.angle = data.angle;
                 }
+                
                 let forceNew = false;
-                const coords = {x:data.x, y:data.y};
-                this.irToken.update(data.rawCoords,coords,forceNew);
-
-                this.irToken.token.data.rotation += angleChange;
+                if (command == 'penB') this.irToken.update(data.rawCoords,{x:data.x, y:data.y},forceNew);
+                else this.irToken.update(this.bar.rawCoords,{x:this.bar.x0, y:this.bar.y0},forceNew,false);
+                this.irToken.token.document.rotation += angleChange;
                 this.irToken.token.refresh();
                 if (game.settings.get(moduleName,'movementMethod') == 'live') this.irToken.token.updateSource({noUpdateFog: false});
             }
@@ -273,7 +325,7 @@ export class Pen extends CanvasLayer {
     }
 
     rulerFunction(command,data,status) {
-        if (command == 'penRight') {
+        if (command == 'penD') {
             if (status == 'click') {
                 if (this.rulerActive && this.ruler != undefined) {
                     this.ruler._addWaypoint({x:data.x, y:data.y});
@@ -299,18 +351,18 @@ export class Pen extends CanvasLayer {
                 }
             } 
         }
-        else if (command == 'penLeft') {
+        else if (command == 'penA') {
             if (status == 'click') {
                 if (this.rulerActive) {
                     const event = {
-                        data: {
+                        interactionData: {
                             origin: this.rulerOrigin,
                             destination: {x:data.x, y:data.y},
+                            _measureTime: Date.now(),
                             originalEvent: {
                                 shiftKey: false
                             },
                         },
-                        _measureTime: Date.now()
                     }
                     this.ruler._onClickRight(event);
                 }
@@ -324,10 +376,17 @@ export class Pen extends CanvasLayer {
                 this.rulerActive = false;
             }
         }
+        else if (command == 'penB') {
+            if (status == 'click' || status == 'release') {
+                this.ruler.clear();
+                this.ruler = undefined;
+                this.rulerActive = false;
+            }
+        }
     }
 
     targetFunction(command,data,status) {
-        if (command == 'penRight' && status == 'click') {
+        if (command == 'penD' && status == 'click') {
             const token = findToken(data);
             if (token == undefined) return;
             token.setTarget(!token.isTargeted,{releaseOthers:false});
@@ -336,7 +395,7 @@ export class Pen extends CanvasLayer {
 
     async drawFunction(command,data,status) {
         
-        if (command == 'penRight') {
+        if (command == 'penD') {
             if (status == 'click') {
                 if (this.menu.selectedDrawingTool == 1) {
                     this.drawing = this.getNearestDrawing(data);
@@ -350,7 +409,7 @@ export class Pen extends CanvasLayer {
                         this.lastDrawing = undefined;
                     }
                 }
-                else if (this.drawing != undefined && (compatibleCore('10.0') ? this.drawing.type : this.drawing.data.type) == CONST.DRAWING_TYPES.POLYGON && (compatibleCore('10.0') ? this.drawing.document.bezierFactor == 0 : true) && this.newDrawing) {
+                else if (this.drawing != undefined && this.drawing.type == CONST.DRAWING_TYPES.POLYGON && this.drawing.document.bezierFactor == 0 && this.newDrawing) {
                     this.drawing._addPoint({x:data.x,y:data.y},false)
                 }
                 else {
@@ -361,16 +420,13 @@ export class Pen extends CanvasLayer {
                     else if (tool == 'ellipse') type = CONST.DRAWING_TYPES.ELLIPSE;
                     else if (tool == 'polygon') type = CONST.DRAWING_TYPES.POLYGON;
                     else if (tool == 'freehand') {
-                        type = compatibleCore('10.0') ? CONST.DRAWING_TYPES.POLYGON : CONST.DRAWING_TYPES.FREEHAND;
+                        type = CONST.DRAWING_TYPES.POLYGON;
                         ui.controls.controls.find(c => c.name == 'drawings').activeTool = 'freehand';
                         ui.controls.render(); 
                     }
 
-                    if (compatibleCore('10.0')) {
-                        drawingData.shape.type = type;
-                        if (tool == 'freehand') drawingData.bezierFactor = 0.5;
-                    }
-                    else drawingData.type = type;
+                    drawingData.shape.type = type;
+                    if (tool == 'freehand') drawingData.bezierFactor = 0.5;
                     drawingData.fillColor = this.menu.colors[this.menu.selectedFillColor].hex;
                     drawingData.fillType = this.menu.colors[this.menu.selectedFillColor].name == 'none' ? 0 : 1;
                     drawingData.strokeColor = this.menu.colors[this.menu.selectedLineColor].hex;
@@ -392,7 +448,7 @@ export class Pen extends CanvasLayer {
             else if (status == 'hold') {
                 if (this.drawing == undefined || this.menu.selectedDrawing == 6) return;
 
-                if (((compatibleCore('10.0') ? this.drawing.type : this.drawing.data.type) == CONST.DRAWING_TYPES.POLYGON || (compatibleCore('10.0') ? this.drawing.type : this.drawing.data.type) == CONST.DRAWING_TYPES.FREEHAND) && this.newDrawing) {
+                if ((this.drawing.type == CONST.DRAWING_TYPES.POLYGON || this.drawing.type == CONST.DRAWING_TYPES.FREEHAND) && this.newDrawing) {
                     const event = {
                         data: {
                             destination: {
@@ -410,15 +466,9 @@ export class Pen extends CanvasLayer {
                 else {
                     const dx = data.x - this.drawing.x;
                     const dy = data.y - this.drawing.y;
-                    
-                    if (compatibleCore('10.0')) {
-                        this.drawing.document.shape.width = dx;
-                        this.drawing.document.shape.height = dy;
-                    }
-                    else {
-                        this.drawing.data.width = dx;
-                        this.drawing.data.height = dy;
-                    }
+
+                    this.drawing.document.shape.width = dx;
+                    this.drawing.document.shape.height = dy;
                     this.drawing.refresh();
                 }
                 
@@ -426,17 +476,13 @@ export class Pen extends CanvasLayer {
             else if (status == 'release') {
                 if (this.drawing == undefined || this.menu.selectedDrawing == 6) return;
                 
-                if ((compatibleCore('10.0') ? this.drawing.type : this.drawing.data.type) != CONST.DRAWING_TYPES.POLYGON || (compatibleCore('10.0') ? this.drawing.document.bezierFactor > 0 : false)) {
+                if (this.drawing.type != CONST.DRAWING_TYPES.POLYGON || this.drawing.document.bezierFactor > 0) {
                     if (this.newDrawing) {
                         this.newDrawing = false;
                         canvas.drawings.preview.removeChild(this.drawing);
                         const cls = getDocumentClass('Drawing');
-                        if (compatibleCore('10.0')) {
-                            this.lastDrawing = await cls.create(this.drawing.document.toObject(false), {parent: canvas.scene});
-                            this.drawing.destroy();
-                        }
-                        else this.lastDrawing = await cls.create(this.drawing.data.toObject(false), {parent: canvas.scene});
-                        
+                        this.lastDrawing = await cls.create(this.drawing.document.toObject(false), {parent: canvas.scene});
+                        this.drawing.destroy();
                         this.drawing == undefined;
                     }
                     else {   
@@ -448,14 +494,13 @@ export class Pen extends CanvasLayer {
                 }
             }   
         }
-        else if (command == 'penLeft') {
+        else if (command == 'penA') {
             if (status == 'click') {
-                if (this.newDrawing && (compatibleCore('10.0') ? this.drawing.type : this.drawing.data.type) == CONST.DRAWING_TYPES.POLYGON) {
+                if (this.newDrawing && this.drawing.type == CONST.DRAWING_TYPES.POLYGON) {
                     this.newDrawing = false;
                     canvas.drawings.preview.removeChild(this.drawing);
                     const cls = getDocumentClass('Drawing');
-                    if (compatibleCore('10.0')) this.lastDrawing = await cls.create(this.drawing.document.toObject(false), {parent: canvas.scene});
-                    else this.lastDrawing = await cls.create(this.drawing.data.toObject(false), {parent: canvas.scene});
+                    this.lastDrawing = await cls.create(this.drawing.document.toObject(false), {parent: canvas.scene});
                     this.drawing == undefined;
                 }
                 else {
@@ -465,14 +510,8 @@ export class Pen extends CanvasLayer {
             }
             else if (status == 'hold') {
                 if (this.drawing == undefined || this.menu.selectedDrawing == 6) return;
-                if (compatibleCore('10.0')) {
-                    this.drawing.document.x = data.x - this.drawing.shape.width/2;
-                    this.drawing.document.y = data.y - this.drawing.shape.height/2;
-                }
-                else {
-                    this.drawing.data.x = data.x - this.drawing.data.width/2;
-                    this.drawing.data.y = data.y - this.drawing.data.height/2;
-                }
+                this.drawing.document.x = data.x - this.drawing.shape.width/2;
+                this.drawing.document.y = data.y - this.drawing.shape.height/2;
                 this.drawing.refresh();
             }
             else if (status == 'release') {
@@ -480,10 +519,11 @@ export class Pen extends CanvasLayer {
                 this.drawing.document.update({x:this.drawing.x, y:this.drawing.y});
             }
         }
-        else if (command == 'penRear') {
+        else if (command == 'penB') {
             if (status == 'click') {
                 this.drawing = this.getNearestDrawing(data);
                 this.lastDrawing = this.drawing;
+                this.drawingRotation = JSON.parse(JSON.stringify(this.drawing.shape.rotation));
                 this.bar = {
                     x0:data.x,
                     x1:data.x2,
@@ -496,28 +536,24 @@ export class Pen extends CanvasLayer {
             else if (status == 'hold') {
                 if (this.drawing == undefined || this.menu.selectedDrawing == 6) return;
                 const angleChange = data.angle - this.bar.angle;
-                this.bar = {
-                    x0:data.x,
-                    x1:data.x2,
-                    y0:data.y,
-                    y2:data.y2,
-                    length:data.length,
-                    angle:data.angle
+                this.drawing.document.x = data.x - this.drawing.shape.width/2;
+                this.drawing.document.y = data.y - this.drawing.shape.height/2;
+
+                if (!isNaN(angleChange)) {
+                    this.drawing.document.rotation = this.drawingRotation + angleChange;
                 }
-                this.drawing.data.x = data.x - this.drawing.data.width/2;
-                this.drawing.data.y = data.y - this.drawing.data.height/2;
-                if (!isNaN(angleChange)) this.drawing.data.rotation += angleChange;
                 this.drawing.refresh();
+                
             }
             else if (status == 'release') {
                 if (this.drawing == undefined || this.menu.selectedDrawing == 6) return;
-                this.drawing.update({x:this.drawing.data.x,y:this.drawing.data.y,rotation:this.drawing.data.rotation})
+                this.drawing.document.update({x:this.drawing.document.x, y:this.drawing.document.y, rotation:this.drawing.document.rotation})
             }  
         }
     }
 
     templateFunction(command,data,status) {
-        if (command == 'penRight') {
+        if (command == 'penD') {
             if (status == 'click') {
                 if (this.menu.selectedTemplate == 1) {
                     this.template = this.getNearestTemplate(data);
@@ -542,7 +578,7 @@ export class Pen extends CanvasLayer {
                         y: snappedPosition.y,
                         distance: 1,
                         direction: 0,
-                        fillColor: (compatibleCore('10.0') ? game.user.color : game.user.data.color) || "#FF0000"
+                        fillColor: game.user.color || "#FF0000"
                     };
     
                     // Apply some type-specific defaults
@@ -566,16 +602,10 @@ export class Pen extends CanvasLayer {
                 const dy = data.y - this.template.y;
                 const length = Math.round(Math.sqrt(dx*dx + dy*dy)*canvas.dimensions.distance/canvas.dimensions.size);
                 const angle = 90-Math.atan2(dx,dy)*180/Math.PI;
-                if (compatibleCore('10.0')) {
-                    this.template.document.distance = length;
-                    this.template.document.direction = angle;
-                }
-                else {
-                    this.template.data.distance = length;
-                    this.template.data.direction = angle;
-                }
+                this.template.document.distance = length;
+                this.template.document.direction = angle;
                 this.template.refresh();
-                this.template.highlightGrid();
+                //this.template.highlightGrid();
             }
             else if (status == 'release') {
                 if (this.template == undefined || this.menu.selectedTemplate == 6) return;
@@ -585,8 +615,7 @@ export class Pen extends CanvasLayer {
                     this.template.controlIcon.visible = false;
                     canvas.templates.preview.removeChild(this.template);
                     const cls = getDocumentClass('MeasuredTemplate');
-                    if (compatibleCore('10.0')) return cls.create(this.template.document.toObject(false), {parent: canvas.scene});
-                    else return cls.create(this.template.data.toObject(false), {parent: canvas.scene});
+                    return cls.create(this.template.document.toObject(false), {parent: canvas.scene});
                 }
                 else {
                     this.template.document.update({distance:this.template.document.distance,direction:this.template.document.direction});
@@ -594,21 +623,17 @@ export class Pen extends CanvasLayer {
                     
             }   
         }
-        else if (command == 'penLeft') {
+        else if (command == 'penA') {
             if (status == 'click')
                 this.template = this.getNearestTemplate(data);
             else if (status == 'hold') {
                 if (this.template == undefined || this.menu.selectedTemplate == 6) return;
-                if (compatibleCore('10.0')) {
-                    this.template.document.x = data.x;
-                    this.template.document.y = data.y;
-                }
-                else {
-                    this.template.data.x = data.x;
-                    this.template.data.y = data.y;
-                }
-                this.template.refresh();
-                this.template.highlightGrid();
+                this.template.document.x = data.x;
+                this.template.document.y = data.y;
+
+                //this.template.refresh();
+                this.template.renderFlags.set({refreshPosition:true, refreshGrid:true})
+                //this.template.highlightGrid();
             }
             else if (status == 'release') {
                 if (this.template == undefined || this.menu.selectedTemplate == 6) return;
@@ -616,7 +641,7 @@ export class Pen extends CanvasLayer {
                 this.template.document.update({x:snappedPosition.x,y:snappedPosition.y});
             }
         }
-        else if (command == 'penRear') {
+        else if (command == 'penB') {
             if (status == 'click') {
                 this.template = this.getNearestTemplate(data);
                 this.bar = {
@@ -640,16 +665,9 @@ export class Pen extends CanvasLayer {
                     angle:data.angle
                 }
                 
-                if (compatibleCore('10.0')) {
-                    if (!isNaN(angleChange)) this.template.document.direction += angleChange;
-                    this.template.document.x = data.x;
-                    this.template.document.y = data.y;
-                }
-                else {
-                    if (!isNaN(angleChange)) this.template.data.direction += angleChange;
-                    this.template.data.x = data.x;
-                    this.template.data.y = data.y;
-                }
+                if (!isNaN(angleChange)) this.template.document.direction += angleChange;
+                this.template.document.x = data.x;
+                this.template.document.y = data.y;
                 
                 this.template.refresh();
                 this.template.highlightGrid();
@@ -696,14 +714,15 @@ export class Pen extends CanvasLayer {
                 const destination = {x:data.x, y:data.y};
                 if (this.rulerActive && this.ruler != undefined) {
                     const event = {
-                        data: {
+                        interactionData: {
                             origin: this.rulerOrigin,
                             destination,
+                            _measureTime: Date.now()-100,
                             originalEvent: {
                                 shiftKey: false
                             },
                         },
-                        _measureTime: Date.now()-100
+                        
                     }
                     this.ruler._onMouseMove(event);
                 }
@@ -736,8 +755,7 @@ export class Pen extends CanvasLayer {
         let nearestDistance = 10000;
         for (let drawing of drawings) {
             let dist;
-            if (compatibleCore('10.0')) dist = Math.abs(drawing.x+drawing.document.shape.width/2-data.x) + Math.abs(drawing.y+drawing.document.shape.height/2-data.y);
-            else dist = Math.abs(drawing.x+drawing.data.width/2-data.x) + Math.abs(drawing.y+drawing.data.height/2-data.y);
+            dist = Math.abs(drawing.x+drawing.document.shape.width/2-data.x) + Math.abs(drawing.y+drawing.document.shape.height/2-data.y);
             if (dist < canvas.dimensions.size*5 && dist < nearestDistance) {
                 nearestDrawing = drawing;
                 nearestDistance = dist;
@@ -754,11 +772,7 @@ export class Pen extends CanvasLayer {
 
             if (Math.abs(data.x - position.x - hitArea.width/2) <= hitArea.width/2 && Math.abs(data.y - position.y - hitArea.height/2) <= hitArea.height/2) {
                 const event = {
-                    data: {
-                        originalEvent: {
-                            button: 0
-                        }
-                    },
+                    button: 0,
                     stopPropagation: event => {return;}
                 }
                 door.doorControl._onMouseDown(event);

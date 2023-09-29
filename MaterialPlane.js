@@ -27,9 +27,31 @@ export let hwVariant = 'Beta';
 export let hwFirmware;
 export let hwWebserver;
 export let msVersion;
-export let masterVersions = {};
+export let latestReleases = {};
 
 export let irRemote = new IRremote();
+
+export const urls = [
+    {
+        target: 'Module',
+        url: "https://api.github.com/repos/CDeenen/MaterialPlane_Foundry/releases"
+    },{
+        target: 'SensorFirmware',
+        url: "https://api.github.com/repos/MaterialFoundry/MaterialPlane_Sensor/releases"
+    },{
+        target: 'SensorWebserver',
+        url: "https://api.github.com/repos/MaterialFoundry/MaterialPlane_Sensor/releases"
+    },{
+        target: 'MaterialCompanion',
+        url: "https://api.github.com/repos/MaterialFoundry/MaterialCompanion/releases"
+    },{
+        target: 'Base',
+        url: "https://api.github.com/repos/MaterialFoundry/MaterialPlane_Base/releases"
+    },{
+        target: 'Pen',
+        url: "https://api.github.com/repos/MaterialFoundry/MaterialPlane_Pen/releases"
+    }
+]
 
 Handlebars.registerHelper('ifCond', function(v1, v2, options) {
     if(v1 === v2) {
@@ -52,6 +74,7 @@ Handlebars.registerHelper('ifNCond', function(v1, v2, options) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 export function setHwVariant(v) {
+    return;
     if (hwVariant != v) {
         onHwVariantChange(v);
     }
@@ -59,21 +82,21 @@ export function setHwVariant(v) {
 }
 
 export function setHwFirmware(v) {
-    hwFirmware = v;
-    if(document.getElementById('MaterialPlane_Config') != null) 
+    if(hwFirmware != v && document.getElementById('MaterialPlane_Config') != null) 
         document.getElementById('mpConfigLocalFwVersion').innerHTML = v;
+    hwFirmware = v;
 }
 
 export function setHwWebserver(v) {
-    hwWebserver = v;
-    if(document.getElementById('MaterialPlane_Config') != null) 
+    if(hwWebserver != v && document.getElementById('MaterialPlane_Config') != null) 
         document.getElementById('mpConfigLocalSWsVersion').innerHTML = v;
+    hwWebserver = v;
 }
 
 export function setMsVersion(v) {
-    msVersion = v;
-    if(document.getElementById('MaterialPlane_Config') != null)
+    if(msVersion != v && document.getElementById('MaterialPlane_Config') != null)
         document.getElementById('mpConfigLocalMsVersion').innerHTML = v;
+    msVersion = v;
 }
 
 /**
@@ -120,56 +143,27 @@ function checkKeys() {
  * Attempt to open the websocket
  */
 Hooks.on('ready', ()=>{
-    //configDialog.setConfigOpen(true);
-    //configDialog.render(true);
-
-    //Update dialog
-    /*
-    if (game.user.isGM && game.settings.get(moduleName, 'showUpdateDialog_215')) {
-        const updateDialogContent = `Material Plane has been updated to v2.1.5.<br><br>
-        Please note that all configuration settings have been moved from the module settings to a new configuration screen.<br><br>
-        This screen can be accessed by pressing the 'Material Plane Configuration' button in the 'Game Settings' sidebar tab.<br><br>`;
-        new Dialog({
-            title: "Material Plane Update Notification",
-            content: updateDialogContent,
+    if (game.version.split('.')[0] >= 11 && game.settings.get(moduleName,'device') == 'touch') {
+        console.warn("")
+        let d = new Dialog({
+            title: "Material Plane: Incompatibility",
+            content: "<p>The touch functionality of Material Plane is incompatible with Foundry V11.<br>You should downgrade to Foundry V10 if you want to use the touch functionality. If you ignore this message, expect weird behavior.</p>",
             buttons: {
-                ok: {
-                    label: "Ok"
-                },
-                dontShow: {
-                    label: "Don't show again",
-                    callback: () => {game.settings.set(moduleName, 'showUpdateDialog_215', false)}
-                }
-            }
-        }).render(true);
-    }*/
-
-    //Settings migration
-    if (game.user.isGM && game.settings.get(moduleName, 'migrate_215')) {
-        console.log('Migrating MP settings to v2.1.5');
-
-        let device = game.settings.get(moduleName,'device');
-        if (device == 0) device = 'sensor';
-        else if (device == 1) device = 'touch';
-        game.settings.set(moduleName,'device',device);
-
-        let movementMethod = game.settings.get(moduleName,'movementMethod');
-        if (movementMethod == 0) movementMethod = 'default';
-        else if (movementMethod == 1) movementMethod = 'live';
-        else if (movementMethod == 2) movementMethod = 'stepByStep';
-        game.settings.set(moduleName, 'movementMethod', movementMethod);
-
-        let tapMode = game.settings.get(moduleName,'tapMode');
-        if (tapMode == 0) tapMode = 'disable';
-        else if (tapMode == 1) tapMode = 'tapTimeout';
-        else if (tapMode == 2) tapMode = 'raiseMini';
-        game.settings.set(moduleName,'tapMode',tapMode);
-
-        game.settings.set(moduleName, 'migrate_215', false);
-        console.log('MP settings migration done');
+             one: {
+              icon: '<i class="fas fa-check"></i>',
+              label: "Ok"
+             }
+            },
+            default: "one",
+           });
+           d.render(true);
     }
 
-    enableModule = game.user.name == game.settings.get(moduleName,'TargetName');
+    if (game.settings.get(moduleName, 'ActiveUser') == "" && game.user.isGM) {
+        game.settings.set(moduleName, 'ActiveUser',game.users.activeGM.id)
+    }
+
+    enableModule = game.user.id == game.settings.get(moduleName,'ActiveUser');
     hideElements = game.settings.get(moduleName,'HideElements') && game.user.isGM == false;
     if (game.settings.get(moduleName,'device') == 'sensor' && game.settings.get(moduleName,'Enable') && window.location.protocol == "https:" && game.settings.get(moduleName,'EnMaterialServer') == false){
         ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.SSL"));
@@ -180,10 +174,10 @@ Hooks.on('ready', ()=>{
         if (game.settings.get(moduleName,'device') == 'sensor')
             startWebsocket();
         else {
-            document.addEventListener('touchstart',function(e) {analyzeTouch('start',e);});
-            document.addEventListener('touchmove',function(e) {analyzeTouch('move',e);});
-            document.addEventListener('touchend',function(e) {analyzeTouch('end',e);});
-            document.addEventListener('touchcancel',function(e) {analyzeTouch('end',e);});
+            document.addEventListener('touchstart',function(e) {e.preventDefault(); analyzeTouch('start',e);});
+            document.addEventListener('touchmove',function(e) {e.preventDefault(); analyzeTouch('move',e);});
+            document.addEventListener('touchend',function(e) {e.preventDefault(); analyzeTouch('end',e);});
+            document.addEventListener('touchcancel',function(e) {e.preventDefault(); analyzeTouch('end',e);});
         }
 
         if (hideElements){
@@ -199,12 +193,12 @@ Hooks.on('ready', ()=>{
 
     if (!enableModule && !game.user.isGM) return;
 
-    checkForUpdate('module');
-    checkForUpdate('hwFw');
-    checkForUpdate('SWs');
-    checkForUpdate('MS');
-    checkForUpdate('base');
-    checkForUpdate('pen');
+    checkForUpdate('Module');
+    checkForUpdate('SensorFirmware');
+    checkForUpdate('SensorWebserver');
+    checkForUpdate('MaterialCompanion');
+    checkForUpdate('Base');
+    checkForUpdate('Pen');
 
     game.socket.on(`module.MaterialPlane`, (payload) =>{
         //console.log(payload);
@@ -256,15 +250,16 @@ Hooks.on('ready', ()=>{
 });
 
 Hooks.on("renderSidebarTab", (app, html) => {
-    enableModule = game.user.name == game.settings.get(moduleName,'TargetName');
+    enableModule = game.user.id == game.settings.get(moduleName,'ActiveUser');
     if (!enableModule && !game.user.isGM) return;
 
     if (app.options.id == 'settings') {
+        const popOut = app.popOut ? "_PopOut" : "";
         const label = $(
             `<div id="MP-section">
             <h2>Material Plane</h2>
 
-            <button id="MaterialPlane_ConfigBtn" title="Material Plane Configuration">
+            <button id="MaterialPlane_ConfigBtn${popOut}" title="Material Plane Configuration">
                 <i></i> ${game.i18n.localize("MaterialPlane.Config.Title")}
             </button>
             </div>
@@ -273,8 +268,7 @@ Hooks.on("renderSidebarTab", (app, html) => {
         const setupButton = html.find("div[id='settings-game']");
         setupButton.after(label);
         
-        document.getElementById("MaterialPlane_ConfigBtn").addEventListener("click",event => {
-            // let dialog = new mpConfig();
+        document.getElementById(`MaterialPlane_ConfigBtn${popOut}`).addEventListener("click",event => {
             configDialog.setConfigOpen(true);
             configDialog.render(true);
         });
@@ -291,8 +285,8 @@ Hooks.on('closecalibrationProgressScreen',() => {
     removeOverlay();
     calibrationProgress.setCalibrationRunning(false)
     console.log('stopping calibration')
-    let msg = "CAL CANCEL ";
-    sendWS(msg);
+    
+    sendWS(JSON.stringify({event:"calibration", state:"cancel"}));
 });
 
 /**
@@ -306,7 +300,6 @@ Hooks.once('init', function(){
     //calibrationDialog = new calibrationForm();
     calibrationProgress = new calibrationProgressScreen();    
 });
-
 
 /**
  * Hide elements on various hooks
@@ -348,7 +341,7 @@ Hooks.on('canvasReady', (canvas) => {
 
 Hooks.on('controlToken', (token,controlled) => {
     if (!controlled) return;
-    enableModule = game.user.name == game.settings.get(moduleName,'TargetName');
+    enableModule = game.user.id == game.settings.get(moduleName,'ActiveUser');
     if (!enableModule && !game.user.isGM) return;
 
     lastToken = token;
@@ -372,15 +365,44 @@ Hooks.on('MPdebug', (data) => {
     configureDebug(data);
 })
 
-export function checkForUpdate(reqType) {
-    let url, id;
-    if (reqType == 'module') {id = 'Module'; url = 'https://raw.githubusercontent.com/CDeenen/MaterialPlane_Foundry/master/module.json';}
-    else if (reqType == 'hwFw') {id = 'Fw'; url = 'https://raw.githubusercontent.com/CDeenen/MaterialPlane_Hardware/master/Sensor/configuration.h';}
-    else if (reqType == 'SWs') {id = 'SWs'; url = 'https://raw.githubusercontent.com/CDeenen/MaterialPlane_Hardware/master/Sensor/data/main.js';}
-    else if (reqType == 'base') {id = 'Base'; url = 'https://raw.githubusercontent.com/CDeenen/MaterialPlane_Hardware/master/Base/definitions.h';}
-    else if (reqType == 'pen') {id = 'Pen'; url = 'https://raw.githubusercontent.com/CDeenen/MaterialPlane_Hardware/master/Pen/definitions.h';}
-    else if (reqType == 'MS') {id = 'Ms'; url = 'https://raw.githubusercontent.com/CDeenen/MaterialServer/master/package.json';}
+Hooks.on('renderPlayerList', (a,b, playerlist) => {
+    const pl = playerlist.users.find(p => p._id == game.settings.get(moduleName,'ActiveUser'));
+    if (pl == undefined) return;
+    const html = `<span style="font-size:0.6rem; border:2px solid; border-radius:25%; padding: 0px 3px 0px 3px">MP</span>`;
+    document.querySelectorAll(`[data-tooltip="${pl.displayName}"]`)[0].innerHTML+=html;
+});
 
+export async function checkForUpdate(reqType) {
+    const url = urls.find(u => u.target == reqType).url;
+
+    $.getJSON(url).done(function(releases) {
+        releases = releases.filter(r => r.prerelease == false);
+        if (reqType == 'SensorFirmware') releases = releases.filter(r => r.tag_name.includes('irmware'));
+        else if (reqType == 'SensorWebserver') releases = releases.filter(r => r.tag_name.includes('ebserver'));
+        const arr = releases[0].tag_name.split('v');
+        const version = arr[arr.length-1]
+
+        if (reqType == 'Module') {
+            latestReleases.module = version;
+        }
+        if (reqType == 'SensorFirmware') {
+            latestReleases.sensorFirmware = version;
+        }
+        if (reqType == 'SensorWebserver') {
+            latestReleases.sensorWebserver = version;
+        }
+        if (reqType == 'Base') {
+            latestReleases.baseFirmware = version;
+        }
+        if (reqType == 'Pen') {
+            latestReleases.penFirmware = version;
+        }
+        else if (reqType == 'MaterialCompanion') {
+            latestReleases.materialCompanion = version;
+        }
+    });
+
+    return;
 
     var request = new XMLHttpRequest();
     request.open('GET', url, true);
@@ -392,11 +414,11 @@ export function checkForUpdate(reqType) {
                 let version;
                 if (reqType == 'module') {
                     version = JSON.parse(request.responseText).version;
-                    masterVersions.module = version;
+                    latestReleases.module = version;
                 }
                 else if (reqType == 'MS') {
                     version = JSON.parse(request.responseText).version;
-                    masterVersions.ms = version;
+                    latestReleases.ms = version;
                 }
                 else if (reqType == 'SWs') {
                     const start = request.responseText.search('"', request.responseText.search('const webserverVersion = "v')) + 2;
@@ -405,7 +427,7 @@ export function checkForUpdate(reqType) {
                         if (request.responseText[i] == '"') break;
                         else v += request.responseText[i];
                     }
-                    masterVersions.sensorWs = v;
+                    latestReleases.sensorWs = v;
                     version = v;
                 }
                 else {
@@ -416,9 +438,9 @@ export function checkForUpdate(reqType) {
                     else v += request.responseText[i];
                   }
                   
-                  if (reqType == 'hwFw') masterVersions.sensorFW = v;
-                  else if (reqType == 'base') masterVersions.baseFW = v;
-                  else if (reqType == 'pen') masterVersions.penFW = v;
+                  if (reqType == 'hwFw') latestReleases.sensorFW = v;
+                  else if (reqType == 'base') latestReleases.baseFW = v;
+                  else if (reqType == 'pen') latestReleases.penFW = v;
                   version = v;
                 }
                 
