@@ -55,10 +55,9 @@ export class calibrationProgressScreen extends FormApplication {
         const calNextBtn = html.find("button[name='calNext']");
 
         calNextBtn.on("click", event => {
+            console.log('test')
             const msg = JSON.stringify({event:"calibration", state:"next"});
-            let user = game.users.contents.filter(u => u.active == true && u.isGM == true)[0];
-            if (game.userId == user.id) sendWS(msg);
-            else if (user == undefined && game.settings.get(moduleName,'TargetName') == game.user.name) sendWS(msg);
+            sendWS(msg);
         });
        
     }
@@ -74,7 +73,7 @@ export class calibrationProgressScreen extends FormApplication {
         countdownCount = 5;
         this.render(true);
         
-        if (this.calibrationMode != 'multi' && overlay == undefined && game.settings.get(moduleName,'TargetName') == game.user.name) {
+        if (this.calibrationMode != 'multi' && overlay == undefined && game.settings.get(moduleName,'ActiveUser') == game.userId) {
             overlay = new calibrationOverlay();
             canvas.stage.addChild(overlay);
             overlay.init();
@@ -104,11 +103,11 @@ export class calibrationProgressScreen extends FormApplication {
         if (this.calibrationMode != 'MultiPoint') return;
         let points = 0;
         for (let i=0; i<4; i++) {
-            if (data[i]?.x != undefined && data[i]?.y != undefined) {
+            if (data.points[i]?.x != undefined && data.points[i]?.y != undefined) {
                 points++;
-                if (data[i].x != 0 && data[i].y != 0) {
-                    document.getElementById("mpCalPoint_x"+i).innerHTML=data[i].x;
-                    document.getElementById("mpCalPoint_y"+i).innerHTML=data[i].y;
+                if (data.points[i].x != 0 && data.points[i].y != 0) {
+                    document.getElementById("mpCalPoint_x"+i).innerHTML=Math.round(data.points[i].x);
+                    document.getElementById("mpCalPoint_y"+i).innerHTML=Math.round(data.points[i].y);
                 }
                 document.getElementById("iterationPoint"+i).style.color='black';
                 document.getElementById("mpCalPoint_x"+i).style.color='black';
@@ -131,19 +130,24 @@ export class calibrationProgressScreen extends FormApplication {
     }
 
     setPoint(data) {
-        if (this.calibrationMode == 'multi') return;
-        if (data.point < 0 || data.point > 3) return;
-        this.pointCount = data.point+1;
-
-        document.getElementById("mpCalPoint_x"+data.point).value = data.x;
-        document.getElementById("mpCalPoint_y"+data.point).value = data.y;
-        document.getElementById("iterationPoint"+data.point).style.color='black';
-        document.getElementById("mpCalPoint_x"+data.point).style.color='black';
-        document.getElementById("mpCalPoint_y"+data.point).style.color='black';
+        if (data.mode == 'MultiPoint') {
+            this.setMultiPoint(data);
+        }
+        else {
+            if (data.point < 0 || data.point > 3) return;
+            this.pointCount = data.point+1;
+    
+            document.getElementById("mpCalPoint_x"+data.point).value = data.x;
+            document.getElementById("mpCalPoint_y"+data.point).value = data.y;
+            document.getElementById("iterationPoint"+data.point).style.color='black';
+            document.getElementById("mpCalPoint_x"+data.point).style.color='black';
+            document.getElementById("mpCalPoint_y"+data.point).style.color='black';
+        }
+        
     }
 
     updatePoint(data) {
-        if (this.calibrationMode == 'multi') return;
+        if (this.calibrationMode == 'MultiPoint') return;
         document.getElementById("noMovement").style="display:none";
         document.getElementById("waiting").style="";
         countdownCount = 5;
@@ -174,7 +178,7 @@ export class calibrationProgressScreen extends FormApplication {
             const msg = JSON.stringify({event:"calibration", state:"next"});
             let user = game.users.contents.filter(u => u.active == true && u.isGM == true)[0];
             if (game.userId == user.id) sendWS(msg);
-            else if (user == undefined && game.settings.get(moduleName,'TargetName') == game.user.name) sendWS(msg);
+            else if (user == undefined && game.settings.get(moduleName,'ActiveUser') == game.userId) sendWS(msg);
         }
     }
 
@@ -202,7 +206,7 @@ export class calibrationProgressScreen extends FormApplication {
 }
 
 export function removeOverlay(){
-    if (game.settings.get(moduleName,'TargetName') != game.user.name) return;
+    if (game.settings.get(moduleName,'ActiveUser') != game.userId) return;
     if (overlay == undefined) return;
     canvas.stage.removeChild(overlay);
     overlay.remove();
@@ -223,7 +227,7 @@ export class calibrationOverlay extends ControlsLayer {
         this.addChild(this.container);
 
         var drawing = new PIXI.Graphics();
-        drawing.beginFill("0x0");
+        drawing.beginFill("0x000000");
         drawing.drawRect(0,0,canvas.scene.dimensions.width,canvas.scene.dimensions.height);
         drawing.endFill();
         drawing.alpha = 0.5;

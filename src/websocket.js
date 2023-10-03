@@ -25,7 +25,7 @@ async function analyzeWSmessage(msg,passthrough = false){
         //console.log('data',data);
     }
     catch (error) {
-        console.warn('could not parse JSON',error);
+        console.warn('could not parse JSON',error, msg);
         //console.log(msg);
         return;
     }
@@ -111,9 +111,14 @@ export async function startWebsocket() {
         wsOpen = true;
         if (game.settings.get(moduleName,'EnMaterialServer')) {
             const msg = {
-                target: "server",
-                module: "MP",
-                ip: game.settings.get(moduleName,'IP')
+                target: "MaterialCompanion",
+                source: "MaterialPlane_Foundry",
+                sourceTarget: "MaterialPlane_Device",
+                type: "connected",
+                userId: game.userId,
+                userName: game.user.name,
+                version: game.modules.get(moduleName).version,
+                sensorIp: game.settings.get(moduleName,'IP')
             }
             ws.send(JSON.stringify(msg));
         }
@@ -151,6 +156,7 @@ function resetWS(){
 
 
 export function sendWS(txt){
+    console.log('SendWS',wsOpen,txt)
     if (wsOpen) {
         if (game.settings.get(moduleName,'EnMaterialServer')) {
             const msg = {

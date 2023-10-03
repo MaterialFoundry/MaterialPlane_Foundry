@@ -1,4 +1,11 @@
 # Changelog Material Plane Foundry Module
+### v3.0.1 - 04-10-2023
+Fixes:
+<ul>
+<li>Calibration overlay is now properly displayed</li>
+<li>Calibration 'Next' and 'Close' buttons are now properly communicated to the sensor</li>
+</ul>
+
 ### v3.0.0 - 30-09-2023
 This release is only meant for the production hardware (requiring firmware v3.0.0+). DIY hardware is currently not supported.<br>
 The communication between the sensor and module has been overhauled, which is why it only works with the latest firmware. Besides that, a lot of minor changes and fixes have been made.<br>
