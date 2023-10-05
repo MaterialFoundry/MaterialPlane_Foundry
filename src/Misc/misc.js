@@ -61,7 +61,7 @@ export function updatePowerState(data) {
       batteryIcon.style.fontSize = "0.75em";
       let batteryLabel = document.createElement("bat");
       batteryLabel.id = "batteryLabel";
-      batteryLabel.style.fontSize = "1em";
+      batteryLabel.style.fontSize = "0.8em";
 
       playersElement.after(batteryLabel);
       playersElement.after(batteryIcon);

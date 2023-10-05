@@ -55,9 +55,7 @@ export class calibrationProgressScreen extends FormApplication {
         const calNextBtn = html.find("button[name='calNext']");
 
         calNextBtn.on("click", event => {
-            console.log('test')
-            const msg = JSON.stringify({event:"calibration", state:"next"});
-            sendWS(msg);
+            sendWS({event:"calibration", state:"next"});
         });
        
     }
@@ -175,10 +173,9 @@ export class calibrationProgressScreen extends FormApplication {
             document.getElementById("noMovement").style="";
             document.getElementById("waiting").style="display:none";
             document.getElementById('MaterialPlane_CalProgMenu').style.height='auto';
-            const msg = JSON.stringify({event:"calibration", state:"next"});
             let user = game.users.contents.filter(u => u.active == true && u.isGM == true)[0];
-            if (game.userId == user.id) sendWS(msg);
-            else if (user == undefined && game.settings.get(moduleName,'ActiveUser') == game.userId) sendWS(msg);
+            if (game.userId == user.id) sendWS({event:"calibration", state:"next"});
+            else if (user == undefined && game.settings.get(moduleName,'ActiveUser') == game.userId) sendWS({event:"calibration", state:"next"});
         }
     }
 

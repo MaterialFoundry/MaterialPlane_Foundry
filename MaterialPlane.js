@@ -286,7 +286,7 @@ Hooks.on('closecalibrationProgressScreen',() => {
     calibrationProgress.setCalibrationRunning(false)
     console.log('stopping calibration')
     
-    sendWS(JSON.stringify({event:"calibration", state:"cancel"}));
+    sendWS({event:"calibration", state:"cancel"});
 });
 
 /**

@@ -453,40 +453,40 @@ export class mpConfig extends FormApplication {
         })
 
         // --- Sensor Settings ---
-        html.find("button[id=mpAutoExposure]").on('click', event =>                 { sendWS(JSON.stringify({event:'autoExposure'})); })
+        html.find("button[id=mpAutoExposure]").on('click', event =>                 { sendWS({event:'autoExposure'}); })
 
-        html.find("input[id='mpSensorUpdateRate']").on('change', event =>           { sendWS(JSON.stringify({ir:{updateRate:event.target.value}})); })
-        html.find("input[id='mpSensorUpdateRateNumber']").on('change', event =>     { sendWS(JSON.stringify({ir:{updateRate:event.target.value}})); })
+        html.find("input[id='mpSensorUpdateRate']").on('change', event =>           { sendWS({ir:{updateRate:event.target.value}}); })
+        html.find("input[id='mpSensorUpdateRateNumber']").on('change', event =>     { sendWS({ir:{updateRate:event.target.value}}); })
 
-        html.find("input[id='mpSensorBrightness']").on('change', event =>           { sendWS(JSON.stringify({ir:{brightness:event.target.value}})); })
-        html.find("input[id='mpSensorBrightnessNumber']").on('change', event =>     { sendWS(JSON.stringify({ir:{brightness:event.target.value}})); })
+        html.find("input[id='mpSensorBrightness']").on('change', event =>           { sendWS({ir:{brightness:event.target.value}}); })
+        html.find("input[id='mpSensorBrightnessNumber']").on('change', event =>     { sendWS({ir:{brightness:event.target.value}}); })
         
-        html.find("input[id='mpSensorMinBrightness']").on('change', event =>        { sendWS(JSON.stringify({ir:{minBrightness:event.target.value}})); })
-        html.find("input[id='mpSensorMinBrightnessNumber']").on('change', event =>  { sendWS(JSON.stringify({ir:{minBrightness:event.target.value}})); })
+        html.find("input[id='mpSensorMinBrightness']").on('change', event =>        { sendWS({ir:{minBrightness:event.target.value}}); })
+        html.find("input[id='mpSensorMinBrightnessNumber']").on('change', event =>  { sendWS({ir:{minBrightness:event.target.value}}); })
 
-        html.find("input[id='mpSensorAverage']").on('change', event =>              { sendWS(JSON.stringify({ir:{average:event.target.value}})); })
-        html.find("input[id='mpSensorAverageNumber']").on('change', event =>        { sendWS(JSON.stringify({ir:{average:event.target.value}})); })
+        html.find("input[id='mpSensorAverage']").on('change', event =>              { sendWS({ir:{average:event.target.value}}); })
+        html.find("input[id='mpSensorAverageNumber']").on('change', event =>        { sendWS({ir:{average:event.target.value}}); })
         
-        html.find("input[id='mpSensorMirrorX']").on('change', event =>              { sendWS(JSON.stringify({ir:{mirrorX:event.target.checked ? '1' : '0'}})); })
-        html.find("input[id='mpSensorMirrorY']").on('change', event =>              { sendWS(JSON.stringify({ir:{mirrorY:event.target.checked ? '1' : '0'}})); })
-        html.find("input[id='mpSensorRotate']").on('change', event =>               { sendWS(JSON.stringify({ir:{rotation:event.target.checked ? '1' : '0'}})); })
+        html.find("input[id='mpSensorMirrorX']").on('change', event =>              { sendWS({ir:{mirrorX:event.target.checked ? '1' : '0'}}); })
+        html.find("input[id='mpSensorMirrorY']").on('change', event =>              { sendWS({ir:{mirrorY:event.target.checked ? '1' : '0'}}); })
+        html.find("input[id='mpSensorRotate']").on('change', event =>               { sendWS({ir:{rotation:event.target.checked ? '1' : '0'}}); })
 
-        html.find("input[id='mpSensorOffsetX']").on('change', event =>              { sendWS(JSON.stringify({ir:{offsetX:event.target.value}})); })
-        html.find("input[id='mpSensorOffsetXNumber']").on('change', event =>        { sendWS(JSON.stringify({ir:{offsetX:event.target.value}})); })
+        html.find("input[id='mpSensorOffsetX']").on('change', event =>              { sendWS({ir:{offsetX:event.target.value}}); })
+        html.find("input[id='mpSensorOffsetXNumber']").on('change', event =>        { sendWS({ir:{offsetX:event.target.value}}); })
 
-        html.find("input[id='mpSensorOffsetY']").on('change', event =>              { sendWS(JSON.stringify({ir:{offsetY:event.target.value}})); })
-        html.find("input[id='mpSensorOffsetYNumber']").on('change', event =>        { sendWS(JSON.stringify({ir:{offsetY:event.target.value}})); })
+        html.find("input[id='mpSensorOffsetY']").on('change', event =>              { sendWS({ir:{offsetY:event.target.value}}); })
+        html.find("input[id='mpSensorOffsetYNumber']").on('change', event =>        { sendWS({ir:{offsetY:event.target.value}}); })
 
-        html.find("input[id='mpSensorScaleX']").on('change', event =>               { sendWS(JSON.stringify({ir:{scaleX:event.target.value}})); })
-        html.find("input[id='mpSensorScaleXNumber']").on('change', event =>         { sendWS(JSON.stringify({ir:{scaleX:event.target.value}})); })
+        html.find("input[id='mpSensorScaleX']").on('change', event =>               { sendWS({ir:{scaleX:event.target.value}}); })
+        html.find("input[id='mpSensorScaleXNumber']").on('change', event =>         { sendWS({ir:{scaleX:event.target.value}}); })
 
-        html.find("input[id='mpSensorScaleY']").on('change', event =>               { sendWS(JSON.stringify({ir:{scaleY:event.target.value}})); })
-        html.find("input[id='mpSensorScaleYNumber']").on('change', event =>         { sendWS(JSON.stringify({ir:{scaleY:event.target.value}})); })
+        html.find("input[id='mpSensorScaleY']").on('change', event =>               { sendWS({ir:{scaleY:event.target.value}}); })
+        html.find("input[id='mpSensorScaleYNumber']").on('change', event =>         { sendWS({ir:{scaleY:event.target.value}}); })
 
-        html.find("input[id='mpSensorCalEn']").on('change', event =>                { sendWS(JSON.stringify({ir:{calibration:event.target.checked ? '1' : '0'}})); })
-        html.find("input[id='mpSensorOffsetEn']").on('change', event =>             { sendWS(JSON.stringify({ir:{offsetCalibration:event.target.checked ? '1' : '0'}})); })
-        html.find("button[id='mpConfigPerformCal']").on('click', event =>           { sendWS(JSON.stringify({event:"calibration", state:"start", mode:document.getElementById('mpCalMethod').value})); })
-        html.find("button[id=mpRestartSensor]").on('click', event =>                { sendWS(JSON.stringify({event:"restart"})); })
+        html.find("input[id='mpSensorCalEn']").on('change', event =>                { sendWS({ir:{calibration:event.target.checked ? '1' : '0'}}); })
+        html.find("input[id='mpSensorOffsetEn']").on('change', event =>             { sendWS({ir:{offsetCalibration:event.target.checked ? '1' : '0'}}); })
+        html.find("button[id='mpConfigPerformCal']").on('click', event =>           { sendWS({event:"calibration", state:"start", mode:document.getElementById('mpCalMethod').value}); })
+        html.find("button[id=mpRestartSensor]").on('click', event =>                { sendWS({event:"restart"}); })
 
         // --- Downloads ---
         html.find("button[id='mpConfigRefresh']").on('click', event =>           {

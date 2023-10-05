@@ -1,4 +1,11 @@
 # Changelog Material Plane Foundry Module
+### v3.0.2 - 
+Fixes:
+<ul>
+<li>Decreased the size of the battery indicator to it doesn't overflow</li>
+<li>Data is now correctly formatted before being sent to Material Companion</li>
+</ul>
+
 ### v3.0.1 - 04-10-2023
 Fixes:
 <ul>

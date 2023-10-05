@@ -22,7 +22,7 @@ async function analyzeWSmessage(msg,passthrough = false){
     try {
         data = JSON.parse(msg);
         debug('ws',data);
-        //console.log('data',data);
+        console.log('data',data);
     }
     catch (error) {
         console.warn('could not parse JSON',error, msg);
@@ -155,18 +155,19 @@ function resetWS(){
 }
 
 
-export function sendWS(txt){
-    console.log('SendWS',wsOpen,txt)
+export function sendWS(data){
+    //console.log('SendWS',wsOpen,data)
     if (wsOpen) {
-        if (game.settings.get(moduleName,'EnMaterialServer')) {
-            const msg = {
-                target: "MPSensor",
-                data: txt
-            }
-            ws.send(JSON.stringify(msg));
+        if (game.settings.get(moduleName,'EnMaterialServer')) { 
+            ws.send(JSON.stringify({
+                data,
+                target: "MaterialPlane_Device",
+                source: "MaterialPlane_Foundry"  
+            }));
         }
-        else
-            ws.send(txt);
+        else ws.send(JSON.stringify(data));
+        //console.log('data',data)
+        
     }
     
 }
