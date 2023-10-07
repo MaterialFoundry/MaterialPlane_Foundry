@@ -160,7 +160,7 @@ Hooks.on('ready', ()=>{
     }
 
     if (game.settings.get(moduleName, 'ActiveUser') == "" && game.user.isGM) {
-        game.settings.set(moduleName, 'ActiveUser',game.users.activeGM.id)
+        game.settings.set(moduleName, 'ActiveUser',game.userId)
     }
 
     enableModule = game.user.id == game.settings.get(moduleName,'ActiveUser');

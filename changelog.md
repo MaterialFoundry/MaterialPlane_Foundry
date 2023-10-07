@@ -4,6 +4,7 @@ Fixes:
 <ul>
 <li>Decreased the size of the battery indicator to it doesn't overflow</li>
 <li>Data is now correctly formatted before being sent to Material Companion</li>
+<li>In the base setup, rules with base IDs of the current base display a green ID again</li>
 </ul>
 
 ### v3.0.1 - 04-10-2023

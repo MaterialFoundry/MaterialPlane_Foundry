@@ -1,6 +1,6 @@
 import { moduleName,configDialog,calibrationProgress } from "../MaterialPlane.js";
 import { IRtoken } from "./IRtoken/IRtoken.js";
-import { cursor, scaleIRinput } from "./Misc/misc.js";
+import { cursor, scaleIRinput, debug } from "./Misc/misc.js";
 import { Pen } from "./Pen/pen.js";
 
 export let lastBaseAddress = 0;
@@ -10,12 +10,11 @@ let pen;
 let oldCommand = 0;
 
 function getTokenByID(id){
-    
     const tokenIDs = game.settings.get(moduleName,'baseSetup');
     const baseData = tokenIDs.find(p => p.baseId == id);
     if (baseData == undefined) return undefined;
-    if (baseData.linkActor) return canvas.tokens.children[0].children.find(p => p.actor.name == baseData.actorName);
-    else if (baseData.sceneName == canvas.scene.name)return canvas.tokens.children[0].children.find(p => p.name == baseData.tokenName);
+    if (baseData.linkActor) return canvas.tokens.placeables.find(p => p.actor.name == baseData.actorName);
+    else if (baseData.sceneName == canvas.scene.name) return canvas.tokens.placeables.find(p => p.name == baseData.tokenName);
     return undefined;
 }
 
@@ -47,7 +46,7 @@ export function setLastBaseAddress(address) {
 export async function analyzeIR(data) {
     const activeUser = game.settings.get(moduleName,'ActiveUser');
     if (configDialog?.configOpen) configDialog.drawIrCoordinates(data);
-//console.log('data',data)
+    //console.log('data',data)
 
     foundBases = data.detectedPoints;
 
@@ -79,7 +78,7 @@ export async function analyzeIR(data) {
                 continue;
             }
             */
-            if (game.user.id != activeUser) return;
+            
 
             //Drop token if x and y are -9999
             
@@ -88,7 +87,7 @@ export async function analyzeIR(data) {
             const coords = {x:point.x, y:point.y};
             let scaledCoords = scaleIRinput(coords);
 
-            //console.log(command,foundBases,data.id)
+            debug('baseData',`Command: ${command}, nr of bases: ${foundBases}, base ID: ${data.id}`)
             
             if (foundBases == 1) {
                 if (data.id != 0) {
@@ -100,17 +99,27 @@ export async function analyzeIR(data) {
                     game.socket.emit(`module.MaterialPlane`, payload);
                     if (document.getElementById("MaterialPlane_Config") != null) {
                         document.getElementById("mpLastBaseAddress").value=data.id;
-                        for (let i=0; i<999; i++) {
-                            let base = document.getElementById("baseId-"+i);
-                            if (base == null) break;
-                            if (point.id == base.value) base.style.color="green";
-                            else base.style.color="";
+                        debug('baseData',`Set last base ID: ${data.id}`)
+                        let baseElmnts = Array.from(document.getElementsByName('mpBaseId'));
+                        if (baseElmnts != undefined)  {
+                            for (let elmnt of baseElmnts) {
+                                if (data.id == elmnt.value) elmnt.style.color="green";
+                                else elmnt.style.color="";
+                            }
                         }
                     }
+                    if (game.user.id != activeUser) return;
                     if (data.id != 0 && !(configDialog?.configOpen && configDialog?.blockInteraction)) {
                         if (data.id != lastBaseAddress || IRtokens[point.number].token == undefined) {
                             const token = getTokenByID(data.id);
-                            if (token != undefined) IRtokens[point.number].token = token;
+                            
+                            if (token != undefined) {
+                                IRtokens[point.number].token = token;
+                                debug('baseData',`Grabbed token ${token.name} with base ID: ${data.id}`)
+                            }
+                            else {
+                                debug('baseData',`No configured token for base ID: ${data.id}`)
+                            }
                             forceNew = true;
                         }
                     }
@@ -118,6 +127,8 @@ export async function analyzeIR(data) {
                 
                 
             }
+
+            if (game.user.id != activeUser) return;
             
             if (configDialog?.configOpen  && configDialog?.blockInteraction) return;
 

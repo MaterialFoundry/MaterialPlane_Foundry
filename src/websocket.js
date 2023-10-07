@@ -22,7 +22,7 @@ async function analyzeWSmessage(msg,passthrough = false){
     try {
         data = JSON.parse(msg);
         debug('ws',data);
-        console.log('data',data);
+        //console.log('data',data);
     }
     catch (error) {
         console.warn('could not parse JSON',error, msg);

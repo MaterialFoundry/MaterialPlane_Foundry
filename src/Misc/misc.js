@@ -9,7 +9,9 @@ let debugSettings = {
   nearestToken: false,
   updateMovement: false,
   moveToken: false,
-  dropToken: false
+  dropToken: false,
+  baseData: false,
+  cal: false
 };
 
 export function activateControl(controlName) {
@@ -117,17 +119,19 @@ export function compatibleCore(compatibleVersion){
      */
 export function scaleIRinput(coords){
   if (coords.x < 0) coords.x = 0;
-  if (coords.x > 4093) coords.x = 4093;
+  if (coords.x > 4095) coords.x = 4095;
   if (coords.y < 0) coords.y = 0;
-  if (coords.y > 4093) coords.y = 4093;
+  if (coords.y > 4095) coords.y = 4095;
 
   //Calculate the amount of pixels that are visible on the screen
   const horVisible = screen.width/canvas.scene._viewPosition.scale;
   const vertVisible = screen.height/canvas.scene._viewPosition.scale;
 
   //Calculate the scaled coordinates
-  const posX = (coords.x/4093)*horVisible+canvas.scene._viewPosition.x-horVisible/2;
-  const posY = (coords.y/4093)*vertVisible+canvas.scene._viewPosition.y-vertVisible/2;
+  const posX = (coords.x/4096)*horVisible+canvas.scene._viewPosition.x-horVisible/2;
+  const posY = (coords.y/4096)*vertVisible+canvas.scene._viewPosition.y-vertVisible/2;
+
+  debug('cal',`Raw: (${Math.round(coords.x)}, ${Math.round(coords.y)}). Scaled: (${Math.round(posX)}, ${Math.round(posY)}). View: (${Math.round(canvas.scene._viewPosition.x)}, ${Math.round(canvas.scene._viewPosition.y)}, ${canvas.scene._viewPosition.scale}). Canvas: ${canvas.dimensions.width}x${canvas.dimensions.height} (${canvas.dimensions.rect.x}, ${canvas.dimensions.rect.y}). Scene: ${canvas.dimensions.sceneWidth}x${canvas.dimensions.sceneHeight} (${canvas.dimensions.sceneRect.x}, ${canvas.dimensions.sceneRect.y}). Display: ${screen.width}x${screen.height}`)
 
   //Return the value
   return {"x":Math.round(posX),"y":Math.round(posY)};
