@@ -54,6 +54,7 @@ export async function analyzeIR(data) {
        // if (game.user.id != activeUser) return;
        // for (let token of IRtokens) token.dropIRtoken(); 
        // foundBases = 0;
+       debug('baseData',`No base detected`)
         return;
     }
    

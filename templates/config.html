@@ -468,19 +468,22 @@
         <p class="mpNotes">* {{localize "MaterialPlane.Config.Refresh_Hint"}}</p>
 
         <hr>
-
-        <!-- Connect to Sensor -->
+        <!-- Connection Mode Select -->
         <div class="mpConfigFormElements">
-            <label class="mpTooltip">{{localize "MaterialPlane.Config.Connect"}}*
-                <span class="mpTooltiptext">{{localize "MaterialPlane.Config.Connect_Hint"}}</span>
+            <label class="mpTooltip">{{localize "MaterialPlane.Config.ConnectionModeLabel"}}*
+                <span class="mpTooltiptext">{{localize "MaterialPlane.Config.ConnectionModeLabel_Hint"}}</span>
             </label>
             <div class="mpConfigFormVal">
-                <input type="checkbox" id="mpConnect"  {{#if connectToSensor}}checked{{/if}}>
+                <select id="mpConnectionMethod">
+                    <option value="direct" {{#ifCond connectionMode 'direct'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.ConnectionModeDirect"}}</option>
+                    <option value="materialCompanion" {{#ifCond connectionMode 'materialCompanion'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.ConnectionModeMC"}}</option>
+                    <option value="noConnect" {{#ifCond connectionMode 'noConnect'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.ConnectionModeNoConnect"}}</option>
+                </select>
             </div>
         </div>
 
         <!-- Sensor Module IP Address -->
-        <div class="mpConfigFormElements">
+        <div class="mpConfigFormElements" id="mpSensorIpWrapper" {{#ifNCond connectionMode 'direct'}}style="display:none"{{/ifNCond}}>
             <label class="mpTooltip">{{localize "MaterialPlane.Config.SensorIP"}}*
                 <span class="mpTooltiptext">{{localize "MaterialPlane.Config.SensorIP_Hint"}}</span>
             </label>
@@ -489,23 +492,24 @@
             </div>
         </div>
 
-        <!-- Connect Through Material Server -->
-        <div class="mpConfigFormElements">
-            <label class="mpTooltip">{{localize "MaterialPlane.Config.EnMaterialServer"}}*
-                <span class="mpTooltiptext" style="top: -35px;">{{localize "MaterialPlane.Config.EnMaterialServer_Hint"}}</span>
-            </label>
-            <div class="mpConfigFormVal">
-                <input type="checkbox" id="mpEnMaterialServer"  {{#if connectThroughMS}}checked{{/if}}>
-            </div>
-        </div>
-
-        <!-- Material Server IP Address -->
-        <div class="mpConfigFormElements">
+        <!-- Material Companion IP Address -->
+        <div class="mpConfigFormElements" id="mpMCIpWrapper" {{#ifNCond connectionMode 'materialCompanion'}}style="display:none"{{/ifNCond}}>
             <label class="mpTooltip">{{localize "MaterialPlane.Config.MaterialServerIP"}}*
                 <span class="mpTooltiptext" style="top: -30px;">{{localize "MaterialPlane.Config.MaterialServerIP_Hint"}}</span>
             </label>
             <div class="mpConfigFormVal">
                 <input type="text" id="mpMaterialServerIP" value="{{materialServerIP}}">
+            </div>
+        </div>
+
+        <!-- Number of connections attempts -->
+        <div class="mpConfigFormElements">
+            <label class="mpTooltip">{{localize "MaterialPlane.Config.MaxAttempts"}}
+                <span class="mpTooltiptext">{{localize "MaterialPlane.Config.MaxAttempts_Hint"}}</span>
+            </label>
+            <div class="mpConfigFormValRange">
+                <input type="range" id="mpConnAttempts" min=0 max=100 step=1 value={{nrOfConnAttempts}}>
+                <input type="number" id="mpConnAttemptsNumber" value={{nrOfConnAttempts}}>
             </div>
         </div>
     </div>

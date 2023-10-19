@@ -1,10 +1,21 @@
 # Changelog Material Plane Foundry Module
-### v3.0.2 - 
+### v3.0.2 - 20-10-2023
 Fixes:
 <ul>
 <li>Decreased the size of the battery indicator to it doesn't overflow</li>
 <li>Data is now correctly formatted before being sent to Material Companion</li>
 <li>In the base setup, rules with base IDs of the current base display a green ID again</li>
+</ul>
+
+Additions:
+<ul>
+<li>Added a configurable maximum connection attempts to connect to either the sensor or Material Companion</li>
+</ul>
+
+Other:
+<ul>
+<li>Added a 'Connection Mode' setting that replaces the 'Connect to the Sensor' and 'Use Material Server' settings</li>
+<li>When connecting to the sensor through Material Companion, the IP address now has to be configured in Material Companion instead of in the module.</li>
 </ul>
 
 ### v3.0.1 - 04-10-2023

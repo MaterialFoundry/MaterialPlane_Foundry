@@ -1,7 +1,7 @@
 {
     "title": "Material Plane",
     "description": "Module for tracking physical minis. By using an IR tracking camera and mini bases with IR LED's this module can be used to move tokens in Foundry by moving physical tokens on top of a horizontally mounted TV",
-    "version": "3.0.2_pre2",
+    "version": "3.0.2",
     "esmodules": [
         "MaterialPlane.js"
     ],
@@ -11,7 +11,7 @@
         "minimumSensorWsVersion": "2.0.0",
         "minimumBaseVersion": "2.0.0",
         "minimumPenVersion": "2.0.0",
-        "minimumMSversion": "1.0.0"
+        "minimumMSversion": "1.0.2"
     },
     "languages": [
         {
@@ -19,6 +19,20 @@
             "name": "English",
             "path": "lang/en.json",
             "flags": {}
+        }
+    ],
+    "media": [
+        {
+            "type": "icon",
+            "url": "modules/MaterialPlane/img/MaterialFoundry512x512.png"
+        },
+        {
+            "type": "setup",
+            "url": "modules/MaterialPlane/img/MaterialFoundry2560x1440.jpg"
+        },
+        {
+            "type": "cover",
+            "url": "modules/MaterialPlane/img/MaterialFoundry2560x1440.jpg"
         }
     ],
     "url": "https://github.com/MaterialFoundry/MaterialPlane_Foundry",

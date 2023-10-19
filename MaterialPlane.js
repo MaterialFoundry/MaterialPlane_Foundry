@@ -165,12 +165,12 @@ Hooks.on('ready', ()=>{
 
     enableModule = game.user.id == game.settings.get(moduleName,'ActiveUser');
     hideElements = game.settings.get(moduleName,'HideElements') && game.user.isGM == false;
-    if (game.settings.get(moduleName,'device') == 'sensor' && game.settings.get(moduleName,'Enable') && window.location.protocol == "https:" && game.settings.get(moduleName,'EnMaterialServer') == false){
+    if (game.settings.get(moduleName,'device') == 'sensor' && game.settings.get(moduleName,'ConnectionMode') != "noConnect" && window.location.protocol == "https:" && game.settings.get(moduleName,'ConnectionMode') != 'materialCompanion'){
         ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.SSL"));
         enableModule = false;
         return;
     }
-    if ((enableModule || game.user.isGM) && game.settings.get(moduleName,'Enable')){
+    if ((enableModule || game.user.isGM) && game.settings.get(moduleName,'ConnectionMode') != "noConnect"){
         if (game.settings.get(moduleName,'device') == 'sensor')
             startWebsocket();
         else {
@@ -294,10 +294,9 @@ Hooks.on('closecalibrationProgressScreen',() => {
  * Initialize settings
  */
 Hooks.once('init', function(){
-    registerSettings(); //in ./src/settings.js
+    registerSettings();
     registerLayer();
     configDialog = new mpConfig();
-    //calibrationDialog = new calibrationForm();
     calibrationProgress = new calibrationProgressScreen();    
 });
 
@@ -333,11 +332,6 @@ Hooks.on('renderPlayerList', (app, html) => {
         html.hide();
     }
 });
-
-Hooks.on('canvasReady', (canvas) => {
-   // canvas.stage.addChild(circle);
-    //circle.init();
-})
 
 Hooks.on('controlToken', (token,controlled) => {
     if (!controlled) return;
@@ -401,58 +395,4 @@ export async function checkForUpdate(reqType) {
             latestReleases.materialCompanion = version;
         }
     });
-
-    return;
-
-    var request = new XMLHttpRequest();
-    request.open('GET', url, true);
-    request.send(null);
-    request.onreadystatechange = function () {
-        if (request.readyState === 4 && request.status === 200) {
-            var type = request.getResponseHeader('Content-Type');
-            if (type.indexOf("text") !== 1) {
-                let version;
-                if (reqType == 'module') {
-                    version = JSON.parse(request.responseText).version;
-                    latestReleases.module = version;
-                }
-                else if (reqType == 'MS') {
-                    version = JSON.parse(request.responseText).version;
-                    latestReleases.ms = version;
-                }
-                else if (reqType == 'SWs') {
-                    const start = request.responseText.search('"', request.responseText.search('const webserverVersion = "v')) + 2;
-                    let v = "";
-                    for (let i=start; i<start+10; i++) {
-                        if (request.responseText[i] == '"') break;
-                        else v += request.responseText[i];
-                    }
-                    latestReleases.sensorWs = v;
-                    version = v;
-                }
-                else {
-                  const start = request.responseText.search('"', request.responseText.search('#define FIRMWARE_VERSION')) + 1;
-                  let v = "";
-                  for (let i=start; i<start+10; i++) {
-                    if (request.responseText[i] == '"') break;
-                    else v += request.responseText[i];
-                  }
-                  
-                  if (reqType == 'hwFw') latestReleases.sensorFW = v;
-                  else if (reqType == 'base') latestReleases.baseFW = v;
-                  else if (reqType == 'pen') latestReleases.penFW = v;
-                  version = v;
-                }
-                
-                if (document.getElementById('MaterialPlane_Config') != null) {
-                    document.getElementById(`mpConfigMaster${id}Version`).innerHTML = version;
-                }    
-                return;
-            }
-            
-        }
-    }
-    request.onerror = function () {
-        
-    }
 } 

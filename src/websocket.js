@@ -9,6 +9,7 @@ let wsOpen = false;             //Bool for checking if websocket has ever been o
 let wsInterval;                 //Interval timer to detect disconnections
 let disableTimeout = false;
 let connectFailedMsg = false;
+let connectionAttempts = 0;
 
 /**
  * Analyzes the message received from the IR tracker.-
@@ -92,7 +93,7 @@ async function analyzeWSmessage(msg,passthrough = false){
  */
 export async function startWebsocket() {
     
-    ip = game.settings.get(moduleName,'EnMaterialServer') ? game.settings.get(moduleName,'MaterialServerIP') : game.settings.get(moduleName,'IP');
+    ip = game.settings.get(moduleName,'ConnectionMode') == 'materialCompanion' ? game.settings.get(moduleName,'MaterialServerIP') : game.settings.get(moduleName,'IP');
     console.log(`Material Plane: Starting websocket on 'ws://${ip}'`);
     ws = new WebSocket('ws://'+ip);
     
@@ -106,10 +107,11 @@ export async function startWebsocket() {
 
     ws.onopen = function() {
         console.log("Material Plane: Websocket connected",ws)
-        if (game.settings.get(moduleName,'EnMaterialServer')) ui.notifications.info(`Material Plane: ${game.i18n.localize("MaterialPlane.Notifications.ConnectedMS")}: ${ip}`);
+        if (game.settings.get(moduleName,'ConnectionMode') == 'materialCompanion') ui.notifications.info(`Material Plane: ${game.i18n.localize("MaterialPlane.Notifications.ConnectedMS")}: ${ip}`);
         else ui.notifications.info(`Material Plane: ${game.i18n.localize("MaterialPlane.Notifications.Connected")}: ${ip}`);
         wsOpen = true;
-        if (game.settings.get(moduleName,'EnMaterialServer')) {
+        connectionAttempts = 0;
+        if (game.settings.get(moduleName,'ConnectionMode') == 'materialCompanion') {
             const msg = {
                 target: "MaterialCompanion",
                 source: "MaterialPlane_Foundry",
@@ -117,8 +119,7 @@ export async function startWebsocket() {
                 type: "connected",
                 userId: game.userId,
                 userName: game.user.name,
-                version: game.modules.get(moduleName).version,
-                sensorIp: game.settings.get(moduleName,'IP')
+                version: game.modules.get(moduleName).version
             }
             ws.send(JSON.stringify(msg));
         }
@@ -135,22 +136,32 @@ export async function startWebsocket() {
  * Try to reset the websocket if a connection is lost
  */
 function resetWS(){
-    //disableTimeout = true;
+    const maxAttempts = game.settings.get(moduleName, 'nrOfConnAttempts');
+    
+    if (connectionAttempts >= maxAttempts+1) return;
+
     if (wsOpen && !disableTimeout) {
         wsOpen = false;
-        console.warn("Material Plane: Disconnected from server");
+        connectionAttempts = 0;
         ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.Disconnected"));
         startWebsocket();
     }
     else if (ws.readyState == 3){
-        console.warn("Material Plane: Connection to server failed");
         if (!connectFailedMsg) {
-            ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.ConnectFail"));
-            connectFailedMsg = true;
-            setTimeout(()=>{connectFailedMsg = false},10000)
+            if (connectionAttempts == maxAttempts) {
+                connectionAttempts++;
+                ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.MaxAttemptsReached"));
+            }
+            else {
+                connectionAttempts++;
+                ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.ConnectFail") + ` (${connectionAttempts}/${maxAttempts})` );
+                connectFailedMsg = true;
+                setTimeout(()=>{
+                    connectFailedMsg = false;
+                    startWebsocket();
+                },10000)
+            }
         }
-        
-        startWebsocket();
     }
 }
 
@@ -158,7 +169,7 @@ function resetWS(){
 export function sendWS(data){
     //console.log('SendWS',wsOpen,data)
     if (wsOpen) {
-        if (game.settings.get(moduleName,'EnMaterialServer')) { 
+        if (game.settings.get(moduleName,'ConnectionMode') == 'materialCompanion') { 
             ws.send(JSON.stringify({
                 data,
                 target: "MaterialPlane_Device",

@@ -185,6 +185,25 @@ export const registerSettings = function() {
     });
 
     /**
+     * Connection mode
+     */
+    game.settings.register(moduleName,'ConnectionMode', {
+        scope: "client",
+        config: false,
+        default: "",
+        type: String
+    });
+
+    game.settings.register(moduleName, 'nrOfConnAttempts', {
+        default: 5,
+        type: Number,
+        scope: 'client',
+        range: { min: 0, max: 100, step: 1 },
+        config: false
+        
+    });
+
+    /**
      * Use Material Server
      */
      game.settings.register(moduleName,'EnMaterialServer', {
@@ -211,6 +230,16 @@ export const registerSettings = function() {
         default: false,
         type: Boolean
     });
+
+
+    //Settings migration
+    if (game.settings.get(moduleName, 'ConnectionMode') == "") {
+        console.log("Migrating Material Plane setting: 'Connection Mode'");
+        if (!game.settings.get(moduleName, 'Enable')) game.settings.set(moduleName, 'ConnectionMode', 'noConnect')
+        else if (game.settings.get(moduleName, 'EnMaterialServer')) game.settings.set(moduleName, 'ConnectionMode', 'materialCompanion')
+        else game.settings.set(moduleName, 'ConnectionMode', 'direct')
+    }
+
 }
 
 export function onHwVariantChange(variant) {
@@ -283,10 +312,10 @@ export class mpConfig extends FormApplication {
             hideElements: game.settings.get(moduleName,'HideElements'),
             penMenu: game.settings.get(moduleName,'MenuSize'),
 
-            connectToSensor: game.settings.get(moduleName,'Enable'),
+            connectionMode: game.settings.get(moduleName,'ConnectionMode'),
             sensorIP: game.settings.get(moduleName,'IP'),
-            connectThroughMS: game.settings.get(moduleName,'EnMaterialServer'),
             materialServerIP: game.settings.get(moduleName,'MaterialServerIP'),
+            nrOfConnAttempts: game.settings.get(moduleName,'nrOfConnAttempts'),
 
             tapMode: game.settings.get(moduleName,'tapMode'),
             touchTimeout: game.settings.get(moduleName,'touchTimeout'),
@@ -377,10 +406,36 @@ export class mpConfig extends FormApplication {
         html.find("input[id=mpBlockInteraction]").on('change', event => { parent.blockInteraction = event.target.checked; });
 
         // --- Connection settings ---
-        html.find("input[id=mpConnect]").on('change', event =>          { this.setSettings('Enable',event.target.checked); this.restart = true; });
+        html.find("select[id=mpConnectionMethod]").on('change', event =>{ 
+            const target = event.target.value;
+            if (target == 'direct') {
+                document.getElementById("mpSensorIpWrapper").style.display = "";
+                document.getElementById("mpMCIpWrapper").style.display = "none";
+            }
+            else if (target == 'materialCompanion') {
+                document.getElementById("mpSensorIpWrapper").style.display = "none";
+                document.getElementById("mpMCIpWrapper").style.display = "";
+            }
+            else {
+                document.getElementById("mpSensorIpWrapper").style.display = "none";
+                document.getElementById("mpMCIpWrapper").style.display = "none";
+            }
+            this.setSettings('ConnectionMode',target); this.restart = true; 
+        });
         html.find("input[id=mpSensorIP]").on('change', event =>         { this.setSettings('IP',event.target.value); this.restart = true; });
-        html.find("input[id=mpEnMaterialServer]").on('change', event => { this.setSettings('EnMaterialServer',event.target.checked); this.restart = true; });
         html.find("input[id=mpMaterialServerIP]").on('change', event => { this.setSettings('MaterialServerIP',event.target.value); this.restart = true; });
+        html.find("input[id=mpConnAttempts]").on('change', event =>{ 
+            const val = this.constrain(event.target.value, game.settings.settings.get("MaterialPlane.nrOfConnAttempts").range);
+            document.getElementById("mpConnAttempts").value = val;
+            document.getElementById("mpConnAttemptsNumber").value = val;
+            this.setSettings('nrOfConnAttempts',val);
+        });
+        html.find("input[id=mpConnAttemptsNumber]").on('change', event =>{ 
+            const val = this.constrain(event.target.value, game.settings.settings.get("MaterialPlane.nrOfConnAttempts").range);
+            document.getElementById("mpConnAttempts").value = val;
+            document.getElementById("mpConnAttemptsNumber").value = val;
+            this.setSettings('nrOfConnAttempts',val);
+        });
 
         // --- Touch settings ---
         html.find("select[id=mpTapMode]").on('change', event =>         { this.setSettings('tapMode',event.target.value); });

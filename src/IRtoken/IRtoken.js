@@ -278,15 +278,13 @@ export class IRtoken {
             rotation: this.token.document.rotation
         }
 
-        
-
         if (game.settings.get(moduleName,'collisionPrevention')) {
             newCoords = this.findNearestEmptySpace(newCoords);
         }
         
         this.previousPosition = this.currentPosition;
         
-       // this.moveToken(this.currentPosition);
+        this.moveToken(this.currentPosition);
 
         //Get the coordinates of the center of the grid closest to the coords
         if (game.settings.get(moduleName,'movementMethod') != 'stepByStep') {
