@@ -75,10 +75,20 @@ export class IRtoken {
      */
     async moveToken(coords) {
         //Compensate for the difference between the center of the token and the top-left of the token, and compensate for token size
-        coords.x -= (this.token.document.width - 0.5)*canvas.dimensions.size;
-        coords.y -= canvas.dimensions.size/2;
+        let ledPosition = game.settings.get(moduleName,'ledPosition');
+
+        if (ledPosition.includes("Upper")) {
+            coords.y -= canvas.dimensions.size/2;
+        } else {
+            coords.y -= (this.token.document.height - 0.5)*canvas.dimensions.size;
+        }
+        if (ledPosition.includes("Left")) {
+            coords.x -= canvas.dimensions.size/2;
+        } else {
+            coords.x -= (this.token.document.width - 0.5)*canvas.dimensions.size;
+        }
         if (Math.abs(coords.x-this.token.x) < 5 && Math.abs(coords.y-this.token.y) < 5) return;
-        
+
         let cp = canvas.grid.getCenter(coords.x+canvas.dimensions.size/2,coords.y+canvas.dimensions.size/2);
         let currentPos = {x:cp[0], y:cp[1]};
 
@@ -268,23 +278,37 @@ export class IRtoken {
      */
     async dropIRtoken(release = game.settings.get(moduleName,'deselect')){
         
+        let ledPosition = game.settings.get(moduleName,'ledPosition');
+
         //If no token is controlled, return
         if (this.token == undefined) return false;
-        
-        //this.moveToken(this.currentPosition)
+
+        let adjx = this.currentPosition.x;
+        let adjy = this.currentPosition.y;
+
+        // If not in upper left LED position, need to adjust for the offset
+        // of the token size.
+        if (ledPosition.includes("Right")) {
+            adjx += (this.token.document.width - 1) * canvas.dimensions.size;
+        }
+        if (ledPosition.includes("Lower")) {
+            adjy += (this.token.document.height - 1) * canvas.dimensions.size;
+        }
         let newCoords = {
-            x: (this.currentPosition.x-canvas.dimensions.size/2),
-            y: (this.currentPosition.y-canvas.dimensions.size/2),
+            x: adjx,
+            y: adjy,
             rotation: this.token.document.rotation
         }
 
         if (game.settings.get(moduleName,'collisionPrevention')) {
             newCoords = this.findNearestEmptySpace(newCoords);
         }
-        
+
         this.previousPosition = this.currentPosition;
         
-        this.moveToken(this.currentPosition);
+        // using this.currentPosition to moveToken() results in odd behavior because moveToken()
+        // adjusts based on LED position, so those adjustments get doubled.
+        this.moveToken(newCoords);
 
         //Get the coordinates of the center of the grid closest to the coords
         if (game.settings.get(moduleName,'movementMethod') != 'stepByStep') {

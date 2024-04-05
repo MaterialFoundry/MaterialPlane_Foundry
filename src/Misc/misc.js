@@ -247,17 +247,26 @@ export class MaterialPlaneLayer extends CanvasLayer {
   //For all tokens on the canvas: get the distance between the token and the coordinate. Get the closest token. If the distance is smaller than the hitbox of the token, 'token' is returned
   let closestToken = undefined;
   let minDistance = 1000;
-  
+  let ledPosition = game.settings.get(moduleName,'ledPosition');
+  var dx, dy
+
   for (let token of canvas.tokens.placeables){
     if (currentToken == token) continue;
     if (!token.can(game.user,"control")) {
       if (!game.settings.get(moduleName,'EnNonOwned') || !token.visible) continue;
     }
 
-    let coordsCenter = token.getCenter(token.x,token.y); 
-    const dx =  Math.abs(coordsCenter.x - coords.x + (token.document.width-1)*spacing/2);
-    const dy = Math.abs(coordsCenter.y - coords.y - (token.document.height-1)*spacing/2);
-
+    let coordsCenter = token.getCenter(token.x,token.y);
+      if (ledPosition.includes("Upper")) {
+      dy = Math.abs(coordsCenter.y - coords.y - (token.document.height-1)*spacing/2);
+    } else {
+      dy = Math.abs(coordsCenter.y - coords.y + (token.document.height-1)*spacing/2);
+    }
+    if (ledPosition.includes("Left")) {
+      dx =  Math.abs(coordsCenter.x - coords.x - (token.document.width-1)*spacing/2);
+    } else {
+      dx =  Math.abs(coordsCenter.x - coords.x + (token.document.width-1)*spacing/2);
+    }
     const distance = Math.sqrt( dx*dx + dy*dy );
   
     if (distance < minDistance) {

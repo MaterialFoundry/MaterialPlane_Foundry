@@ -92,6 +92,15 @@ export const registerSettings = function() {
         default:'live'
     });
 
+    /**
+     * Sets the LED Position.
+     */
+    game.settings.register(moduleName,'ledPosition', {
+        scope: "world",
+        config: false,
+        type:String,
+        default:'Upper Right'
+    });
 
     /**
      * Release the token after dropping
@@ -305,6 +314,7 @@ export class mpConfig extends FormApplication {
             users,
             device: game.settings.get(moduleName,'device'),
             movementMethod: game.settings.get(moduleName,'movementMethod'),
+            ledPosition: game.settings.get(moduleName,'ledPosition'),
             deselect: game.settings.get(moduleName,'deselect'),
             movementMarker: game.settings.get(moduleName,'movementMarker'),
             nonOwnedMovement: game.settings.get(moduleName,'EnNonOwned'),
@@ -386,6 +396,7 @@ export class mpConfig extends FormApplication {
         html.find("select[id=mpActiveUser]").on('change', event =>       { this.setSettings('ActiveUser',event.target.value); this.restart = true; });
         html.find("select[id=mpDevice]").on('change', async event =>    { await this.setSettings('device',event.target.value); this.render(); this.restart = true; });
         html.find("select[id=mpMovementMethod]").on('change', event =>  { this.setSettings('movementMethod',event.target.value); });
+        html.find("select[id=mpLedPosition]").on('change', event =>     { this.setSettings('ledPosition',event.target.value); });
         html.find("input[id=mpDeselect]").on('change', event =>         { this.setSettings('deselect',event.target.checked); });
         html.find("input[id=mpMovementMarker]").on('change', event =>   { this.setSettings('movementMarker',event.target.checked); });
         html.find("input[id=mpNonOwned]").on('change', event =>         { this.setSettings('EnNonOwned',event.target.checked); });
