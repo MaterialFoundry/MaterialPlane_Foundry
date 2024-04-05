@@ -385,6 +385,22 @@
             </div>
         </div>
 
+
+         <!-- Position (orientation) of the LED on the base relative to screen -->
+        <div class="mpConfigFormElements">
+            <label class="mpTooltip">{{localize "MaterialPlane.Config.LedPosition"}}
+                <span class="mpTooltiptext">{{localize "MaterialPlane.Config.LedPosition_Hint"}}</span>
+            </label>
+            <div class="mpConfigFormVal">
+                <select id="mpLedPosition">
+                  <option value="Upper Left" {{#ifCond ledPosition 'Upper Left'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.LedPosition_UL"}}</option>
+                  <option value="Upper Right" {{#ifCond ledPosition 'Upper Right'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.LedPosition_UR"}}</option>
+                  <option value="Lower Left" {{#ifCond ledPosition 'Lower Left'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.LedPosition_LL"}}</option>
+                  <option value="Lower Right" {{#ifCond ledPosition 'Lower Right'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.LedPosition_LR"}}</option>
+                </select>
+            </div>
+        </div>
+
         <!-- Deselect Token After Drop -->
         <div class="mpConfigFormElements">
             <label class="mpTooltip">{{localize "MaterialPlane.Config.Deselect"}}
