@@ -1,55 +1,163 @@
 <form autocomplete="off" onsubmit="event.preventDefault()">
     
-    <h2><b>Calibration</b></h2>  
+    
 
-    <div id="calStart"></div>
-    <div>
-        Make sure the Foundry screen is positioned the way you want to use it. For example, make it full screen (F11).
-        If the Foundry window is moved, resized, or made full screen, please restart the calibration.
+    <div id="mpCalConfig">
+        <h2><b>Calibration Configuration</b></h2>  
+
+        <div class="mpConfigFormElements">
+            <label>Calibration mode:</label>
+            <div class="mpConfigFormVal">
+                <select id="mpCalMethodSel">
+                    <option value="">{{localize "MaterialPlane.Config.Select"}}</option>
+                    <option value="Normal">Normal Points</option>
+                    <option value="Custom">Custom Points</option>
+                </select> 
+            </div>  
+        </div>
+
+        <div id="mpCalMethodExplanation">
+            <hr>
+            Select which calibration mode you'd like to use.
+            <ul>
+                <li><b>Normal Points:</b> Use pre-defined calibration points.</li>
+                <li><b>Custom Points:</b> Use custom calibration points.</li>
+            </ul>
+        </div>
+
+        <div id="mpCalOffsetSelector" style="display:none">
+            <div class="mpConfigFormElements">
+                <label>What to Calibrate:</label>
+                <div class="mpConfigFormVal">
+                    <select id="mpCalOffsetSel">
+                        <option value="">{{localize "MaterialPlane.Config.Select"}}</option>
+                        <option value="Custom">Custom Points</option>
+                        <option value="Calibrate">Calibrate Custom Points</option>
+                    </select> 
+                </div>  
+            </div>
+    
+            <div id="mpCalOffsetDescription">
+                <hr>
+                Using custom calibration points, you can calibrate by placing bases in any convenient location (such as against the bezel of your display) or using separate embedded infrared LEDs.<br>
+                To first calibrate using custom calibration points, you will need to perform 2 separate calibration steps in the following order:
+
+                <ol>
+                    <li>Calibrate using your chosen custom calibration points by selecting 'Custom Points'.</li>
+                    <li>Calibrate to pre-defined calibration points so the sensor knows where these points are related relative to your display, by selecting 'Calibrate Custom Points'</li>
+                </ol>
+
+                After that, you only need to perform step 1, unless a different display is used, or the relative location of the sensor to the display is changed significantly.
+            </div>
+        </div>
+        
+        <div id="mpCalSinglepointSelector" style="display:none">
+            <div class="mpConfigFormElements">
+                <label>Single-Point/Multipoint:</label>
+                <div class="mpConfigFormVal">
+                    <select id="mpCalSinglepointSel">
+                        <option value="">{{localize "MaterialPlane.Config.Select"}}</option>
+                        <option value="SinglePoint">{{localize "MaterialPlane.Config.SinglePoint"}}</option>
+                        <option value="MultiPoint">{{localize "MaterialPlane.Config.MultiPoint"}}</option>
+                    </select> 
+                </div>  
+            </div>
+    
+            <div id="mpCalSinglepointDescription" style="display:none">
+                <hr>
+
+                <ul>
+                    <li><b>Single-Point:</b> Calibrate each calibration point one at a time.</li>
+                    <li><b>Multipoint:</b> Calibrate all 4 calibration points at the same time.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="mpCalLocationSelector" style="display:none">
+            <div class="mpConfigFormElements">
+                <label>Calibration Location:</label>
+                <div class="mpConfigFormVal">
+                    <select id="mpCalLocationSel">
+                        <option value="">{{localize "MaterialPlane.Config.Select"}}</option>
+                        <option value="On-Screen">On-Screen</option>
+                        <option value="Corner">Corner</option>
+                    </select> 
+                </div>  
+            </div>
+    
+            <div id="mpCalLocationDescription">
+                <hr>
+                Select the preferred location of the 4 calibration points.
+                <ul>
+                    <li><b>On-Screen (Recommended):</b> Calibrate using on-screen calibration points, as indicated by the red squares.</li>
+                    <li><b>Corner:</b> Calibrate on the corners of your display, as indicated by the green arrows.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="mpConfigFormBtn" id="mpCalStartButton" style="display:none">
+            <hr>
+            <div>Press 'Start Calibration' to start the calibration procedure.</div>
+            <br>
+            <button name="mpStartCalibration" type="button"><i></i>Start Calibration</button>
+        </div>
     </div>
-    <div id="calInstructions"></div>
-     
-    <br>
-    <h3><b>Calibration Points</b></h3> 
 
-    <table style="float:right;text-align:center;width:100%">
-        <tr>
-            <th style="width:33.3%">Point</th>
-            <th style="width:33.3%">X</th>
-            <th style="width:33.3%">Y</th> 
-        </tr>
-        {{#each iteration as |i|}}
+
+
+    <div id="mpCalProcedure" style="display:none;">
+        <h2><b>Calibration Procedure</b></h2>  
+
+        <div id="calStart"></div>
+        <div>
+            Make sure the Foundry screen is full screen (F11).
+        </div>
+        <div id="calInstructions"></div>
+         
+        <br>
+        <h3><b>Calibration Points</b></h3> 
+    
+        <table style="float:right;text-align:center;width:100%">
             <tr>
-                <td id="iterationPoint{{i}}" style="color:grey">{{i}}</td>
-                <td id="mpCalPoint_x{{i}}" style="color:grey">0</td>
-                <td id="mpCalPoint_y{{i}}" style="color:grey">0</td>
+                <th style="width:33.3%">Point</th>
+                <th style="width:33.3%">X</th>
+                <th style="width:33.3%">Y</th> 
             </tr>
-        {{/each}}
-    </table>
-
-
-    <p id="noMovement" style="display:none">
-        <b>Move a base to a calibration point and wait a few seconds.</b>
-    </p>
-
-    <p id="waiting" style="display:none">
-        <b>Locking in point in 5 seconds.</b>
-    </p>
-
-    <p id="calDone" style="display:none">
-        <b>Calibration done. You can close this window or wait 5 seconds.</b>
-    </p>
-
-    <p id="calCancel" style="display:none">
-        <b>Calibration cancelled. You can close this window or wait 5 seconds.</b>
-    </p>
-
-    <button name="calNext" type="button" id=calNextBtn>
-        <i></i> Next
-    </button>
-
-    <button type="submit" id=calCloseBtn style="display:none">
-        Close
-    </button>
+            {{#each iteration as |i|}}
+                <tr>
+                    <td id="iterationPoint{{i}}" style="color:grey">{{i}}</td>
+                    <td id="mpCalPoint_x{{i}}" style="color:grey">0</td>
+                    <td id="mpCalPoint_y{{i}}" style="color:grey">0</td>
+                </tr>
+            {{/each}}
+        </table>
+    
+    
+        <p id="noMovement" style="display:none">
+            <b>Move a base to a calibration point and wait a few seconds.</b>
+        </p>
+    
+        <p id="waiting" style="display:none">
+            <b>Locking in point in 5 seconds.</b>
+        </p>
+    
+        <p id="calDone" style="display:none">
+            <b>Calibration done. You can close this window or wait 5 seconds.</b>
+        </p>
+    
+        <p id="calCancel" style="display:none">
+            <b>Calibration cancelled. You can close this window or wait 5 seconds.</b>
+        </p>
+    
+        <button name="calNext" type="button" id=calNextBtn>
+            <i></i> Next
+        </button>
+    
+        <button type="submit" id=calCloseBtn style="display:none">
+            Close
+        </button>
+    
+    </div>
+    
 </form>
 

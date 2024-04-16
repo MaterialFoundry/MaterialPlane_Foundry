@@ -1,13 +1,16 @@
 import { moduleName,configDialog,calibrationProgress } from "../MaterialPlane.js";
 import { IRtoken } from "./IRtoken/IRtoken.js";
-import { cursor, scaleIRinput, debug } from "./Misc/misc.js";
+import { debug } from "./Misc/misc.js";
 import { Pen } from "./Pen/pen.js";
+import { scaleIRinput } from "./IRtoken/tokenHelpers.js";
+import { Cursor } from "./Misc/cursor.js";
 
 export let lastBaseAddress = 0;
 export let IRtokens = [];
 let cursors = [];
-let pen;
+export let pen;
 let oldCommand = 0;
+let batteryNotificationTimer = 0;
 
 function getTokenByID(id){
     const tokenIDs = game.settings.get(moduleName,'baseSetup');
@@ -26,7 +29,7 @@ export function initializeIRtokens(){
 
 export function initializeCursors(){
     for (let i=0; i<16; i++) {
-        cursors[i] = new cursor();
+        cursors[i] = new Cursor();
         canvas.stage.addChild(cursors[i]);
         cursors[i].init();
     }
@@ -51,38 +54,34 @@ export async function analyzeIR(data) {
     foundBases = data.detectedPoints;
 
     if (foundBases == 0) {
-       // if (game.user.id != activeUser) return;
-       // for (let token of IRtokens) token.dropIRtoken(); 
-       // foundBases = 0;
-       debug('baseData',`No base detected`)
+        debug('baseData',`No base detected`)
         return;
     }
+
+    if (data.battery < 30 && Date.now() - batteryNotificationTimer >= 60000) {
+        batteryNotificationTimer = Date.now();
+        if (data.command == 1) ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.BatteryLowBase"));
+        else if (data.command == 2) ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.BatteryLowPen"));
+        
+    }
    
-    if (data.command > 1 && data.command != 129 && configDialog?.configOpen == false && calibrationProgress?.calibrationRunning == false) {
+    if (data.command > 1 && data.command != 129 && (configDialog?.configOpen == false || !configDialog?.blockInteraction) && calibrationProgress?.calibrationRunning == false) {
         if (game.user.id != activeUser) return;
         pen.analyze(data);
+        for (let i=0; i<16; i++) {
+            cursors[i].hide();
+        }
     }
     else {
         for (let i=0; i<foundBases; i++) {
             const point = data.irPoints[i];
-            //console.log('point',point, data.command)
+
             let command = data.command;
             
             if (calibrationProgress?.calibrationRunning) {
                 calibrationProgress.updatePoint(point);
                 continue;
             }
-            /*
-            else if (configDialog?.configOpen) {
-                console.log('dialogOpen')
-                //configDialog.updateIrPoint(point);
-                continue;
-            }
-            */
-            
-
-            //Drop token if x and y are -9999
-            
             
             let forceNew = false;
             const coords = {x:point.x, y:point.y};
@@ -104,6 +103,13 @@ export async function analyzeIR(data) {
                         let baseElmnts = Array.from(document.getElementsByName('mpBaseId'));
                         if (baseElmnts != undefined)  {
                             for (let elmnt of baseElmnts) {
+                                if (data.id == elmnt.value) elmnt.style.color="green";
+                                else elmnt.style.color="";
+                            }
+                        }
+                        let penElmnts = Array.from(document.getElementsByName('mpPenId'));
+                        if (penElmnts != undefined)  {
+                            for (let elmnt of penElmnts) {
                                 if (data.id == elmnt.value) elmnt.style.color="green";
                                 else elmnt.style.color="";
                             }

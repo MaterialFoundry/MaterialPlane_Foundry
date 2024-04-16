@@ -4,11 +4,12 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-import { registerSettings, mpConfig, onHwVariantChange } from "./src/Misc/settings.js";
-import { sendWS,startWebsocket } from "./src/websocket.js";
-import { calibrationProgressScreen, removeOverlay } from "./src/calibration.js";
-import { registerLayer, configureDebug, compareVersions, compatibleCore } from "./src/Misc/misc.js";
-import { initializeIRtokens, initializeCursors, setLastBaseAddress } from "./src/analyzeIR.js";
+import { registerSettings, onHwVariantChange } from "./src/Misc/settings.js";
+import { mpConfig } from "./src/Misc/config.js";
+import { sendWS, startWebsocket } from "./src/Communication/websocket.js";
+import { calibrationProgressScreen, removeOverlay, calOverlay } from "./src/calibration.js";
+import { registerLayer, configureDebug, compatibleCore } from "./src/Misc/misc.js";
+import { initializeIRtokens, initializeCursors, setLastBaseAddress, pen } from "./src/analyzeIR.js";
 import { IRremote } from "./src/IRremote/IRremote.js";
 import { analyzeTouch } from "./src/analyzeTouch.js";
 
@@ -23,13 +24,15 @@ let enableModule = false;
 export let configDialog;
 export let calibrationProgress;
 
-export let hwVariant = 'Beta';
+export let hwVariant = 'Production';
 export let hwFirmware;
 export let hwWebserver;
 export let msVersion;
 export let latestReleases = {};
 
 export let irRemote = new IRremote();
+
+export let routingLibEnabled = false;
 
 export const urls = [
     {
@@ -67,6 +70,8 @@ Handlebars.registerHelper('ifNCond', function(v1, v2, options) {
     return options.fn(this);
 });
 
+//CONFIG.debug.hooks = true;
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Functions
@@ -74,7 +79,6 @@ Handlebars.registerHelper('ifNCond', function(v1, v2, options) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 export function setHwVariant(v) {
-    return;
     if (hwVariant != v) {
         onHwVariantChange(v);
     }
@@ -142,9 +146,11 @@ function checkKeys() {
  * Ready hook
  * Attempt to open the websocket
  */
-Hooks.on('ready', ()=>{
+Hooks.on('ready', async ()=>{
+   // configDialog.setConfigOpen(true);
+   // configDialog.render(true);
+
     if (game.version.split('.')[0] >= 11 && game.settings.get(moduleName,'device') == 'touch') {
-        console.warn("")
         let d = new Dialog({
             title: "Material Plane: Incompatibility",
             content: "<p>The touch functionality of Material Plane is incompatible with Foundry V11.<br>You should downgrade to Foundry V10 if you want to use the touch functionality. If you ignore this message, expect weird behavior.</p>",
@@ -171,8 +177,9 @@ Hooks.on('ready', ()=>{
         return;
     }
     if ((enableModule || game.user.isGM) && game.settings.get(moduleName,'ConnectionMode') != "noConnect"){
-        if (game.settings.get(moduleName,'device') == 'sensor')
+        if (game.settings.get(moduleName,'device') == 'sensor') {
             startWebsocket();
+        }
         else {
             document.addEventListener('touchstart',function(e) {e.preventDefault(); analyzeTouch('start',e);});
             document.addEventListener('touchmove',function(e) {e.preventDefault(); analyzeTouch('move',e);});
@@ -190,15 +197,6 @@ Hooks.on('ready', ()=>{
             checkKeys();
         }
     }
-
-    if (!enableModule && !game.user.isGM) return;
-
-    checkForUpdate('Module');
-    checkForUpdate('SensorFirmware');
-    checkForUpdate('SensorWebserver');
-    checkForUpdate('MaterialCompanion');
-    checkForUpdate('Base');
-    checkForUpdate('Pen');
 
     game.socket.on(`module.MaterialPlane`, (payload) =>{
         //console.log(payload);
@@ -233,7 +231,6 @@ Hooks.on('ready', ()=>{
                             if (lastBaseAddress == base.value) base.style.color="green";
                             else base.style.color="";
                         }
-                        
                     }
                 }
             }
@@ -242,11 +239,49 @@ Hooks.on('ready', ()=>{
             }
         }    
     });
+
+    if (!enableModule && !game.user.isGM) return;
+
+    checkForUpdate('Module');
+    checkForUpdate('SensorFirmware');
+    checkForUpdate('SensorWebserver');
+    checkForUpdate('MaterialCompanion');
+    checkForUpdate('Base');
+    checkForUpdate('Pen');
     
     if (game.user.isGM) game.settings.set(moduleName,'menuOpen',false);
 
+    let rulerSettings = await game.settings.get(moduleName,'tokenRuler');
+    if (rulerSettings.mode == undefined) rulerSettings.mode = 'disabled';
+    if (rulerSettings.stop == undefined) rulerSettings.stop = 'tokenDrop';
+    if (rulerSettings.distance == undefined) rulerSettings.distance = 2;
+    game.settings.set(moduleName,'tokenRuler',rulerSettings);
+
+    const routingLib = game.modules.get('routinglib');
+    if (routingLib && routingLib.active) routingLibEnabled = true;
+
     initializeIRtokens();
     initializeCursors();
+
+    Hooks.on('activateDrawingsLayer', layer => {
+        const drawings = layer.placeables;
+    
+        for (let drawing of drawings) {
+            pen.drawingTarget.addTarget(drawing);
+        }
+    })
+    
+    Hooks.on('refreshDrawing', drawing => {
+        pen.drawingTarget.updateTarget(drawing);
+    });
+    
+    Hooks.on('drawDrawing', drawing => {
+        pen.drawingTarget.addTarget(drawing);
+    })
+    
+    Hooks.on('deleteDrawing', drawing => {
+        pen.drawingTarget.removeTarget(drawing);
+    })
 });
 
 Hooks.on("renderSidebarTab", (app, html) => {
@@ -363,7 +398,31 @@ Hooks.on('renderPlayerList', (a,b, playerlist) => {
     const pl = playerlist.users.find(p => p._id == game.settings.get(moduleName,'ActiveUser'));
     if (pl == undefined) return;
     const html = `<span style="font-size:0.6rem; border:2px solid; border-radius:25%; padding: 0px 3px 0px 3px">MP</span>`;
-    document.querySelectorAll(`[data-tooltip="${pl.displayName}"]`)[0].innerHTML+=html;
+    if (compatibleCore('11.0')) 
+        document.querySelectorAll(`[data-tooltip="${pl.displayName}"]`)[0].innerHTML+=html;
+    //else
+       // document.querySelectorAll(`[data-user-id="${pl._id}"]`)[0].innerHTML+=html;
+});
+
+//let scaleOld;
+let viewPositionOld;
+
+Hooks.on('canvasPan', (canvas, viewPosition) => {
+    if (pen == undefined) return;
+    if (viewPositionOld == undefined) {
+        viewPositionOld = viewPosition;
+        return;
+    }
+
+    if (viewPosition.scale-viewPositionOld.scale == 0) {
+        pen.menu.moveMenu({x:viewPosition.x-viewPositionOld.x, y:viewPosition.y-viewPositionOld.y}, true)
+    }
+    else {
+        pen.menu.drawMenu(undefined);
+    }
+    viewPositionOld = viewPosition;
+
+    if (calOverlay != undefined) calOverlay.update();
 });
 
 export async function checkForUpdate(reqType) {

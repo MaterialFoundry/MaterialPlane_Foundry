@@ -1,20 +1,30 @@
 import { moduleName } from "../../MaterialPlane.js";
-import { debug, findToken, tokenMarker } from "../Misc/misc.js";
+import { debug } from "../Misc/misc.js";
+import { DragRuler } from "./tokenRuler.js";
+import { findToken, getGridCenter, getIRDeadZone, getIROffset, getTokenGridEnterPosition, getTokenCollision, comparePositions, addToCoordinates, checkSurroundingGridCollision, findNearestEmptySpace } from "./tokenHelpers.js";
+import { TokenMarker } from "./tokenMarker.js";
+import { TokenDebug } from "./tokenDebug.js";
 
 let pausedMessage = false;
 
 export class IRtoken {
     constructor() { 
         this.controlledToken = undefined;   //Stores the currently controlled token
-        this.currentPosition;           //Stores the current position of the token
+        this.currentGridSpace;           //Stores the current position of the token
         this.token = undefined;
         this.rawCoordinates;
         this.previousPosition;
         this.scaledCoords;
+        this.previousCoords;
 
-        this.marker = new tokenMarker();
+        this.marker = new TokenMarker();
+        this.debug = new TokenDebug();
         canvas.stage.addChild(this.marker);
+        canvas.stage.addChild(this.debug);
         this.marker.init();
+        this.debug.init();
+
+        this.ruler = new DragRuler();
     }
 
     /**
@@ -22,7 +32,10 @@ export class IRtoken {
      * @param {*} coords 
      */
     async update(data,scaledCoords,forceNew=false,moveToken=true){
+
         if (data == undefined && this.token == undefined) return;
+
+        //Prevent movement if game is paused
         if (game.paused) {
             if (!pausedMessage) {
                 pausedMessage = true;
@@ -31,6 +44,7 @@ export class IRtoken {
             }
             return true;
         }
+
         if (data != undefined) {
             let coords = {x:data.x,y:data.y}
             this.rawCoordinates = coords;
@@ -39,6 +53,7 @@ export class IRtoken {
             this.scaledCoords = scaledCoords;
         }
         
+        //If no token is assigned yet
         if (this.token == undefined || forceNew) {
             //Find the nearest token to the scaled coordinates
             if (this.token == undefined) this.token = findToken( this.scaledCoords );
@@ -47,24 +62,39 @@ export class IRtoken {
                 debug('updateMovement','No token found')
                 return false;
             }
-                
+            
+            //If the user can't control the token and non-owned token movement is disabled, prevent token movement
             if (this.token.can(game.user,"control") == false && game.settings.get(moduleName,'EnNonOwned') == false) {
                 this.token = undefined;
                 debug('updateMovement',`User can't control token ${this.token.name}`)
                 return false;
             }
+
+            //Print debug message
             debug('updateMovement',`Found token ${this.token.name}`)
-            this.currentPosition = {x:this.token.x+canvas.dimensions.size/2, y:this.token.y+canvas.dimensions.size/2}
-            this.previousPosition = this.currentPosition;
+
+            //Get the current grid space of the token
+            this.currentGridSpace = {x:this.token.x+canvas.dimensions.size/2, y:this.token.y+canvas.dimensions.size/2}
+            this.previousPosition = this.currentGridSpace;
             this.controlledToken = this.token;
             this.originPosition = {x:this.token.x, y:this.token.y};
+
+            //Start the token ruler
+            this.ruler.start(this.token, this.currentGridSpace);  
         }
+
+        //Select token
         if (this.token.can(game.user,"control"))
             this.token.control({releaseOthers:false});
         
-        if (moveToken) this.moveToken(this.scaledCoords);
+        //Move token
+        if (moveToken) 
+            this.moveToken(this.scaledCoords);
 
-        if (game.settings.get(moduleName,'movementMarker') && this.marker != undefined && this.token != undefined) this.marker.show();
+        //Enable marker
+        if (game.settings.get(moduleName,'movementMarker') && this.marker != undefined && this.token != undefined) 
+            this.marker.show(); 
+
         return true;
     }
     
@@ -74,193 +104,143 @@ export class IRtoken {
      * @param {*} coords 
      */
     async moveToken(coords) {
-        //Compensate for the difference between the center of the token and the top-left of the token, and compensate for token size
-        coords.x -= (this.token.document.width - 0.5)*canvas.dimensions.size;
-        coords.y -= canvas.dimensions.size/2;
-        if (Math.abs(coords.x-this.token.x) < 5 && Math.abs(coords.y-this.token.y) < 5) return;
+        this.debug.updateToken(this.token);
         
-        let cp = canvas.grid.getCenter(coords.x+canvas.dimensions.size/2,coords.y+canvas.dimensions.size/2);
-        let currentPos = {x:cp[0], y:cp[1]};
+        this.debug.updateCoords(coords);
+
+        this.previousCoords = Object.assign({}, coords);
+
+        //Compensate for the offset of the IR led
+        coords = getIROffset(coords, this.token);
+        this.debug.updateIrOffset(coords);
+
+        //Only move token if the coordinates have changed by more than 5
+        if (getIRDeadZone(coords, this.token, 5)) return;
+
+        //Get the center of the current grid space
+        let currentGridSpace = getGridCenter(coords, this.token);
+        this.debug.updateGridSpace(currentGridSpace);
+
+        //Check if a token has entered a new grid space, if so, store where it entered the space
+        let enterPos = getTokenGridEnterPosition(this.token, this.previousPosition, currentGridSpace, coords, this.debug);
 
         let movementMethod = game.settings.get(moduleName,'movementMethod');
-        
-        let collision = false;
-        if (this.previousPosition == undefined) this.previousPosition = currentPos;
-        else if (this.previousPosition.x != currentPos.x || this.previousPosition.y != currentPos.y){
-            collision = this.checkCollision(this.token,this.previousPosition,currentPos);
+
+        //Check if a collision occurs between the position where the token entered the grid space, and the current position. This is to prevent teleportation through walls that are placed through a grid space.
+        let collision;
+        if (movementMethod == 'stepByStep') collision = getTokenCollision(this.token, undefined, currentGridSpace, false);
+        else collision = getTokenCollision(this.token, enterPos, currentGridSpace, true, this.previousPosition, this.debug);
+
+        if (!collision) {
+            this.token.MPgridEnterPosition = enterPos;
         }
 
-        if (this.token.can(game.user,"control") == false) {
-            movementMethod = 'default';
-            collision = false;
-        }
+        this.debug.updateEnterGrid(enterPos);
         
+        const gridSize = canvas.dimensions.size;
+
+        //In case of a collision, send debug message and prevent movement
+        if (collision) {
+            debug('moveToken',`Token: ${this.token.name}, Can't move due to a wall collision`)
+        }
+
         //Step-by-Step movement: when dragging the token, the token is moved every gridspace
-        if (movementMethod == 'stepByStep') {
-            if (collision == false) {
-                this.currentPosition = currentPos;
-                let newCoords = {
-                    x: (this.currentPosition.x-canvas.dimensions.size/2),
-                    y: (this.currentPosition.y-canvas.dimensions.size/2)
-                }
-                
-                this.previousPosition = this.currentPosition;
+        else if (movementMethod == 'stepByStep') { 
+            //Update the token ruler
+            this.ruler.move(currentGridSpace);
 
+            //Save the current position
+            this.currentGridSpace = currentGridSpace;
+            this.previousPosition = currentGridSpace;
+
+            //Calculate the new coords for token.document.update
+            const newCoords = {
+                x: currentGridSpace.x - 0.5*gridSize,
+                y: currentGridSpace.y - 0.5*gridSize
+            }
+
+            //If user can control the token
+            if (this.token.can(game.user,"control")) {
+                //Update token position
                 await this.token.document.update(newCoords);
-                debug('moveToken',`Token: ${this.token.name}, Move to: (${newCoords.x}, ${newCoords.y})`)
             }
-            else
-                debug('moveToken',`Token: ${this.token.name}, Can't move due to a wall collision`)
+            //Otherwise, request movement from GM client
+            else {
+                let payload = {
+                    "msgType": "moveToken",
+                    "senderId": game.user.id, 
+                    "receiverId": game.data.users.find(users => users.role == 4)._id, 
+                    "tokenId": this.token.id,
+                    "newCoords": newCoords
+                };
+                game.socket.emit(`module.MaterialPlane`, payload);
+            }
+
+            //Print debug info
+            debug('moveToken',`Token: ${this.token?.name}, Move to: (${newCoords.x}, ${newCoords.y})`)
         }
-        //Default foundry movement method: update position after dropping token. Or live movement method: update vision live, update position when dropping token
+
+        //Default foundry movement method: update position after dropping token
+        //Or live movement method: update vision live, update position when dropping token
         else {
-            if (collision == false) {
-                if (movementMethod == 'live') this.previousPosition = currentPos;
+            this.token.MPlastPosition = this.previousPosition;
+            if (movementMethod == 'live') this.previousPosition = currentGridSpace;
 
-                if (this.token.can(game.user,"control")) {
-                    let surroundingGridCollisions = this.checkSurroundingGridCollision(coords,currentPos);
-                    let collisions = [surroundingGridCollisions[0],surroundingGridCollisions[1],surroundingGridCollisions[2],surroundingGridCollisions[3]];
-                    
-                    if (surroundingGridCollisions[4]) {collisions[0]=true; collisions[2]=true}
-                    if (surroundingGridCollisions[5]) {collisions[0]=true; collisions[3]=true}
-                    if (surroundingGridCollisions[6]) {collisions[1]=true; collisions[2]=true}
-                    if (surroundingGridCollisions[7]) {collisions[1]=true; collisions[3]=true}
-
-                    let moveX = false;
-                    let moveY = false;
-                    if (!collisions[0] && !collisions[1]) moveX = true;
-                    if (!collisions[2] && !collisions[3]) moveY = true;
-                    
-                    if (moveX && moveY) {
-                        this.token.document.x = coords.x;
-                        this.token.document.y = coords.y;
-                    }
-                    //movement in X is allowed, Y is not
-                    else if (!surroundingGridCollisions[0] && !surroundingGridCollisions[1]) {
-                        this.token.document.x = coords.x;
-                        this.token.document.y = currentPos.y - Math.floor(canvas.dimensions.size/2);
-                    }
-                    //movement in Y is allowed, X is not
-                    else if (!surroundingGridCollisions[2] && !surroundingGridCollisions[3]) {
-                        this.token.document.x = currentPos.x - Math.floor(canvas.dimensions.size/2);
-                        this.token.document.y = coords.y;
-                    }
-                    this.currentPosition = currentPos;
-                }
-                else {
-                    this.token.document.x = coords.x+(this.token.document.width-1)*canvas.dimensions.size/2;
-                    this.token.document.y = coords.y+(this.token.document.height-1)*canvas.dimensions.size/2;
-                    this.currentPosition = currentPos;
-                }
+            if (this.token.can(game.user,"control")) {
+                //Get collisions for surrounding grid spaces
+                const collisions = checkSurroundingGridCollision(this.token, coords, currentGridSpace, this.debug);
                 
-                this.token.refresh();
-                if (movementMethod == 'live') this.token.updateSource({noUpdateFog: false});
-                debug('moveToken',`Token: ${this.token.name}, Move to: (${coords.x}, ${coords.y})`)
+                //Movement in X and Y is allowed
+                if (collisions.moveX && collisions.moveY) {
+                    this.token.document.x = coords.x;
+                    this.token.document.y = coords.y;
+                }
+                //Movement in X is allowed, Y is not
+                else if (!collisions.e && !collisions.w) {
+                    this.token.document.x = coords.x;
+                    this.token.document.y = currentGridSpace.y - Math.floor(gridSize/2);
+                }
+                //Movement in Y is allowed, X is not
+                else if (!collisions.n && !collisions.s) {
+                    this.token.document.x = currentGridSpace.x - Math.floor(gridSize/2);
+                    this.token.document.y = coords.y;
+                }
+
+                this.currentGridSpace = currentGridSpace;
             }
-            else
-                debug('moveToken',`Token: ${this.token.name}, Can't move due to a wall collision`)
+            else {
+                this.token.document.x = coords.x;
+                this.token.document.y = coords.y;
+                this.currentGridSpace = currentGridSpace;
+            }
+
+            //Update the token ruler
+            this.ruler.move(currentGridSpace);
+
+            //Refresh token to update its position
+            this.token.refresh();
+
+            //Update lighting in case of 'live' movement method
+            if (movementMethod == 'live') this.token.updateSource({noUpdateFog: false});
+
+            //Print debug message
+            debug('moveToken',`Token: ${this.token.name}, Move to: (${coords.x}, ${coords.y})`)
         }
 
         //Draw the movement marker
         if (game.settings.get(moduleName,'movementMarker')) {
             const color = collision ? "0xFF0000" : "0x00FF00"
-            if (this.currentPosition != undefined && this.token != undefined)
+            if (this.currentGridSpace != undefined && this.token != undefined) {
                 this.marker.updateMarker({
-                    x: currentPos.x+(this.token.document.width-1)*canvas.dimensions.size/2,
-                    y: currentPos.y+(this.token.document.height-1)*canvas.dimensions.size/2,
-                    width: canvas.dimensions.size*this.token.document.width,
-                    height: canvas.dimensions.size*this.token.document.height,
+                    x: currentGridSpace.x,
+                    y: currentGridSpace.y,
+                    width: this.token.document.width,
+                    height: this.token.document.height,
+                    gridSize,
                     color: color
                 })
-        }
-    }
-
-    /*
-     * Check for wall collisions
-     */
-    checkCollision(token,origin,destination) {
-            return token.checkCollision(destination, {origin:origin});
-    }
-
-    /*
-     * Check if surrounding grids cause wall collisions
-     */
-    checkSurroundingGridCollision(coords,origin) {
-        
-        const offsetFromGrid = {
-            x: coords.x+canvas.dimensions.size/2 - origin.x,
-            y: coords.y+canvas.dimensions.size/2 - origin.y
-        }
-        let surroundingGrids = [false,false,false,false,false,false,false,false];
-        if (offsetFromGrid.x > 0)       surroundingGrids[0] = this.checkCollision(this.token,origin,{x:origin.x+canvas.dimensions.size,   y:origin.y})
-        else if (offsetFromGrid.x < 0)  surroundingGrids[1] = this.checkCollision(this.token,origin,{x:origin.x-canvas.dimensions.size,   y:origin.y})
-        if (offsetFromGrid.y > 0)       surroundingGrids[2] = this.checkCollision(this.token,origin,{x:origin.x,                          y:origin.y+canvas.dimensions.size})
-        else if (offsetFromGrid.y < 0)  surroundingGrids[3] = this.checkCollision(this.token,origin,{x:origin.x,                          y:origin.y-canvas.dimensions.size})
-
-        if (offsetFromGrid.x > 0 && offsetFromGrid.y > 0)       surroundingGrids[4] = this.checkCollision(this.token,origin,{x:origin.x+canvas.dimensions.size, y:origin.y+canvas.dimensions.size})
-        else if (offsetFromGrid.x > 0 && offsetFromGrid.y < 0)  surroundingGrids[5] = this.checkCollision(this.token,origin,{x:origin.x+canvas.dimensions.size, y:origin.y-canvas.dimensions.size})
-        else if (offsetFromGrid.x < 0 && offsetFromGrid.y > 0)  surroundingGrids[6] = this.checkCollision(this.token,origin,{x:origin.x-canvas.dimensions.size, y:origin.y+canvas.dimensions.size})
-        else if (offsetFromGrid.x < 0 && offsetFromGrid.y < 0)  surroundingGrids[7] = this.checkCollision(this.token,origin,{x:origin.x-canvas.dimensions.size, y:origin.y-canvas.dimensions.size})
-        return surroundingGrids;
-    }
-
-    /**
-     * Find the nearest empty space
-     * @param {} coords 
-     */
-    findNearestEmptySpace(coords) {
-        const spacer = canvas.scene.gridType === CONST.GRID_TYPES.SQUARE ? 1.41 : 1;
-        //If space is already occupied
-        if (findToken(this.token.getCenter(coords.x,coords.y),(spacer * Math.min(canvas.grid.w, canvas.grid.h))/2,this.token) != undefined) {
-            ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.SpaceOccupied"));
-            let ray = new Ray({x: this.originPosition.x, y: this.originPosition.y}, {x: coords.x, y: coords.y});
-
-            //Code below modified from _highlightMeasurement() in ruler class in core foundry  
-            const nMax = Math.max(Math.floor(ray.distance / (spacer * Math.min(canvas.grid.w, canvas.grid.h))), 1);
-            const tMax = Array.fromRange(nMax+1).map(t => t / nMax);
-
-            // Track prior position
-            let prior = null;
-            let gridPositions = [];
-            // Iterate over ray portions
-            for ( let [i, t] of tMax.entries() ) {
-                let {x, y} = ray.project(t);
-             
-                // Get grid position
-                let [r0, c0] = (i === 0) ? [null, null] : prior;
-                let [r1, c1] = canvas.grid.grid.getGridPositionFromPixels(x, y);
-                if ( r0 === r1 && c0 === c1 ) continue;
-                let [x1, y1] = canvas.grid.grid.getPixelsFromGridPosition(r1, c1);
-                gridPositions.push({x: x1, y: y1})
-                
-                // Skip the first one
-                prior = [r1, c1];
-                if ( i === 0 ) continue;
-
-                // If the positions are not neighbors, also highlight their halfway point
-                if ( !canvas.grid.isNeighbor(r0, c0, r1, c1) ) {
-                    let th = tMax[i - 1] + (0.5 / nMax);
-                    let {x, y} = ray.project(th);
-                    let [rh, ch] = canvas.grid.grid.getGridPositionFromPixels(x, y);
-                    let [xh, yh] = canvas.grid.grid.getPixelsFromGridPosition(rh, ch);
-                    gridPositions.splice(gridPositions.length-1, 0, {x: xh, y: yh})
-                }
             }
-            for (let i=gridPositions.length-1; i>=0; i--) {
-                const position = gridPositions[i];
-                const centeredPosition = this.token.getCenter(position.x,position.y);
-                if (this.checkCollision(this.token,this.token.getCenter(coords.x,coords.y),centeredPosition)) {
-                    continue;
-                }
-                if (findToken(centeredPosition,(spacer * Math.min(canvas.grid.w, canvas.grid.h))/2,this.token) == undefined) {
-                    coords.x = position.x;
-                    coords.y = position.y;
-                    return coords;
-                }
-            }
-            return this.originPosition;
         }
-        return coords;
     }
 
      /**
@@ -270,51 +250,67 @@ export class IRtoken {
         
         //If no token is controlled, return
         if (this.token == undefined) return false;
-        
-        //this.moveToken(this.currentPosition)
+
+        const gridSize = canvas.dimensions.size;
+
         let newCoords = {
-            x: (this.currentPosition.x-canvas.dimensions.size/2),
-            y: (this.currentPosition.y-canvas.dimensions.size/2),
+            x: this.currentGridSpace.x - 0.5*gridSize,
+            y: this.currentGridSpace.y - 0.5*gridSize,
             rotation: this.token.document.rotation
         }
-
+        
+        //If collision prevention is enabled, check if the token doesn't end up in an occupied space, if so, adjust position
         if (game.settings.get(moduleName,'collisionPrevention')) {
-            newCoords = this.findNearestEmptySpace(newCoords);
+            newCoords = findNearestEmptySpace(this.token, newCoords, this.originPosition);
+            this.originPosition = newCoords;
+            this.currentGridSpace = addToCoordinates(newCoords, gridSize/2);
         }
         
-        this.previousPosition = this.currentPosition;
+        this.previousPosition = this.currentGridSpace;
         
-        this.moveToken(this.currentPosition);
-
-        //Get the coordinates of the center of the grid closest to the coords
+        //If 'stepByStep' movement method is not selected (for stepByStep this is handled in the moveToken function)
         if (game.settings.get(moduleName,'movementMethod') != 'stepByStep') {
+
+            //If user can control the token
             if (this.token.can(game.user,"control")) {
+                //Update token position
                 await this.token.document.update(newCoords);
+
+                //Prevent token animation
                 CanvasAnimation.terminateAnimation(this.token.animationName);
+
+                //Print debug message
                 debug('dropToken',`Token ${this.token.name}, Dropping at (${newCoords.x}, ${newCoords.y})`)
             }
+            //Otherwise, request movement from GM client
             else {
-                this.requestMovement(this.token,newCoords);
+                let payload = {
+                    "msgType": "moveToken",
+                    "senderId": game.user.id, 
+                    "receiverId": game.data.users.find(users => users.role == 4)._id, 
+                    "tokenId": this.token.id,
+                    "newCoords": newCoords
+                };
+                game.socket.emit(`module.MaterialPlane`, payload);
+
+                //Print debug message
                 debug('dropToken',`Token ${this.token.name}, Non-owned token, requesting GM client to be dropped at (${newCoords.x}, ${newCoords.y})`)
             }
         }
+
+        //Make sure the token is positioned in the correct spot (required if a token is moved but dropped at its starting position)
+        this.token.document.x = newCoords.x;
+        this.token.document.y = newCoords.y;
+        this.token.refresh();
         
         //Release token, if setting is enabled
         if (release) this.token.release();
 
+        //Handle tokenDrop for token ruler
+        this.ruler.tokenDrop();
+
         this.token = undefined;
         this.marker.hide();
         return true;
-    }
-
-    requestMovement(token,coords){
-        let payload = {
-            "msgType": "moveToken",
-            "senderId": game.user.id, 
-            "receiverId": game.data.users.find(users => users.role == 4)._id, 
-            "tokenId": token.id,
-            "newCoords": coords
-        };
-        game.socket.emit(`module.MaterialPlane`, payload);
     }
 }

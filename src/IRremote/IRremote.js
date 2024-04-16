@@ -53,8 +53,7 @@ export class IRremote {
                     ChatMessage.create(chatData, {});
                 }
             }
-        }
-            
+        }  
     }
 
     getLastCode() {

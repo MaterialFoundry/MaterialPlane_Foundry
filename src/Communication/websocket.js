@@ -1,6 +1,6 @@
-import { moduleName,configDialog,calibrationProgress,hwVariant,setHwVariant, setHwFirmware, setHwWebserver, irRemote, setMsVersion } from "../MaterialPlane.js";
-import { analyzeIR } from "./analyzeIR.js";
-import { debug, updatePowerState } from "./Misc/misc.js";
+import { moduleName,configDialog,calibrationProgress,hwVariant,setHwVariant, setHwFirmware, setHwWebserver, irRemote, setMsVersion } from "../../MaterialPlane.js";
+import { analyzeIR } from "../analyzeIR.js";
+import { debug, updatePowerState } from "../Misc/misc.js";
 
 //Websocket variables
 let ip = "materialserver.local:3000";       //Ip address of the websocket server
@@ -40,32 +40,25 @@ async function analyzeWSmessage(msg,passthrough = false){
         disableTimeout = false;
     }
     if (data.status == "ping") {
-        /*
-        if (data.source == 'calibration' && document.getElementById('MaterialPlane_CalProgMenu') == null) {
-            sendWS("CAL CANCEL");
-        }
-        */
         return;
     }
     else if (data.status == "Auto Exposure Done") {
         ui.notifications.info("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.AutoExposureDone"));
     }
     else if (data.status == 'IR data') {
-        //if (calibrationProgress?.calibrationRunning) {calibrationProgress.setMultiPoint(data.data)}
-        //else if (configDialog?.configOpen) { configDialog.drawCalCanvas(); }
         analyzeIR(data);
         return;
     }
     else if (data.status == 'update') {
-        //console.log('data',data);
-        setHwVariant(data.hardwareVersion);
+        setHwVariant(data.hardwareVariant);
         setHwFirmware(data.firmwareVersion);
         setHwWebserver(data.webserverVersion);
         updatePowerState(data.power);
         configDialog.setIrSettings(data.ir);
     }
     else if (data.status == 'calibration') {
-        if (data.state == 'starting') calibrationProgress.start(data.mode);
+        if (data.state == 'init') calibrationProgress.init();
+        else if (data.state == 'starting') calibrationProgress.start(data.mode, data.onScreen);
         else if (data.state == 'done') calibrationProgress.done();
         else if (data.state == 'cancelled') calibrationProgress.cancel();
         else if (data.state == 'newPoint') calibrationProgress.setPoint(data);
@@ -82,7 +75,6 @@ async function analyzeWSmessage(msg,passthrough = false){
     else if (data.status == 'MSConnected') {
         setMsVersion(data.MSversion);
     }
-    
 };
 
 /**
@@ -165,7 +157,6 @@ function resetWS(){
     }
 }
 
-
 export function sendWS(data){
     //console.log('SendWS',wsOpen,data)
     if (wsOpen) {
@@ -178,7 +169,6 @@ export function sendWS(data){
         }
         else ws.send(JSON.stringify(data));
         //console.log('data',data)
-        
     }
     
 }

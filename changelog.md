@@ -1,4 +1,35 @@
 # Changelog Material Plane Foundry Module
+### v3.1.0 - 16-04-2024
+Fixes:
+<ul>
+<li>Battery icon now properly displays charging state</li>
+<li>Reduced the amount of situations where a token can 'teleport' through a wall when the wall intersects a gridspace</li>
+<li>Token targeting with the pen now works on non-owned tokens and it correctly accounts for token size</li>
+<li>Fixed issue where 'Token Collision Prevention' would not move some UI elements of a token (such as its health bar) to the correct location</li>
+<li>When a new template was drawn using the pen, the preview would not be properly removed and would stay visible until a refresh</li>
+</ul>
+
+Additions:
+<ul>
+<li>Added the functionality to draw a ruler when a token is moved (similar to Drag Ruler)</li>
+<li>Added a 'Pen Setup' tab in the config for all pen related settings</li>
+<li>Added the ability to run macros using the pen</li>
+<li>Added a 'Control' tab in the config that handles all settings related to token controls</li>
+<li>Added a cursor size slider for the pen cursor</li>
+<li>Added the ability to use on-screen calibration points instead of the corner of the display</li>
+<li>Added low battery notifications</li>
+<li>Added 'Base Orientation' selector so offsets are calculated correctly when using base adapters at different orientations</li>
+<li>Added a targeting icon for drawings when using the pen. This makes it easier to select the correct drawing</li>
+</ul>
+
+Other:
+<ul>
+<li>Changed the calibration procedure. It now opens a dialog to select how you want to calibrate</li>
+<li>The pen menu will now have the same size and position on the screen regardless of canvas zoom or pan</li>
+<li>Changed the label for sensor 'brightness' to 'sensitivity' to better reflect what it does and to better distinguish it from 'minimum brightness'</li>
+<li>Did some code cleanup & organization</li>
+</ul>
+
 ### v3.0.2 - 20-10-2023
 Fixes:
 <ul>

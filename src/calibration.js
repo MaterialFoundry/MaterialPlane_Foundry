@@ -1,9 +1,9 @@
-import { sendWS } from "./websocket.js";
+import { sendWS } from "./Communication/websocket.js";
 import { moduleName, calibrationProgress } from "../MaterialPlane.js";
 
 let countdownCount = 5;
 let countdown;
-let overlay = undefined;
+export let calOverlay = undefined;
 
 export class calibrationProgressScreen extends FormApplication {
     constructor(data, options) {
@@ -52,45 +52,221 @@ export class calibrationProgressScreen extends FormApplication {
     activateListeners(html) {
         super.activateListeners(html);
 
-        const calNextBtn = html.find("button[name='calNext']");
+        html.find("select[id='mpCalMethodSel']").on("change", event => {
+            document.getElementById('mpCalStartButton').style.display = 'none';
+            document.getElementById('mpCalOffsetSelector').style.display = 'none';
+            document.getElementById('mpCalSinglepointSelector').style.display = 'none';
+            document.getElementById('mpCalLocationSelector').style.display = 'none';
 
-        calNextBtn.on("click", event => {
+            document.getElementById('mpCalMethodExplanation').style.display = 'none';
+
+            document.getElementById('mpCalOffsetSel').value = '';
+            document.getElementById('mpCalSinglepointSel').value = '';
+            document.getElementById('mpCalLocationSel').value = '';
+
+            if (game.settings.get(moduleName,'ActiveUser') == game.userId) calOverlay.init('');
+
+            if (event.target.value == '') {
+                document.getElementById('mpCalMethodExplanation').style.display = '';
+            }
+
+            if (event.target.value == 'Normal') {
+                document.getElementById('mpCalSinglepointSelector').style.display = '';
+                document.getElementById('mpCalSinglepointDescription').style.display = '';
+            }
+            else if (event.target.value == 'Custom') {
+                document.getElementById('mpCalOffsetSelector').style.display = '';
+                document.getElementById('mpCalOffsetDescription').style.display = '';
+            }
+
+            this.setHeight(); 
+        });
+
+        html.find("select[id='mpCalOffsetSel']").on("change", event => {
+            document.getElementById('mpCalLocationSel').value = '';
+            document.getElementById('mpCalLocationSelector').style.display = 'none';
+            document.getElementById('mpCalStartButton').style.display = 'none';
+            document.getElementById('mpCalSinglepointSelector').style.display = 'none';
+
+            document.getElementById('mpCalOffsetDescription').style.display = 'none';
+            if (game.settings.get(moduleName,'ActiveUser') == game.userId) calOverlay.init('');
+
+            if (event.target.value == '') {
+                document.getElementById('mpCalOffsetDescription').style.display = '';
+            }
+
+            if (event.target.value == 'Custom') {
+                document.getElementById('mpCalStartButton').style.display = '';
+                document.getElementById('mpCalSinglepointSelector').style.display = '';
+                document.getElementById('mpCalSinglepointDescription').style.display = '';
+            }
+            else if (event.target.value == 'Calibrate') {
+                document.getElementById('mpCalStartButton').style.display = '';
+            }
+        });
+
+        html.find("select[id='mpCalLocationSel']").on("change", event => {
+            document.getElementById('mpCalLocationDescription').style.display = 'none';
+            document.getElementById('mpCalStartButton').style.display = 'none';
+            if (game.settings.get(moduleName,'ActiveUser') == game.userId) calOverlay.init('both');
+
+            if (event.target.value == '') {
+                document.getElementById('mpCalLocationDescription').style.display = '';
+            }
+            else {
+                document.getElementById('mpCalStartButton').style.display = '';
+            }
+
+            if (event.target.value == 'On-Screen') {
+                if (game.settings.get(moduleName,'ActiveUser') == game.userId) calOverlay.init('onScreen');
+            }
+            else if (event.target.value == 'Corner') {
+                if (game.settings.get(moduleName,'ActiveUser') == game.userId) calOverlay.init('corners');
+            }
+        });
+
+        html.find("select[id='mpCalSinglepointSel']").on("change", event => {
+            document.getElementById('mpCalLocationDescription').style.display = 'none';
+            document.getElementById('mpCalLocationSelector').style.display = 'none';
+            document.getElementById('mpCalLocationSel').value = '';
+
+            const calMode = document.getElementById('mpCalMethodSel').value;
+
+            if (calMode == 'Normal') {
+                if (event.target.value == '') {
+                    document.getElementById('mpCalSinglepointDescription').style.display = '';
+                }
+                else {
+                    document.getElementById('mpCalSinglepointDescription').style.display = 'none';
+                    document.getElementById('mpCalLocationDescription').style.display = '';
+                    document.getElementById('mpCalLocationSelector').style.display = '';
+                    if (game.settings.get(moduleName,'ActiveUser') == game.userId) calOverlay.init('both');
+                }
+            }
+            else {
+                if (event.target.value == '') {
+                    document.getElementById('mpCalSinglepointDescription').style.display = '';
+                }
+                else {
+                    document.getElementById('mpCalSinglepointDescription').style.display = 'none';
+                }
+            }
+        });
+
+        html.find("button[name='mpStartCalibration']").on("click", event => {
+            const modeSel = document.getElementById('mpCalMethodSel').value;
+            const singlePointSel = document.getElementById('mpCalSinglepointSel').value;
+            const locationSel = document.getElementById('mpCalLocationSel').value;
+            const offsetModeSel = document.getElementById('mpCalOffsetSel').value;
+
+            let mode;
+            if (modeSel == 'Custom' && offsetModeSel == 'Calibrate') mode = 'Offset';
+            else mode = singlePointSel;
+
+            let calibrationBounds = {
+                xMin: 0.1,
+                xMax: 0.9,
+                yMin: Math.round(10000/6)/10000,
+                yMax: Math.round(50000/6)/10000
+            }
+
+            let msg = {
+                event:"calibration", 
+                state:"start", 
+                mode
+            }
+
+            if (mode != 'Offset' && locationSel == 'On-Screen') {
+                msg.calibrationBounds = calibrationBounds;
+            }
+            sendWS(msg); 
+        });
+
+
+        html.find("button[name='calNext']").on("click", event => {
             sendWS({event:"calibration", state:"next"});
         });
        
+    }
+
+    setHeight() {
+        document.getElementById("MaterialPlane_CalProgMenu").style.height = 'auto';
     }
 
     setCalibrationRunning(running) {
         this.calibrationRunning = running;
     }
 
-    start(calMode) {
+    init() {
+        if (game.settings.get(moduleName,'ActiveUser') != game.userId && !game.user.isGM) return;
+        this.calibrationMode = 'init';
+        this.calibrationRunning = true;
+        this.render(true);
+
+        if (game.settings.get(moduleName,'ActiveUser') == game.userId) {
+            if (calOverlay == undefined) {
+                calOverlay = new calibrationOverlay();
+                canvas.stage.addChild(calOverlay);
+            }
+            calOverlay.init('');
+        }
+        
+        setTimeout(()=> {
+            document.getElementById('mpCalConfig').style.display = '';
+            document.getElementById('mpCalProcedure').style.display = 'none';
+        },10);
+    }
+
+    start(calMode, onScreen) {
+        if (game.settings.get(moduleName,'ActiveUser') != game.userId && !game.user.isGM) return;
+
         this.calibrationMode = calMode;
         this.calibrationRunning = true;
         this.pointCount = 0;
         countdownCount = 5;
-        this.render(true);
         
-        if (this.calibrationMode != 'multi' && overlay == undefined && game.settings.get(moduleName,'ActiveUser') == game.userId) {
-            overlay = new calibrationOverlay();
-            canvas.stage.addChild(overlay);
-            overlay.init();
+        if (calOverlay == undefined) {
+            calOverlay = new calibrationOverlay();
+            canvas.stage.addChild(calOverlay);
         }
+        if (game.settings.get(moduleName,'ActiveUser') == game.userId) {
+            if (onScreen) calOverlay.init('onScreen');
+            else calOverlay.init('corners');
+        }
+
+        document.getElementById('mpCalConfig').style.display = 'none';
+        document.getElementById('mpCalProcedure').style.display = '';
+
         let calStart = "";
-        if (this.calibrationMode == 'SinglePoint') calStart = "Starting single-point calibration";
-        else if (this.calibrationMode == 'Offset') calStart = "Starting offset calibration";
-        else if (this.calibrationMode == 'MultiPoint') calStart = "Starting multi-point calibration";
+        if (this.calibrationMode == 'SinglePoint') calStart = "Starting single-point calibration.";
+        else if (this.calibrationMode == 'Offset') calStart = "Starting custom point calibration.";
+        else if (this.calibrationMode == 'MultiPoint') calStart = "Starting multi-point calibration.";
 
         let calInstructions = "";
-        if (this.calibrationMode == 'SinglePoint' || this.calibrationMode == 'Offset') calInstructions = "To calibrate, move to one of the corners of you TV and wait a few seconds (beta hardware) or hold the button on the base for a few seconds and then wait (DIY hardware). The center of the base must align with the corner of the TV.";
-        else if (this.calibrationMode == 'MultiPoint') calInstructions = "To calibrate, make sure all 4 IR points are visible and their coordinates are shown. Then press 'Calibrate'.";
-
+        if (onScreen) {
+            if (this.calibrationMode == 'SinglePoint' || this.calibrationMode == 'Offset') calInstructions = "To calibrate, zoom in or out so the red boxes are the same size as a base. Then move a base to one of the boxes and wait a few seconds (beta hardware) or hold the button on the base for a few seconds and then wait (DIY hardware).";
+            else if (this.calibrationMode == 'MultiPoint') calInstructions = "To calibrate, zoom in or out so the red boxes are the same size as a base. Then move the bases to the boxes and press 'Calibrate'.";
+        }
+        else {
+            if (this.calibrationMode == 'SinglePoint' || this.calibrationMode == 'Offset') calInstructions = 
+            `To calibrate, move a base to one of the corners of your display, as indicated by the green arrows, and wait a few seconds (beta hardware) or hold the button on the base for a few seconds and then wait (DIY hardware). 
+            The center of the base must align with the corner of the TV, as shown in the image.
+            <center><img src="modules/MaterialPlane/img/calPos.png" width=80%></center>
+            `;
+            else if (this.calibrationMode == 'MultiPoint') calInstructions = `
+            To calibrate, make sure all 4 IR points (bases or LEDs) are visible and their coordinates are shown. Then press 'Calibrate'.
+            The center of the base must align with the corner of the TV, as shown in the image.
+            <center><img src="modules/MaterialPlane/img/calPos.png" width=80%></center>
+            `;
+        }
+        
         setTimeout(function(){
             document.getElementById('calStart').innerHTML = calStart;
             document.getElementById('calInstructions').innerHTML = calInstructions;
             if (calMode == 'MultiPoint') {
                 document.getElementById('calNextBtn').innerHTML='Calibrate';
                 document.getElementById('calNextBtn').disabled=true;
+                document.getElementById("noMovement").style.display="none";
             }
             else document.getElementById("noMovement").style="";
             document.getElementById('MaterialPlane_CalProgMenu').style.height='auto';
@@ -99,11 +275,12 @@ export class calibrationProgressScreen extends FormApplication {
 
     setMultiPoint(data) {
         if (this.calibrationMode != 'MultiPoint') return;
+        clearInterval(countdown);
         let points = 0;
         for (let i=0; i<4; i++) {
             if (data.points[i]?.x != undefined && data.points[i]?.y != undefined) {
                 points++;
-                if (data.points[i].x != 0 && data.points[i].y != 0) {
+                if (data.points[i].x != -9999 && data.points[i].y != -9999) {
                     document.getElementById("mpCalPoint_x"+i).innerHTML=Math.round(data.points[i].x);
                     document.getElementById("mpCalPoint_y"+i).innerHTML=Math.round(data.points[i].y);
                 }
@@ -134,7 +311,7 @@ export class calibrationProgressScreen extends FormApplication {
         else {
             if (data.point < 0 || data.point > 3) return;
             this.pointCount = data.point+1;
-    
+
             document.getElementById("mpCalPoint_x"+data.point).value = data.x;
             document.getElementById("mpCalPoint_y"+data.point).value = data.y;
             document.getElementById("iterationPoint"+data.point).style.color='black';
@@ -154,7 +331,7 @@ export class calibrationProgressScreen extends FormApplication {
         clearInterval(countdown);
         countdown = setInterval(this.timer,1000);
         if (data.point > 0) return;
-        if (data.x != undefined && data.y != undefined && data.x != 0 && data.y != 0) {
+        if (data.x != undefined && data.y != undefined && data.x != -9999 && data.y != -9999 && document.getElementById("mpCalPoint_x"+this.pointCount) != null) {
             document.getElementById("mpCalPoint_x"+this.pointCount).innerHTML=Math.round(data.x);
             document.getElementById("mpCalPoint_y"+this.pointCount).innerHTML=Math.round(data.y);
         }
@@ -163,15 +340,18 @@ export class calibrationProgressScreen extends FormApplication {
     timer(){
         countdownCount = countdownCount-1;
         
-        if (countdownCount > 0) {
+        if (countdownCount > 0 && document.getElementById("waiting") != null) {
             const txt = `<b>Locking in point in ` + countdownCount + ` seconds.</b>`;
             document.getElementById("waiting").innerHTML=txt;
         }
         else {
             clearInterval(countdown);
             countdownCount = 5;
-            document.getElementById("noMovement").style="";
-            document.getElementById("waiting").style="display:none";
+            if (document.getElementById("noMovement") != null) {
+                document.getElementById("noMovement").style="";
+                document.getElementById("waiting").style="display:none";
+            }
+            
             document.getElementById('MaterialPlane_CalProgMenu').style.height='auto';
             let user = game.users.contents.filter(u => u.active == true && u.isGM == true)[0];
             if (game.userId == user.id) sendWS({event:"calibration", state:"next"});
@@ -204,79 +384,85 @@ export class calibrationProgressScreen extends FormApplication {
 
 export function removeOverlay(){
     if (game.settings.get(moduleName,'ActiveUser') != game.userId) return;
-    if (overlay == undefined) return;
-    canvas.stage.removeChild(overlay);
-    overlay.remove();
-    overlay = undefined;
+    if (calOverlay == undefined) return;
+    canvas.stage.removeChild(calOverlay);
+    calOverlay.remove();
+    calOverlay = undefined;
 }
 
-/*
- * tokenMarker draws a rectangle at the target position for the token
- */
 export class calibrationOverlay extends ControlsLayer {
     constructor() {
         super();
-        this.init();
     }
   
-    init() {
+    init(mode = '') {
+        this.mode = mode;
+        this.removeChild(this.container);
         this.container = new PIXI.Container();
         this.addChild(this.container);
 
-        var drawing = new PIXI.Graphics();
-        drawing.beginFill("0x000000");
-        drawing.drawRect(0,0,canvas.scene.dimensions.width,canvas.scene.dimensions.height);
-        drawing.endFill();
-        drawing.alpha = 0.5;
-        this.container.addChild(drawing);
+        var background = new PIXI.Graphics();
+        background.beginFill("0x000000");
+        background.drawRect(0,0,canvas.scene.dimensions.width,canvas.scene.dimensions.height);
+        background.endFill();
+        background.alpha = 0.8;
+        background.name = 'background';
+        this.container.addChild(background);
         this.container.setTransform(0, 0);
+        
+        if (mode == 'onScreen' || mode == 'both') {
+            const baseSize = canvas.scene.grid.size;
 
-        const horVisible = window.innerWidth/canvas.scene._viewPosition.scale;
-        const vertVisible = window.innerHeight/canvas.scene._viewPosition.scale;
+            for (let i=0; i<4; i++) {
+                var calPos = new PIXI.Graphics();
+                calPos.lineStyle({width:5, color:'0xff0000', alignment: 1})
+                calPos.drawRect(-baseSize/2, -baseSize/2 , baseSize, baseSize);
+                calPos.name = `calPos-${i}`;
+                this.container.addChild(calPos);
+            }
+        }
+        if (mode == 'corners' || mode == 'both') {
 
-        let x = canvas.scene._viewPosition.x - horVisible/2;
-        let y = canvas.scene._viewPosition.y - vertVisible/2;
+            for (let i=0; i<4; i++) {
+                
+                let arrow = new PIXI.Graphics();
+                arrow.lineStyle(5, '0x00ff00', 1);
+                arrow.beginFill('0x00ff00');
 
-        let arrows = new PIXI.Graphics();
-        arrows.lineStyle(5, "0xff0000", 1);
-        arrows.beginFill("0xff0000");
+                arrow.drawCircle(0,0,20);
 
-        arrows.drawCircle(x,y,20);
-        arrows.moveTo(x+25,y+25);
-        arrows.lineTo(x+100,y+100);
-        arrows.moveTo(x+25,y+25);
-        arrows.lineTo(x+75,y+25);
-        arrows.moveTo(x+25,y+25);
-        arrows.lineTo(x+25,y+75);
+                let a,b;
 
-        x = canvas.scene._viewPosition.x + horVisible/2;
-        arrows.drawCircle(x,y,20);
-        arrows.moveTo(x-25,y+25);
-        arrows.lineTo(x-100,y+100);
-        arrows.moveTo(x-25,y+25);
-        arrows.lineTo(x-75,y+25);
-        arrows.moveTo(x-25,y+25);
-        arrows.lineTo(x-25,y+75);
+                if (i == 0) {
+                    a = 1;
+                    b = 1;
+                }
+                else if (i == 1) {
+                    a = 1;
+                    b = -1;
+                }
+                else if (i == 2) {
+                    a = -1;
+                    b = 1;
+                }
+                else if (i == 3) {
+                    a = -1;
+                    b = -1;
+                }
 
-        x = canvas.scene._viewPosition.x - horVisible/2;
-        y = canvas.scene._viewPosition.y + vertVisible/2;
-        arrows.drawCircle(x,y,20);
-        arrows.moveTo(x+25,y-25);
-        arrows.lineTo(x+100,y-100);
-        arrows.moveTo(x+25,y-25);
-        arrows.lineTo(x+75,y-25);
-        arrows.moveTo(x+25,y-25);
-        arrows.lineTo(x+25,y-75);
+                arrow.moveTo(a*25,b*25);
+                arrow.lineTo(a*100,b*100);
+                arrow.moveTo(a*25,b*25);
+                arrow.lineTo(a*75,b*25);
+                arrow.moveTo(a*25,b*25);
+                arrow.lineTo(a*25,b*75);
 
-        x = canvas.scene._viewPosition.x + horVisible/2;
-        arrows.drawCircle(x,y,20);
-        arrows.moveTo(x-25,y-25);
-        arrows.lineTo(x-100,y-100);
-        arrows.moveTo(x-25,y-25);
-        arrows.lineTo(x-75,y-25);
-        arrows.moveTo(x-25,y-25);
-        arrows.lineTo(x-25,y-75);
-        this.container.addChild(arrows);
+                arrow.name = `arrow-${i}`;
+                this.container.addChild(arrow);
+            }
+        }
+        
+        this.update();
 
         this.container.visible = true;
         this._zIndex = 500;
@@ -289,8 +475,100 @@ export class calibrationOverlay extends ControlsLayer {
         $('#controls').hide();
         $('#players').hide();
         $('#hotbar').hide();
+
+        var interval;
+        let oldScreenLeft = window.screenLeft;
+        let oldScreenTop = window.screenTop;
+        this.activeScreenXOffset = 0;
+        this.activeScreenYOffset = 0;
+        let counter = 0;
+        let parent = this;
+        window.addEventListener("mouseout", function(evt){ 
+            if (evt.toElement === null && evt.relatedTarget === null) {
+                interval = setInterval(function () {
+                    if (counter > 40 || oldScreenLeft != window.screenLeft || oldScreenTop != window.screenTop) {
+                        counter = 0;
+                        oldScreenLeft = window.screenLeft;
+                        oldScreenTop = window.screenTop;
+
+                        parent.update();
+                    }
+                    counter++;
+                }, 25);
+            } else {
+                clearInterval(interval);
+            }
+        });
     }
   
+    update() {
+        const activeScreenX = Math.floor((window.screenLeft+window.outerWidth/2)/screen.width);
+        const activeScreenY = Math.floor((window.screenTop+window.outerHeight/2)/screen.height);
+        this.activeScreenXOffset = (window.screenLeft - (activeScreenX + 0.5)*screen.width + window.outerWidth/2)/canvas.scene._viewPosition.scale;
+        this.activeScreenYOffset = (window.screenTop - (activeScreenY + 0.5)*screen.height + window.outerHeight/2)/canvas.scene._viewPosition.scale;
+
+        //Calculate the amount of pixels that are visible on the screen
+        const horVisible = screen.width/canvas.scene._viewPosition.scale;
+        const vertVisible = screen.height/canvas.scene._viewPosition.scale;
+
+        const x = canvas.scene._viewPosition.x - this.activeScreenXOffset;
+        let y = canvas.scene._viewPosition.y - this.activeScreenYOffset;
+        
+        if (this.mode == 'onScreen' || this.mode == 'both') {
+            const xOffset = 2*horVisible/5;
+            const yOffset = 2*vertVisible/6;
+
+            for (let i=0; i<4; i++) {
+                const calPos = this.container.getChildByName(`calPos-${i}`);
+                if (calPos == null) continue;
+                
+                if (i == 0) {
+                    calPos.position.x = x - xOffset;
+                    calPos.position.y = y - yOffset;
+                }
+                else if (i == 1) {
+                    calPos.position.x = x - xOffset;
+                    calPos.position.y = y + yOffset;
+                }
+                else if (i == 2) {
+                    calPos.position.x = x + xOffset;
+                    calPos.position.y = y - yOffset;
+                }
+                else if (i == 3) {
+                    calPos.position.x = x + xOffset;
+                    calPos.position.y = y + yOffset;
+                }
+            }
+
+        }
+        if (this.mode == 'corners' || this.mode == 'both') {
+            const xOffset = horVisible/2;
+            const yOffset = vertVisible/2;
+
+            for (let i=0; i<4; i++) {
+                const arrow = this.container.getChildByName(`arrow-${i}`);
+                if (arrow == null) continue;
+                
+                if (i == 0) {
+                    arrow.position.x = x - xOffset;
+                    arrow.position.y = y - yOffset;
+                }
+                else if (i == 1) {
+                    arrow.position.x = x - xOffset;
+                    arrow.position.y = y + yOffset;
+                }
+                else if (i == 2) {
+                    arrow.position.x = x + xOffset;
+                    arrow.position.y = y - yOffset;
+                }
+                else if (i == 3) {
+                    arrow.position.x = x + xOffset;
+                    arrow.position.y = y + yOffset;
+                }
+            }
+        }
+    }
+
     async draw() {
       super.draw();
     }
@@ -322,6 +600,6 @@ export class calibrationOverlay extends ControlsLayer {
         $('#players').show();
         $('#hotbar').show();
     }
-  }
+}
 
 

@@ -1,2 +1,3 @@
 MaterialFoundry512x512.png is owned by Material Foundry
+macro.png: Foundry's icon folder, converted from .svg, original name: dice-target.svg
 All other images are from fontawesome
