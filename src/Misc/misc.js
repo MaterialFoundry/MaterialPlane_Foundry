@@ -1,4 +1,5 @@
 import { moduleName } from "../../MaterialPlane.js";
+import { compatibilityHandler } from "./compatibilityHandler.js";
 
 let debugSettings = {
   wsRaw: false,
@@ -32,7 +33,7 @@ export function updatePowerState(data) {
   let battery = data.percentage;
   let batteryColor = "#FFFFFF";
 
-  if (battery < 20 && Date.now() - batteryNotificationTimer >= 60000) {
+  if (battery < 20 && data.chargerStatus != "Charging" && Date.now() - batteryNotificationTimer >= 60000) {
     batteryNotificationTimer = Date.now();
     ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.BatteryLowSensor"));
   }
@@ -114,8 +115,8 @@ export function compareVersions(checkedVersion, requiredVersion) {
 
 export function compatibleCore(compatibleVersion){
   const split = compatibleVersion.split(".");
-  if (split.length == 2) compatibleVersion = `0.${compatibleVersion}`;
-  let coreVersion = game.version == undefined ? game.data.version : `0.${game.version}`;
+  if (split.length == 1) compatibleVersion = `${compatibleVersion}.0`;
+  let coreVersion = game.version;
   return compareVersions(compatibleVersion, coreVersion);
 }
 
@@ -189,7 +190,7 @@ export class MaterialPlaneLayer extends CanvasLayer {
 
   /** @override */
   static get layerOptions() {
-    return mergeObject(super.layerOptions, { zIndex: 20000 });
+    return compatibilityHandler('mergeObject', super.layerOptions, { zIndex: 20000 });
   }
 
   activate() {

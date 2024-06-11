@@ -4,6 +4,7 @@ import { DragRuler } from "./tokenRuler.js";
 import { findToken, getGridCenter, getIRDeadZone, getIROffset, getTokenGridEnterPosition, getTokenCollision, comparePositions, addToCoordinates, checkSurroundingGridCollision, findNearestEmptySpace } from "./tokenHelpers.js";
 import { TokenMarker } from "./tokenMarker.js";
 import { TokenDebug } from "./tokenDebug.js";
+import { compatibilityHandler } from "../Misc/compatibilityHandler.js";
 
 let pausedMessage = false;
 
@@ -65,8 +66,9 @@ export class IRtoken {
             
             //If the user can't control the token and non-owned token movement is disabled, prevent token movement
             if (this.token.can(game.user,"control") == false && game.settings.get(moduleName,'EnNonOwned') == false) {
+                
+                debug('updateMovement',`User can't control token ${this.token?.name}`)
                 this.token = undefined;
-                debug('updateMovement',`User can't control token ${this.token.name}`)
                 return false;
             }
 
@@ -122,7 +124,7 @@ export class IRtoken {
         this.debug.updateGridSpace(currentGridSpace);
 
         //Check if a token has entered a new grid space, if so, store where it entered the space
-        let enterPos = getTokenGridEnterPosition(this.token, this.previousPosition, currentGridSpace, coords, this.debug);
+        let enterPos = await getTokenGridEnterPosition(this.token, this.previousPosition, currentGridSpace, coords, this.debug);
 
         let movementMethod = game.settings.get(moduleName,'movementMethod');
 
@@ -221,7 +223,7 @@ export class IRtoken {
             this.token.refresh();
 
             //Update lighting in case of 'live' movement method
-            if (movementMethod == 'live') this.token.updateSource({noUpdateFog: false});
+            if (movementMethod == 'live') compatibilityHandler('initializeSources', this.token);
 
             //Print debug message
             debug('moveToken',`Token: ${this.token.name}, Move to: (${coords.x}, ${coords.y})`)
@@ -275,9 +277,12 @@ export class IRtoken {
             if (this.token.can(game.user,"control")) {
                 //Update token position
                 await this.token.document.update(newCoords);
+                
+                if (this.token == undefined) return false;
 
                 //Prevent token animation
-                CanvasAnimation.terminateAnimation(this.token.animationName);
+                if (this.token?.animationName)
+                    CanvasAnimation.terminateAnimation(this.token.animationName);
 
                 //Print debug message
                 debug('dropToken',`Token ${this.token.name}, Dropping at (${newCoords.x}, ${newCoords.y})`)

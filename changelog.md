@@ -1,4 +1,14 @@
 # Changelog Material Plane Foundry Module
+
+### v3.1.1 - 12-06-2024
+
+<b>The module is now compatible with Foundry v12, removed compatibility with v10.</b>
+
+Fixes:
+<ul>
+<li>Fixed issue where linked tokens would sometimes not move</li>
+</ul>
+
 ### v3.1.0 - 16-04-2024
 Fixes:
 <ul>

@@ -1,5 +1,6 @@
 import { moduleName } from "../../MaterialPlane.js";
 import { debug } from "../Misc/misc.js";
+import { compatibilityHandler } from "../Misc/compatibilityHandler.js";
 
 /**
  * Compare positions of two tokens/objects. If they are equal, return true
@@ -78,7 +79,7 @@ export function findToken(coords, spacing, currentToken, mode){
             if (token.h >= spacing && token.h > sp) sp = token.h;
         }
         else {
-            coordsCenter = token.getCenter(token.x,token.y); 
+            coordsCenter = compatibilityHandler('tokenCenter', token, token.x, token.y); 
             const baseOrientation = game.settings.get(moduleName,'baseOrientation');
             if (baseOrientation == '0') {
             dx = Math.abs(coordsCenter.x - coords.x + (token.document.width-1)*spacing/2);
@@ -159,8 +160,10 @@ export function getGridCenter(coords, token) {
         x: coords.x + 0.5*gridSize,
         y: coords.y + 0.5*gridSize
     }
-    const center = canvas.grid.getCenter(newCoords.x, newCoords.y);
-    return {x: center[0], y: center[1]};
+    //const center = 
+    return compatibilityHandler('gridCenter', newCoords.x, newCoords.y);
+    //console.log('center',center)
+    //return {x: center[0], y: center[1]};
 }
 
 /**
@@ -196,6 +199,9 @@ export function getTokenGridEnterPosition(token, previousPosition, currentGridSp
 
     if (token.MPlastPosition == undefined) 
         token.MPlastPosition = currentGridSpace;
+
+    if (token.MPgridEnterPosition == undefined)
+        token.MPgridEnterPosition = currentGridSpace;
 
     debug.updateTokenLastPosition({
         x: token.MPlastPosition.x,
@@ -251,7 +257,7 @@ export function getTokenCollision(token, origin, destination, useTestPosition=fa
 
     if (useTestPosition) {
         let dest = Object.assign({}, destination);
-
+        
         //Define a position to test for wall collisions. Start at the center of the token
         let collisionTestPosition = {
             x: origin.x + gridSize/2,
@@ -350,12 +356,12 @@ export function checkSurroundingGridCollision(token, coords, origin, debug) {
 export function findNearestEmptySpace(token, coords, originPosition) {
     const spacer = canvas.scene.gridType === CONST.GRID_TYPES.SQUARE ? 1.41 : 1;
     //If space is already occupied
-    if (findToken(token.getCenter(coords.x,coords.y),(spacer * Math.min(canvas.grid.w, canvas.grid.h))/2,token) != undefined) {
+    if (findToken(compatibilityHandler('tokenCenter', token, coords.x, coords.y),(spacer * Math.min(compatibilityHandler('canvasWidth'), compatibilityHandler('canvasHeight')))/2,token) != undefined) {
         ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.SpaceOccupied"));
         let ray = new Ray({x: originPosition.x, y: originPosition.y}, {x: coords.x, y: coords.y});
 
         //Code below modified from _highlightMeasurement() in ruler class in core foundry  
-        const nMax = Math.max(Math.floor(ray.distance / (spacer * Math.min(canvas.grid.w, canvas.grid.h))), 1);
+        const nMax = Math.max(Math.floor(ray.distance / (spacer * Math.min(compatibilityHandler('canvasWidth'), compatibilityHandler('canvasHeight')))), 1);
         const tMax = Array.fromRange(nMax+1).map(t => t / nMax);
 
         // Track prior position
@@ -367,9 +373,9 @@ export function findNearestEmptySpace(token, coords, originPosition) {
          
             // Get grid position
             let [r0, c0] = (i === 0) ? [null, null] : prior;
-            let [r1, c1] = canvas.grid.grid.getGridPositionFromPixels(x, y);
+            let [r1, c1] = compatibilityHandler('getGridOffset', x, y);
             if ( r0 === r1 && c0 === c1 ) continue;
-            let [x1, y1] = canvas.grid.grid.getPixelsFromGridPosition(r1, c1);
+            let [x1, y1] = compatibilityHandler('getTopLeftPoint', r1, c1);
             gridPositions.push({x: x1, y: y1})
             
             // Skip the first one
@@ -377,24 +383,22 @@ export function findNearestEmptySpace(token, coords, originPosition) {
             if ( i === 0 ) continue;
 
             // If the positions are not neighbors, also highlight their halfway point
-            if ( !canvas.grid.isNeighbor(r0, c0, r1, c1) ) {
+            if (!compatibilityHandler('testAdjacency', {i:r0, j:c0}, {i:r1, j:c1})) {
                 let th = tMax[i - 1] + (0.5 / nMax);
                 let {x, y} = ray.project(th);
-                let [rh, ch] = canvas.grid.grid.getGridPositionFromPixels(x, y);
-                let [xh, yh] = canvas.grid.grid.getPixelsFromGridPosition(rh, ch);
+                let [rh, ch] = compatibilityHandler('getGridOffset', x, y);
+                let [xh, yh] = compatibilityHandler('getTopLeftPoint', rh, ch);
                 gridPositions.splice(gridPositions.length-1, 0, {x: xh, y: yh})
             }
         }
         for (let i=gridPositions.length-1; i>=0; i--) {
             const position = gridPositions[i];
-            const centeredPosition = token.getCenter(position.x,position.y);
-            if (getTokenCollision(token,token.getCenter(coords.x,coords.y),centeredPosition)) {
+            const centeredPosition = compatibilityHandler('tokenCenter', token, position.x, position.y);
+            if (getTokenCollision(token, compatibilityHandler('tokenCenter', token, coords.x, coords.y), centeredPosition)) {
                 continue;
             }
-            if (findToken(centeredPosition,(spacer * Math.min(canvas.grid.w, canvas.grid.h))/2,token) == undefined) {
-                coords.x = position.x;
-                coords.y = position.y;
-                return coords;
+            if (findToken(centeredPosition,(spacer * Math.min(compatibilityHandler('canvasWidth'), compatibilityHandler('canvasHeight')))/2,token) == undefined) {
+                return position;
             }
         }
         return originPosition;

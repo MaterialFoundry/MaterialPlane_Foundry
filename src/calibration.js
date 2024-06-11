@@ -1,5 +1,6 @@
 import { sendWS } from "./Communication/websocket.js";
 import { moduleName, calibrationProgress } from "../MaterialPlane.js";
+import { compatibilityHandler } from "./Misc/compatibilityHandler.js";
 
 let countdownCount = 5;
 let countdown;
@@ -17,7 +18,7 @@ export class calibrationProgressScreen extends FormApplication {
      * Default Options for this FormApplication
      */
     static get defaultOptions() {
-        return mergeObject(super.defaultOptions, {
+        return compatibilityHandler('mergeObject', super.defaultOptions, {
             id: "MaterialPlane_CalProgMenu",
             title: `Material Plane: Calibration`,
             template: "./modules/MaterialPlane/templates/calibrationProgressScreen.html",
@@ -352,7 +353,10 @@ export class calibrationProgressScreen extends FormApplication {
                 document.getElementById("waiting").style="display:none";
             }
             
-            document.getElementById('MaterialPlane_CalProgMenu').style.height='auto';
+            if (document.getElementById('MaterialPlane_CalProgMenu')) {
+                document.getElementById('MaterialPlane_CalProgMenu').style.height='auto';
+            }
+            
             let user = game.users.contents.filter(u => u.active == true && u.isGM == true)[0];
             if (game.userId == user.id) sendWS({event:"calibration", state:"next"});
             else if (user == undefined && game.settings.get(moduleName,'ActiveUser') == game.userId) sendWS({event:"calibration", state:"next"});

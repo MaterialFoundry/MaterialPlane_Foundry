@@ -1,6 +1,7 @@
 import { moduleName, hwVariant, hwFirmware, hwWebserver, msVersion, latestReleases, checkForUpdate, urls } from "../../MaterialPlane.js";
-import { lastBaseAddress, pen } from "../analyzeIR.js";
+import { lastBaseAddress } from "../analyzeIR.js";
 import { sendWS } from "../Communication/websocket.js";
+import { compatibilityHandler } from "./compatibilityHandler.js";
 
 /**
  * Configuration application
@@ -21,7 +22,7 @@ export class mpConfig extends FormApplication {
      * Default Options for this FormApplication
      */
     static get defaultOptions() {
-        return mergeObject(super.defaultOptions, {
+        return compatibilityHandler('mergeObject', super.defaultOptions, {
             id: "MaterialPlane_Config",
             title: game.i18n.localize("MaterialPlane.Config.Title"),
             template: "./modules/MaterialPlane/templates/config.html",

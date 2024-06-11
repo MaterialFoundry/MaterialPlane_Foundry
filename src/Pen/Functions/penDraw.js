@@ -1,3 +1,5 @@
+import { compatibilityHandler } from "../../Misc/compatibilityHandler.js";
+
 let drawing;
 let lastDrawing;
 let newDrawing = false;
@@ -15,7 +17,7 @@ let freehand = false;
  */
 export async function drawFunction(command, data, status, menu) {
     if (command == 'penIdle') {
-        if (drawing != undefined && (drawing.type == CONST.DRAWING_TYPES.POLYGON || drawing.type == CONST.DRAWING_TYPES.FREEHAND) && newDrawing) {
+        if (drawing != undefined && (drawing.type == compatibilityHandler('drawingTypes').POLYGON || drawing.type == compatibilityHandler('drawingTypes').FREEHAND) && newDrawing) {
             drawing._addPoint({x:data.x, y:data.y}, {snap:false, temporary:true});
             drawing.renderFlags.set({refreshShape: true});
         }
@@ -37,7 +39,7 @@ export async function drawFunction(command, data, status, menu) {
                 }
             }
             //Add point to the drawing
-            else if (drawing != undefined && drawing.type == CONST.DRAWING_TYPES.POLYGON && drawing.document.bezierFactor == 0 && newDrawing) {
+            else if (drawing != undefined && drawing.type == compatibilityHandler('drawingTypes').POLYGON && drawing.document.bezierFactor == 0 && newDrawing) {
                 drawing._addPoint({x:data.x,y:data.y},false)
             }
             //Start drawing
@@ -46,11 +48,11 @@ export async function drawFunction(command, data, status, menu) {
                 let drawingData = canvas.layers.filter(layer => layer.name == 'DrawingsLayer')[0]._getNewDrawingData({x:data.x,y:data.y})
                 let type;
                 freehand = false;
-                if (tool == 'rect') type = CONST.DRAWING_TYPES.RECTANGLE;
-                else if (tool == 'ellipse') type = CONST.DRAWING_TYPES.ELLIPSE;
-                else if (tool == 'polygon') type = CONST.DRAWING_TYPES.POLYGON;
+                if (tool == 'rect') type = compatibilityHandler('drawingTypes').RECTANGLE;
+                else if (tool == 'ellipse') type = compatibilityHandler('drawingTypes').ELLIPSE;
+                else if (tool == 'polygon') type = compatibilityHandler('drawingTypes').POLYGON;
                 else if (tool == 'freehand') {
-                    type = CONST.DRAWING_TYPES.POLYGON;
+                    type = compatibilityHandler('drawingTypes').POLYGON;
                     ui.controls.controls.find(c => c.name == 'drawings').activeTool = 'freehand';
                     ui.controls.render(); 
                     freehand = true;
@@ -79,9 +81,9 @@ export async function drawFunction(command, data, status, menu) {
         else if (status == 'hold') {
             if (drawing == undefined || menu.selectedDrawing == 6) return;
 
-            if (drawing.type == CONST.DRAWING_TYPES.POLYGON && (!freehand || freehand && !newDrawing)) return;
+            if (drawing.type == compatibilityHandler('drawingTypes').POLYGON && (!freehand || freehand && !newDrawing)) return;
 
-            if (drawing.type == CONST.DRAWING_TYPES.POLYGON && newDrawing) {          
+            if (drawing.type == compatibilityHandler('drawingTypes').POLYGON && newDrawing) {          
                 drawing._addPoint({x:data.x, y:data.y});
                 drawing.refresh();
             }
@@ -100,7 +102,7 @@ export async function drawFunction(command, data, status, menu) {
         else if (status == 'release') {
             if (drawing == undefined || menu.selectedDrawing == 6) return;
    
-            if (drawing.type != CONST.DRAWING_TYPES.POLYGON || drawing.document.bezierFactor > 0) {
+            if (drawing.type != compatibilityHandler('drawingTypes').POLYGON || drawing.document.bezierFactor > 0) {
                 if (newDrawing) {
                     newDrawing = false;
                     canvas.drawings.preview.removeChild(drawing);
@@ -120,7 +122,7 @@ export async function drawFunction(command, data, status, menu) {
     }
     else if (command == 'penA') {
         if (status == 'click') {
-            if (newDrawing && drawing.type == CONST.DRAWING_TYPES.POLYGON) {
+            if (newDrawing && drawing.type == compatibilityHandler('drawingTypes').POLYGON) {
                 newDrawing = false;
                 canvas.drawings.preview.removeChild(drawing);
                 const cls = getDocumentClass('Drawing');
@@ -144,7 +146,7 @@ export async function drawFunction(command, data, status, menu) {
         }
     }
     else if (command == 'penB') {
-        if (newDrawing && drawing.type == CONST.DRAWING_TYPES.POLYGON) {
+        if (newDrawing && drawing.type == compatibilityHandler('drawingTypes').POLYGON) {
             if (status == 'click') {
 
             }

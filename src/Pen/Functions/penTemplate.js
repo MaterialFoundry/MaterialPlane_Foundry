@@ -1,4 +1,4 @@
-import { compatibleCore } from "../../Misc/misc.js";
+import { compatibilityHandler } from "../../Misc/compatibilityHandler.js";
 
 let template;
 let newTemplate = false;
@@ -31,7 +31,7 @@ export function templateFunction(command,data,status, menu) {
             else {
                 let tool = menu.selectedTemplateName;
 
-                const snappedPosition = canvas.grid.getSnappedPosition(data.x, data.y, canvas.templates.gridPrecision);
+                const snappedPosition = compatibilityHandler('snappedPoint', data);
 
                 const templateData = {
                     user: game.user.id,
@@ -75,7 +75,7 @@ export function templateFunction(command,data,status, menu) {
             if (newTemplate) {
                 menu.setSelected(1,true)
                 newTemplate = false;
-                template.controlIcon.visible = false;
+                //template.controlIcon.visible = false;
                 template._destroy();
                 canvas.templates.preview.removeChild(template);
                 const cls = getDocumentClass('MeasuredTemplate');
@@ -95,16 +95,11 @@ export function templateFunction(command,data,status, menu) {
             template.document.x = data.x;
             template.document.y = data.y;
 
-            if (compatibleCore('11.0'))
-                template.renderFlags.set({refreshPosition:true, refreshGrid:true})
-            else {
-                template.refresh();
-                template.highlightGrid();
-            }
+            template.renderFlags.set({refreshPosition:true, refreshGrid:true})
         }
         else if (status == 'release') {
             if (template == undefined || menu.selectedTemplate == 6) return;
-            const snappedPosition = canvas.grid.getSnappedPosition(data.x, data.y, canvas.templates.gridPrecision);
+            const snappedPosition = compatibilityHandler('snappedPoint', data);
             template.document.update({x:snappedPosition.x,y:snappedPosition.y});
         }
     }
@@ -141,7 +136,7 @@ export function templateFunction(command,data,status, menu) {
         }
         else if (status == 'release') {
             if (template == undefined || menu.selectedTemplate == 6) return;
-            const snappedPosition = canvas.grid.getSnappedPosition(data.x, data.y, canvas.templates.gridPrecision);
+            const snappedPosition = compatibilityHandler('snappedPoint', data);
             template.document.update({x:snappedPosition.x,y:snappedPosition.y,direction:template.document.direction});
         }  
     }

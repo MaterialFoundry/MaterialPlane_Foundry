@@ -8,10 +8,11 @@ import { registerSettings, onHwVariantChange } from "./src/Misc/settings.js";
 import { mpConfig } from "./src/Misc/config.js";
 import { sendWS, startWebsocket } from "./src/Communication/websocket.js";
 import { calibrationProgressScreen, removeOverlay, calOverlay } from "./src/calibration.js";
-import { registerLayer, configureDebug, compatibleCore } from "./src/Misc/misc.js";
+import { registerLayer, configureDebug } from "./src/Misc/misc.js";
 import { initializeIRtokens, initializeCursors, setLastBaseAddress, pen } from "./src/analyzeIR.js";
 import { IRremote } from "./src/IRremote/IRremote.js";
 import { analyzeTouch } from "./src/analyzeTouch.js";
+import { compatibilityInit } from "./src/Misc/compatibilityHandler.js";
 
 export const moduleName = "MaterialPlane";
 export let lastToken;
@@ -329,6 +330,7 @@ Hooks.on('closecalibrationProgressScreen',() => {
  * Initialize settings
  */
 Hooks.once('init', function(){
+    compatibilityInit();
     registerSettings();
     registerLayer();
     configDialog = new mpConfig();
@@ -398,10 +400,7 @@ Hooks.on('renderPlayerList', (a,b, playerlist) => {
     const pl = playerlist.users.find(p => p._id == game.settings.get(moduleName,'ActiveUser'));
     if (pl == undefined) return;
     const html = `<span style="font-size:0.6rem; border:2px solid; border-radius:25%; padding: 0px 3px 0px 3px">MP</span>`;
-    if (compatibleCore('11.0')) 
-        document.querySelectorAll(`[data-tooltip="${pl.displayName}"]`)[0].innerHTML+=html;
-    //else
-       // document.querySelectorAll(`[data-user-id="${pl._id}"]`)[0].innerHTML+=html;
+    document.querySelectorAll(`[data-tooltip="${pl.displayName}"]`)[0].innerHTML+=html;
 });
 
 //let scaleOld;
@@ -454,4 +453,6 @@ export async function checkForUpdate(reqType) {
             latestReleases.materialCompanion = version;
         }
     });
+
+    
 } 
