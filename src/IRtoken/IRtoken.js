@@ -307,6 +307,7 @@ export class IRtoken {
         this.token.document.x = newCoords.x;
         this.token.document.y = newCoords.y;
         this.token.refresh();
+        compatibilityHandler('initializeSources', this.token);
         
         //Release token, if setting is enabled
         if (release) this.token.release();

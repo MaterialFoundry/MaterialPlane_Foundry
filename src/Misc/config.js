@@ -80,6 +80,7 @@ export class mpConfig extends FormApplication {
             tapTimeout: game.settings.get(moduleName,'tapTimeout'),
             touchScaleX: game.settings.get(moduleName,'touchScaleX'),
             touchScaleY: game.settings.get(moduleName,'touchScaleY'),
+            tapPing: game.settings.get(moduleName, 'tapPing'),
 
             baseSetup: this.baseSettings,
 
@@ -255,6 +256,9 @@ export class mpConfig extends FormApplication {
         html.find("input[id=mpTouchScaleYNumber]").on('change', event => {
             html.find("input[id=mpTouchScaleY]")[0].value = event.target.value;
             this.setSettings('touchScaleY', event.target.value);
+        });
+        html.find("input[id=mpTapPing]").on('change', event => { 
+            this.setSettings('tapPing',event.target.checked); 
         });
 
         // --- Base Setup settings, more in buildBaseTable() ---

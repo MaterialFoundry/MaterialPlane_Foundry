@@ -151,10 +151,10 @@ Hooks.on('ready', async ()=>{
    // configDialog.setConfigOpen(true);
    // configDialog.render(true);
 
-    if (game.version.split('.')[0] >= 11 && game.settings.get(moduleName,'device') == 'touch') {
+    if (game.version.split('.')[0] < 12 && game.settings.get(moduleName,'device') == 'touch') {
         let d = new Dialog({
             title: "Material Plane: Incompatibility",
-            content: "<p>The touch functionality of Material Plane is incompatible with Foundry V11.<br>You should downgrade to Foundry V10 if you want to use the touch functionality. If you ignore this message, expect weird behavior.</p>",
+            content: "<p>The touch functionality of Material Plane is incompatible with Foundry V11.<br>You should upgrade to Foundry v12 if you want to use the touch functionality. If you ignore this message, expect weird behavior.</p>",
             buttons: {
              one: {
               icon: '<i class="fas fa-check"></i>',
@@ -171,7 +171,7 @@ Hooks.on('ready', async ()=>{
     }
 
     enableModule = game.user.id == game.settings.get(moduleName,'ActiveUser');
-    hideElements = game.settings.get(moduleName,'HideElements') && game.user.isGM == false;
+    hideElements = game.settings.get(moduleName,'HideElements') && game.user.isGM == false && enableModule;
     if (game.settings.get(moduleName,'device') == 'sensor' && game.settings.get(moduleName,'ConnectionMode') != "noConnect" && window.location.protocol == "https:" && game.settings.get(moduleName,'ConnectionMode') != 'materialCompanion'){
         ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.SSL"));
         enableModule = false;
@@ -181,11 +181,15 @@ Hooks.on('ready', async ()=>{
         if (game.settings.get(moduleName,'device') == 'sensor') {
             startWebsocket();
         }
-        else {
-            document.addEventListener('touchstart',function(e) {e.preventDefault(); analyzeTouch('start',e);});
-            document.addEventListener('touchmove',function(e) {e.preventDefault(); analyzeTouch('move',e);});
-            document.addEventListener('touchend',function(e) {e.preventDefault(); analyzeTouch('end',e);});
-            document.addEventListener('touchcancel',function(e) {e.preventDefault(); analyzeTouch('end',e);});
+        else if (enableModule) {
+            document.addEventListener('touchstart',function(e) {analyzeTouch('start',e);});
+            document.addEventListener('touchmove',function(e) {analyzeTouch('move',e);});
+            document.addEventListener('touchend',function(e) {analyzeTouch('end',e);});
+            document.addEventListener('touchcancel',function(e) {analyzeTouch('end',e);});
+
+            //disable ping on long press
+            canvas.pingOld = canvas.ping;
+            canvas.ping = function(origin) {};
         }
 
         if (hideElements){

@@ -59,6 +59,16 @@ export const registerSettings = function() {
     });
 
     /**
+     * Ping on double tap
+     */
+    game.settings.register(moduleName,'tapPing', {
+        scope: "world",
+        config: false,
+        default: true,
+        type: Boolean
+    });
+
+    /**
      * Touch Scale X
      */
      game.settings.register(moduleName, 'touchScaleX', {

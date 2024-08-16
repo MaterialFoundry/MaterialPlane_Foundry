@@ -1,5 +1,18 @@
 # Changelog Material Plane Foundry Module
 
+### v3.2.0 - 16-08-2024
+
+Additions:
+<ul>
+<li>(Touch) Added the ability to ping on a double tap</li>
+</ul>
+
+Fixes:
+<ul>
+<li>Touch now works for Foundry v12</li>
+<li>Hide UI elements is now only applied to the active user</li>
+</ul>
+
 ### v3.1.1 - 12-06-2024
 
 <b>The module is now compatible with Foundry v12, removed compatibility with v10.</b>

@@ -331,7 +331,7 @@
 
     <div class="mpConfigTab">
         <button type="button" class="mpConfigTabLinks active" onclick="openTab(event, 'mpConfigGeneral')">{{localize "MaterialPlane.Config.General"}}</button>
-        <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigControl')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.Control"}}</button>
+        <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigControl')">{{localize "MaterialPlane.Config.Control"}}</button>
         <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigConnection')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.Connection"}}</button>
         <button type="button" class="mpConfigTabLinks" onclick="openTab(event, 'mpConfigSensor')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.Sensor"}}</button>
         <button type="button" class="mpConfigTabLinks mpProd" onclick="openTab(event, 'mpConfigBase')" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>{{localize "MaterialPlane.Config.BaseSetup"}}</button>
@@ -376,7 +376,7 @@
         </div>
 
         <!-- Low Battery Notifications -->
-        <div class="mpConfigFormElements mpProd">
+        <div class="mpConfigFormElements mpProd" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>
             <label class="mpTooltip">{{localize "MaterialPlane.Config.BatteryNotifications_Label"}}
                 <span class="mpTooltiptext">{{localize "MaterialPlane.Config.BatteryNotifications_Hint"}}</span>
             </label>
@@ -428,7 +428,7 @@
         </div>
 
         <!-- Base Orientation -->
-        <div class="mpConfigFormElements">
+        <div class="mpConfigFormElements" {{#ifNCond device 'sensor'}}style="display:none"{{/ifNCond}}>
             <label class="mpTooltip">{{localize "MaterialPlane.Config.BaseOrientation_Label"}}
                 <span class="mpTooltiptext">{{localize "MaterialPlane.Config.BaseOrientation_Hint"}}</span>
             </label>
@@ -1006,7 +1006,9 @@
 
         <!-- Tap Mode -->
         <div class="mpConfigFormElements">
-            <label for="mpTapMode">{{localize "MaterialPlane.Config.TapMode"}}</label>
+            <label class="mpTooltip">{{localize "MaterialPlane.Config.TapMode"}}
+                <span class="mpTooltiptext">{{localize "MaterialPlane.Config.TapMode_Hint"}}</span>
+            </label>
             <div class="mpConfigFormVal">
                 <select id="mpTapMode">
                     <option value="disable" {{#ifCond tapMode 'disable'}}selected{{/ifCond}}>{{localize "MaterialPlane.Config.TapMode_Disable"}}</option>
@@ -1015,50 +1017,60 @@
                 </select>
             </div>    
         </div>
-        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.TapMode_Hint"}}</p>
-        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.TapMode_Timeout_Hint"}}</p>
-        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.TapMode_RaiseMini_Hint"}}</p>
         
-
         <!-- Touch Timeout -->
         <div class="mpConfigFormElements">
-            <label for="mpTouchTimeout">{{localize "MaterialPlane.Config.TouchTimeout"}}</label>
+            <label class="mpTooltip">{{localize "MaterialPlane.Config.TouchTimeout"}}
+                <span class="mpTooltiptext">{{localize "MaterialPlane.Config.TouchTimeout_Hint"}}</span>
+            </label>
             <div class="mpConfigFormValRange">
                 <input type="range" id="mpTouchTimeout" min=500 max=5000 step=100 value={{touchTimeout}}>
                 <input type="number" id="mpTouchTimeoutNumber" value={{touchTimeout}}>
             </div>
         </div>
-        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.TouchTimeout_Hint"}}</p>
 
         <!-- Tap Timeout -->
         <div class="mpConfigFormElements">
-            <label for="mpTapTimeout">{{localize "MaterialPlane.Config.TapTimeout"}}</label>
+            <label class="mpTooltip">{{localize "MaterialPlane.Config.TapTimeout"}}
+                <span class="mpTooltiptext">{{localize "MaterialPlane.Config.TapTimeout_Hint"}}</span>
+            </label>
             <div class="mpConfigFormValRange">
                 <input type="range" id="mpTapTimeout" min=100 max=5000 step=100 value={{tapTimeout}}>
                 <input type="number" id="mpTapTimeoutNumber" value={{tapTimeout}}>
             </div>
         </div>
-        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.TapTimeout_Hint"}}</p>
+
+        <!-- Tap Ping -->
+        <div class="mpConfigFormElements">
+            <label class="mpTooltip">{{localize "MaterialPlane.Config.TapPing"}}
+                <span class="mpTooltiptext">{{localize "MaterialPlane.Config.TapPing_Hint"}}</span>
+            </label>
+            <div class="mpConfigFormVal">
+                <input type="checkbox" id="mpTapPing"  {{#if tapPing}}checked{{/if}}>
+            </div>
+        </div>
 
         <!-- X Scale -->
         <div class="mpConfigFormElements">
-            <label for="mpTouchScaleX">{{localize "MaterialPlane.Config.ScaleX"}}</label>
+            <label class="mpTooltip">{{localize "MaterialPlane.Config.ScaleX"}}
+                <span class="mpTooltiptext">{{localize "MaterialPlane.Config.ScaleX_Hint"}}</span>
+            </label>
             <div class="mpConfigFormValRange">
                 <input type="range" id="mpTouchScaleX" min=0 max=2 step=0.01 value={{touchScaleX}}>
                 <input type="number" id="mpTouchScaleXNumber" value={{touchScaleX}}>
             </div>
         </div>
-        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.ScaleX_Hint"}}</p>
 
         <!-- Y Scale -->
         <div class="mpConfigFormElements">
-            <label for="mpTouchScaleY">{{localize "MaterialPlane.Config.ScaleY"}}</label>
+            <label class="mpTooltip">{{localize "MaterialPlane.Config.ScaleY"}}
+                <span class="mpTooltiptext">{{localize "MaterialPlane.Config.ScaleY_Hint"}}</span>
+            </label>
             <div class="mpConfigFormValRange">
                 <input type="range" id="mpTouchScaleY" min=0 max=2 step=0.01 value={{touchScaleY}}>
                 <input type="number" id="mpTouchScaleYNumber" value={{touchScaleY}}>
             </div>
         </div>
-        <p class="mpConfigNotes">{{localize "MaterialPlane.Config.ScaleY_Hint"}}</p>
     </div>
 
     <!-----------------------------------------------Downloads--------------------------------------------------------------------->

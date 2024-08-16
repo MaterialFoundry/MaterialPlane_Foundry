@@ -7,11 +7,13 @@ let tokenActive = [];
 let tapTimeout = [];
 let raiseData = [];
 let touches = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+let touchesTimer = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
 let pauseTimeoutCheck = false;
 
 export async function analyzeTouch(type,data) {
     //console.log('data',type,data)
     //debug('touchDetect',{type,data});
+    
 
     if (game.paused) {
         if (!pauseTimeoutCheck) {
@@ -40,6 +42,16 @@ export async function analyzeTouch(type,data) {
         debug('touchDetect', `${type}, id: ${id}, Coordinates: (${coordinates.x}, ${coordinates.y}), Scaled: (${scaledCoordinates.x}, ${scaledCoordinates.y})`);
         const forceNew = type == 'start';
         const tapMode = game.settings.get('MaterialPlane','tapMode');
+
+        if (type == 'start') {
+            const timeSinceLastTouch = Date.now() - touchesTimer[id];
+            touchesTimer[id] = Date.now();
+
+            if (game.settings.get(moduleName, 'tapPing') && timeSinceLastTouch < 500) {
+                canvas.pingOld(scaledCoordinates);
+                return;
+            }
+        }
         
         if (tapMode == 'disable') {             //Tap disabled
             if (type == 'end')
