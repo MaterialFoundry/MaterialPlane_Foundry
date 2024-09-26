@@ -1,0 +1,270 @@
+.mpConfigTab {
+    overflow: hidden;
+    display:flex;
+}
+
+.mpConfigTab button {
+    background-color: #ccc;
+    float: left;
+    border: 1px solid black;
+    outline: none;
+    cursor: pointer;
+    transition: 0.3s;
+    border-radius: 5px 5px 0px 0px;
+}
+
+.mpConfigTab button:hover {
+    background-color: #ddd;
+
+}
+
+.mpConfigTab button.active {
+    background-color: inherit;
+    border: 1px solid black;
+    border-bottom: none;
+}
+
+.mpConfigTabContent {
+    padding: 6px 12px;
+    border: 1px solid black;
+    border-top: none;
+    min-height: 300px;
+    max-height: 700px;
+    overflow: auto;
+} 
+
+.mpContentSensor {
+    height: 500px;
+    max-height: 500px;
+    overflow: hidden;
+} 
+
+.mpConfigFormElements{
+    width: 100%;
+    display: flex;
+    margin-bottom: 1px;
+    align-items: center;
+}
+
+.mpConfigFormElements label {
+    width: 50%;
+}
+
+.mpConfigFormElements .mpConfigFormVal,
+.mpConfigFormElements .mpConfigFormValRange,
+.mpConfigFormElements .mpConfigFormBtn {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    width: 50%;
+}
+
+.mpConfigFormElements .mpConfigFormVal input[type='text'],
+.mpConfigFormElements .mpConfigFormVal input[type='number'],
+.mpConfigFormElements .mpConfigFormVal select,
+.mpConfigFormElements .mpConfigFormValRange input[type='range'] {
+    flex-grow: 4;
+}
+
+.mpConfigFormElements .mpConfigFormValRange input[type='number'] {
+    width: 25%;
+    margin-left: 5px;
+}
+
+.mpConfigFormElements .mpConfigFormBtn button {
+    width: 100%;
+    margin-left: 5px;
+}
+
+.mpConfigFormElements .mpConfigFormBtn select {
+    min-width: 50%;
+    transform: translateY(10%);
+}
+
+.mpConfigNotes {
+    font-size: 0.85em;
+    font-style: italic;
+    color: grey;
+    margin-bottom: 5px;
+}
+
+.mpNotes {
+    font-size: 0.9em;
+    color: black;
+    margin-bottom: 5px;
+}
+
+.mpBaseTableId {
+    flex: 0 0 10%;
+}
+.mpBaseTableName {
+    flex: 0 0 20%;
+}
+.mpBaseTableLink {
+    text-align: center;
+    flex: 0 0 7%;
+}
+header.mpBaseTableHeader {
+    background: rgba(0, 0, 0, 0.5);
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #191813;
+    text-align: left;
+    font-weight: bold;
+    color: #f0f0e0;
+    font-weight: bold;
+    text-shadow: 1px 1px #000;
+}
+.mpIrTableName {
+    flex: 0 0 25%;
+}
+
+.mpIrTableProtocol{
+    flex: 0 0 12.5%
+}
+
+.mpIrTableCode{
+    flex: 0 0 15%;
+}
+
+.mpIrTableMacro{
+    flex: 0 0 15%;
+}
+
+.mpIrTableArgument{
+    flex: 0 0 12.5%;
+}
+
+.mpIrTableDelay{
+    flex: 0 0 7.5%;
+}
+
+.mpIrTableLink{
+    flex: 0 0 5%;
+}
+
+.mpConfigContent table,
+.mpConfigContent th,
+.mpConfigContent td {
+  border: 1px solid black;
+}
+.mpConfigContent canvas {
+    border: 2px solid rgb(151, 149, 149);
+}
+.mpExpandable {
+    cursor: pointer;
+}
+.mpCollapsed {
+    display:none;
+}
+.mpExpandableIcon {
+    border: none;
+}
+
+.mpConfigColumn {
+    float: left;
+    width: 48%;
+    margin: 1%;
+}
+
+.mpConfigColumnLeft {
+    height: 425px;
+    overflow: auto;
+}
+
+.mpConfigColumn label {
+    width: 35%;
+}
+
+.mpConfigColumn .mpConfigFormVal,
+.mpConfigColumn .mpConfigFormValRange,
+.mpConfigColumn .mpConfigFormBtn {
+    width: 65%;
+}
+
+/* Clear floats after the columns */
+.mpConfigRow:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+.mpDownloadsTable,
+.mpDownloadsTable th,
+.mpDownloadsTable td {
+    border: none;   
+}
+
+.mpDownloadsColumnLabel {
+    width:25%;
+    text-align: left;
+}
+.mpDownloadsColumnVersion {
+    width:15%;
+    text-align: center;
+}
+.mpDownloadsColumnOS {
+    width:15%;
+    text-align: center;
+}
+.mpDownloadsColumnButton {
+    width:15%;
+    text-align: center;
+}
+.mpDownloadsBtn {
+    width:50%;
+}
+
+/* Tooltip container */
+.mpTooltip {
+    position: relative;
+    display: inline-block;
+    cursor: default;
+    overflow: visible;
+    max-width: 100%;
+}
+
+/* Tooltip text */
+.mpTooltip .mpTooltiptext {
+    visibility: hidden;
+    background-color: black;
+    text-align: center;
+    padding: 5px;
+    margin-left: 5px;
+    border-radius: 6px;
+    min-width: 200px;
+    max-width: 200px;
+    opacity: 0.75;
+
+    top: -15px;
+    position: absolute;
+    z-index: 1;
+    font-size: 12px;
+    font-style: italic;
+    font-weight: normal;
+    color: darkgrey;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.mpTooltip:hover .mpTooltiptext {
+    visibility: visible;
+}
+
+.MaterialPlane_Config {
+    max-height: 500px;
+}
+
+.mpBaseListContainer {
+    min-height: 150px;
+    max-height: 150px;
+    overflow-y: scroll;
+}
+
+.mpCalError {
+    background-color: orange; 
+    border: solid 1px black;
+    border-radius: 10px;
+    margin: 5px;
+    padding: 5px;
+    font-size: 0.9em;
+}

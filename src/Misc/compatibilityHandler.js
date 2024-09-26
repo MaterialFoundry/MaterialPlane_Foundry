@@ -20,8 +20,6 @@ export function compatibilityInit() {
 }
 
 export function compatibilityHandler(id, ...args) {
-    //console.log('combatibiliyHandler',id, args)
-
     if (id == 'mergeObject')                return mergeObj(args);
     else if (id == 'tokenCenter')           return tokenCenter(args[0], args[1], args[2]);
     else if (id == 'gridCenter')            return gridCenter(args[0], args[1]);
@@ -79,7 +77,6 @@ function getGridOffset(x, y) {
 }
 
 function getTopLeftPoint(x, y) {
-    //console.log('TLP',canvas.grid.grid.getPixelsFromGridPosition(x, y),canvas.grid.getTopLeftPoint({i:x, j:y}))
     if (isV12)  {
         const topLeftPoint = canvas.grid.getTopLeftPoint({i:x, j:y});
         return [topLeftPoint.x, topLeftPoint.y];

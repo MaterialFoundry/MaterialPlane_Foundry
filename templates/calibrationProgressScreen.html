@@ -44,7 +44,7 @@
 
                 <ol>
                     <li>Calibrate using your chosen custom calibration points by selecting 'Custom Points'.</li>
-                    <li>Calibrate to pre-defined calibration points so the sensor knows where these points are related relative to your display, by selecting 'Calibrate Custom Points'</li>
+                    <li>Calibrate to pre-defined calibration points (display corner or on-screen points) so the sensor knows where these points are related relative to your display, by selecting 'Calibrate Custom Points'</li>
                 </ol>
 
                 After that, you only need to perform step 1, unless a different display is used, or the relative location of the sensor to the display is changed significantly.
@@ -73,7 +73,7 @@
             </div>
         </div>
 
-        <div id="mpCalLocationSelector" style="display:none">
+        <div class="mpCalLocationSelector" id="mpCalLocationSelector" style="display:none">
             <div class="mpConfigFormElements">
                 <label>Calibration Location:</label>
                 <div class="mpConfigFormVal">
@@ -92,6 +92,16 @@
                     <li><b>On-Screen (Recommended):</b> Calibrate using on-screen calibration points, as indicated by the red squares.</li>
                     <li><b>Corner:</b> Calibrate on the corners of your display, as indicated by the green arrows.</li>
                 </ul>
+            </div>
+
+            <div class="mpCalError" id="mpCalError" style="display:none">
+                Problems detected with your browser or display:
+                <ul>
+                    <li>Window might not be full screen</li>
+                    <li>Browser might be zoomed in or out</li>
+                    <li>Display scaling might be enabled</li>
+                </ul>
+                This might prevent the on-screen markers from appearing in the correct location.
             </div>
         </div>
 

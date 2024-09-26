@@ -11,9 +11,7 @@ let touchesTimer = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
 let pauseTimeoutCheck = false;
 
 export async function analyzeTouch(type,data) {
-    //console.log('data',type,data)
-    //debug('touchDetect',{type,data});
-    
+    debug('touchDetect',{type,data});
 
     if (game.paused) {
         if (!pauseTimeoutCheck) {

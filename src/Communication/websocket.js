@@ -17,17 +17,14 @@ let connectionAttempts = 0;
  * @param {*} msg Message received from the IR tracker
  */
 async function analyzeWSmessage(msg,passthrough = false){
-    //console.log('raw',msg);
     debug('wsRaw',msg);
     let data;
     try {
         data = JSON.parse(msg);
         debug('ws',data);
-        //console.log('data',data);
     }
     catch (error) {
-        console.warn('could not parse JSON',error, msg);
-        //console.log(msg);
+        console.warn('could not parse JSON. Message: "', msg , '". Error: ', error);
         return;
     }
     if (data.status == "debug") {
@@ -57,11 +54,19 @@ async function analyzeWSmessage(msg,passthrough = false){
         configDialog.setIrSettings(data.ir);
     }
     else if (data.status == 'calibration') {
-        if (data.state == 'init') calibrationProgress.init();
-        else if (data.state == 'starting') calibrationProgress.start(data.mode, data.onScreen);
-        else if (data.state == 'done') calibrationProgress.done();
-        else if (data.state == 'cancelled') calibrationProgress.cancel();
-        else if (data.state == 'newPoint') calibrationProgress.setPoint(data);
+        if (data.mode == 'Auto') {
+            if (data.state == 'starting')
+                ui.notifications.info("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.AutoCalibrationStarting"));
+            else if (data.state == 'done')
+                ui.notifications.info("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.AutoCalibrationDone"));
+        }
+        else {
+            if (data.state == 'init') calibrationProgress.init();
+            else if (data.state == 'starting') calibrationProgress.start(data.mode, data.onScreen);
+            else if (data.state == 'done') calibrationProgress.done();
+            else if (data.state == 'cancelled') calibrationProgress.cancel();
+            else if (data.state == 'newPoint') calibrationProgress.setPoint(data);
+        }
     }
     else if (data.status == 'sensorConnected') {
         ui.notifications.info(`Material Plane: ${game.i18n.localize("MaterialPlane.Notifications.ConnectedMSS")}: ${game.settings.get(moduleName,'IP')}`);
@@ -158,7 +163,6 @@ function resetWS(){
 }
 
 export function sendWS(data){
-    //console.log('SendWS',wsOpen,data)
     if (wsOpen) {
         if (game.settings.get(moduleName,'ConnectionMode') == 'materialCompanion') { 
             ws.send(JSON.stringify({
@@ -168,7 +172,6 @@ export function sendWS(data){
             }));
         }
         else ws.send(JSON.stringify(data));
-        //console.log('data',data)
     }
     
 }

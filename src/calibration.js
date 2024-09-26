@@ -1,17 +1,21 @@
 import { sendWS } from "./Communication/websocket.js";
 import { moduleName, calibrationProgress } from "../MaterialPlane.js";
 import { compatibilityHandler } from "./Misc/compatibilityHandler.js";
+import { hideElement, showElement, setSelectElement } from "./Misc/misc.js";
 
 let countdownCount = 5;
 let countdown;
+
 export let calOverlay = undefined;
 
 export class calibrationProgressScreen extends FormApplication {
+    config = {};
+    calibrationRunning = false;
+    pointCount = 0;
+    calibrationMode = 'single';
+
     constructor(data, options) {
         super(data, options);
-        this.calibrationRunning = false;
-        this.pointCount = 0;
-        this.calibrationMode = 'single';
     }
 
     /**
@@ -50,108 +54,140 @@ export class calibrationProgressScreen extends FormApplication {
         
     }
 
+    configureElements(config, socket=false) {
+        this.config = config;
+
+        hideElement("mpCalMethodExplanation");
+        hideElement("mpCalSinglepointSelector");
+        hideElement("mpCalSinglepointDescription");
+        hideElement('mpCalOffsetSelector');
+        hideElement('mpCalOffsetDescription');
+        hideElement('mpCalStartButton');
+        hideElement('mpCalLocationDescription');
+        hideElement('mpCalLocationSelector');
+        hideElement('mpCalOffsetDescription');
+
+        if (socket) {
+            setSelectElement("mpCalMethodSel", config.methodSel);
+            setSelectElement("mpCalOffsetSel", config.customMode);
+            setSelectElement("mpCalSinglepointSel", config.pointMode);
+            setSelectElement("mpCalLocationSel", config.location);
+        }
+        
+        if (config.methodSel === '') {
+            showElement("mpCalMethodExplanation");
+            if (game.settings.get(moduleName,'ActiveUser') === game.userId) calOverlay.init('');
+        }
+        else if (config.methodSel === 'Normal') {
+            showElement("mpCalSinglepointSelector");
+            showElement("mpCalSinglepointDescription");
+
+            if (config.pointMode === '') {
+                showElement('mpCalSinglepointDescription');
+                if (game.settings.get(moduleName,'ActiveUser') === game.userId) calOverlay.init('');
+            }
+            else if (config.pointMode) {
+                hideElement('mpCalSinglepointDescription');
+                showElement('mpCalLocationDescription');
+                showElement('mpCalLocationSelector');
+                if (game.settings.get(moduleName,'ActiveUser') === game.userId) calOverlay.init('both');
+            }
+    
+            if (config.location === '') {
+                showElement('mpCalLocationDescription');
+            }
+            else if (config.location) {
+                showElement('mpCalStartButton');
+            }
+    
+            if (config.pointMode != '') {
+                if (config.location === 'On-Screen') {
+                    if (game.settings.get(moduleName,'ActiveUser') === game.userId) calOverlay.init('onScreen');
+                }
+                else if (config.location === 'Corner') {
+                    if (game.settings.get(moduleName,'ActiveUser') === game.userId) calOverlay.init('corners');
+                }
+            }
+        }
+        else if (config.methodSel == 'Custom') {
+            showElement('mpCalOffsetSelector');
+            showElement('mpCalOffsetDescription');
+
+            if (config.customMode === '') {
+                showElement('mpCalOffsetDescription');
+            }
+            else if (config.customMode === 'Custom') {
+                showElement('mpCalStartButton');
+                hideElement('mpCalOffsetDescription');
+            }
+            else if (config.customMode === 'Calibrate') {
+                hideElement('mpCalOffsetDescription');
+                showElement('mpCalSinglepointSelector');
+                showElement('mpCalSinglepointDescription');
+
+                if (config.pointMode === '') {
+                    showElement('mpCalSinglepointDescription');
+                }
+                else if (config.pointMode) {
+                    hideElement('mpCalSinglepointDescription');
+                    showElement('mpCalLocationDescription');
+                    showElement('mpCalLocationSelector');
+                    if (game.settings.get(moduleName,'ActiveUser') === game.userId) calOverlay.init('both');
+                }
+        
+                if (config.location === '') {
+                    showElement('mpCalLocationDescription');
+                }
+                else if (config.location) {
+                    showElement('mpCalStartButton');
+                }
+        
+                if (config.pointMode != '') {
+                    if (config.location === 'On-Screen') {
+                        if (game.settings.get(moduleName,'ActiveUser') === game.userId) calOverlay.init('onScreen');
+                    }
+                    else if (config.location === 'Corner') {
+                        if (game.settings.get(moduleName,'ActiveUser') === game.userId) calOverlay.init('corners');
+                    }
+                }
+            }
+        }
+ 
+        this.setHeight();
+
+        if (!socket) game.socket.emit(`module.MaterialPlane`, {
+            msgType: "calConfig",
+            config
+        });
+    }
+
+    
+
     activateListeners(html) {
         super.activateListeners(html);
 
         html.find("select[id='mpCalMethodSel']").on("change", event => {
-            document.getElementById('mpCalStartButton').style.display = 'none';
-            document.getElementById('mpCalOffsetSelector').style.display = 'none';
-            document.getElementById('mpCalSinglepointSelector').style.display = 'none';
-            document.getElementById('mpCalLocationSelector').style.display = 'none';
-
-            document.getElementById('mpCalMethodExplanation').style.display = 'none';
-
-            document.getElementById('mpCalOffsetSel').value = '';
-            document.getElementById('mpCalSinglepointSel').value = '';
-            document.getElementById('mpCalLocationSel').value = '';
-
             if (game.settings.get(moduleName,'ActiveUser') == game.userId) calOverlay.init('');
-
-            if (event.target.value == '') {
-                document.getElementById('mpCalMethodExplanation').style.display = '';
-            }
-
-            if (event.target.value == 'Normal') {
-                document.getElementById('mpCalSinglepointSelector').style.display = '';
-                document.getElementById('mpCalSinglepointDescription').style.display = '';
-            }
-            else if (event.target.value == 'Custom') {
-                document.getElementById('mpCalOffsetSelector').style.display = '';
-                document.getElementById('mpCalOffsetDescription').style.display = '';
-            }
-
-            this.setHeight(); 
+            this.config.methodSel = event.target.value;
+            this.configureElements(this.config);
         });
 
         html.find("select[id='mpCalOffsetSel']").on("change", event => {
-            document.getElementById('mpCalLocationSel').value = '';
-            document.getElementById('mpCalLocationSelector').style.display = 'none';
-            document.getElementById('mpCalStartButton').style.display = 'none';
-            document.getElementById('mpCalSinglepointSelector').style.display = 'none';
-
-            document.getElementById('mpCalOffsetDescription').style.display = 'none';
             if (game.settings.get(moduleName,'ActiveUser') == game.userId) calOverlay.init('');
-
-            if (event.target.value == '') {
-                document.getElementById('mpCalOffsetDescription').style.display = '';
-            }
-
-            if (event.target.value == 'Custom') {
-                document.getElementById('mpCalStartButton').style.display = '';
-                document.getElementById('mpCalSinglepointSelector').style.display = '';
-                document.getElementById('mpCalSinglepointDescription').style.display = '';
-            }
-            else if (event.target.value == 'Calibrate') {
-                document.getElementById('mpCalStartButton').style.display = '';
-            }
+            this.config.customMode = event.target.value;
+            this.configureElements(this.config);
         });
 
         html.find("select[id='mpCalLocationSel']").on("change", event => {
-            document.getElementById('mpCalLocationDescription').style.display = 'none';
-            document.getElementById('mpCalStartButton').style.display = 'none';
             if (game.settings.get(moduleName,'ActiveUser') == game.userId) calOverlay.init('both');
-
-            if (event.target.value == '') {
-                document.getElementById('mpCalLocationDescription').style.display = '';
-            }
-            else {
-                document.getElementById('mpCalStartButton').style.display = '';
-            }
-
-            if (event.target.value == 'On-Screen') {
-                if (game.settings.get(moduleName,'ActiveUser') == game.userId) calOverlay.init('onScreen');
-            }
-            else if (event.target.value == 'Corner') {
-                if (game.settings.get(moduleName,'ActiveUser') == game.userId) calOverlay.init('corners');
-            }
+            this.config.location = event.target.value;
+            this.configureElements(this.config);
+             
         });
 
         html.find("select[id='mpCalSinglepointSel']").on("change", event => {
-            document.getElementById('mpCalLocationDescription').style.display = 'none';
-            document.getElementById('mpCalLocationSelector').style.display = 'none';
-            document.getElementById('mpCalLocationSel').value = '';
-
-            const calMode = document.getElementById('mpCalMethodSel').value;
-
-            if (calMode == 'Normal') {
-                if (event.target.value == '') {
-                    document.getElementById('mpCalSinglepointDescription').style.display = '';
-                }
-                else {
-                    document.getElementById('mpCalSinglepointDescription').style.display = 'none';
-                    document.getElementById('mpCalLocationDescription').style.display = '';
-                    document.getElementById('mpCalLocationSelector').style.display = '';
-                    if (game.settings.get(moduleName,'ActiveUser') == game.userId) calOverlay.init('both');
-                }
-            }
-            else {
-                if (event.target.value == '') {
-                    document.getElementById('mpCalSinglepointDescription').style.display = '';
-                }
-                else {
-                    document.getElementById('mpCalSinglepointDescription').style.display = 'none';
-                }
-            }
+            this.config.pointMode = event.target.value;
+            this.configureElements(this.config);
         });
 
         html.find("button[name='mpStartCalibration']").on("click", event => {
@@ -177,9 +213,9 @@ export class calibrationProgressScreen extends FormApplication {
                 mode
             }
 
-            if (mode != 'Offset' && locationSel == 'On-Screen') {
+            if (locationSel == 'On-Screen')
                 msg.calibrationBounds = calibrationBounds;
-            }
+
             sendWS(msg); 
         });
 
@@ -200,6 +236,7 @@ export class calibrationProgressScreen extends FormApplication {
 
     init() {
         if (game.settings.get(moduleName,'ActiveUser') != game.userId && !game.user.isGM) return;
+        this.config = {};
         this.calibrationMode = 'init';
         this.calibrationRunning = true;
         this.render(true);
@@ -389,6 +426,7 @@ export class calibrationProgressScreen extends FormApplication {
 export function removeOverlay(){
     if (game.settings.get(moduleName,'ActiveUser') != game.userId) return;
     if (calOverlay == undefined) return;
+    window.removeEventListener("mouseout", calOverlay.mouseOutEventHandler);
     canvas.stage.removeChild(calOverlay);
     calOverlay.remove();
     calOverlay = undefined;
@@ -480,44 +518,36 @@ export class calibrationOverlay extends ControlsLayer {
         $('#players').hide();
         $('#hotbar').hide();
 
-        var interval;
-        let oldScreenLeft = window.screenLeft;
-        let oldScreenTop = window.screenTop;
-        this.activeScreenXOffset = 0;
-        this.activeScreenYOffset = 0;
-        let counter = 0;
-        let parent = this;
-        window.addEventListener("mouseout", function(evt){ 
-            if (evt.toElement === null && evt.relatedTarget === null) {
-                interval = setInterval(function () {
-                    if (counter > 40 || oldScreenLeft != window.screenLeft || oldScreenTop != window.screenTop) {
-                        counter = 0;
-                        oldScreenLeft = window.screenLeft;
-                        oldScreenTop = window.screenTop;
-
-                        parent.update();
-                    }
-                    counter++;
-                }, 25);
-            } else {
-                clearInterval(interval);
-            }
+        window.addEventListener("resize", (evt) => {
+            if (!calOverlay) return;
+            calOverlay.update()
         });
     }
-  
+
     update() {
-        const activeScreenX = Math.floor((window.screenLeft+window.outerWidth/2)/screen.width);
-        const activeScreenY = Math.floor((window.screenTop+window.outerHeight/2)/screen.height);
-        this.activeScreenXOffset = (window.screenLeft - (activeScreenX + 0.5)*screen.width + window.outerWidth/2)/canvas.scene._viewPosition.scale;
-        this.activeScreenYOffset = (window.screenTop - (activeScreenY + 0.5)*screen.height + window.outerHeight/2)/canvas.scene._viewPosition.scale;
+        if (document.getElementById("mpCalError")) {
+            //Check if window is fullscreen
+            const isNotFullScreen = screen.width != window.innerWidth || screen.height != window.innerHeight;
+                    
+            //Check for browser zoom or display scaling
+            const isScaled = window.devicePixelRatio != 1;
+
+            if (isNotFullScreen || isScaled) 
+                document.getElementById("mpCalError").style.display = "";
+            else
+                document.getElementById("mpCalError").style.display = "none";
+
+            document.getElementById("MaterialPlane_CalProgMenu").style.height = "auto"
+        }
+        
 
         //Calculate the amount of pixels that are visible on the screen
         const horVisible = screen.width/canvas.scene._viewPosition.scale;
         const vertVisible = screen.height/canvas.scene._viewPosition.scale;
 
-        const x = canvas.scene._viewPosition.x - this.activeScreenXOffset;
-        let y = canvas.scene._viewPosition.y - this.activeScreenYOffset;
-        
+        const x = canvas.scene._viewPosition.x;
+        let y = canvas.scene._viewPosition.y;
+
         if (this.mode == 'onScreen' || this.mode == 'both') {
             const xOffset = 2*horVisible/5;
             const yOffset = 2*vertVisible/6;
@@ -595,6 +625,7 @@ export class calibrationOverlay extends ControlsLayer {
      * Remove the marker
      */
     remove() {
+        window.removeEventListener("resize", calOverlay.update())
         this.container.removeChildren();
         $('#MaterialPlane_CalMenu').show();
         $('#logo').show();

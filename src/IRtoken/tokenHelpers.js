@@ -160,10 +160,8 @@ export function getGridCenter(coords, token) {
         x: coords.x + 0.5*gridSize,
         y: coords.y + 0.5*gridSize
     }
-    //const center = 
+
     return compatibilityHandler('gridCenter', newCoords.x, newCoords.y);
-    //console.log('center',center)
-    //return {x: center[0], y: center[1]};
 }
 
 /**

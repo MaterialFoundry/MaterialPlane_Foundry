@@ -215,6 +215,9 @@ Hooks.on('ready', async ()=>{
         else if (payload.msgType == 'refresh') {
             window.location.reload(); 
         }
+        else if (payload.msgType == 'calConfig') {
+            calibrationProgress.configureElements(payload.config, true)
+        }
         if (game.user.isGM) {
             if (payload.msgType == "controlToken") {
                 lastToken = game.canvas.tokens.get(payload.tokenId);
@@ -324,8 +327,6 @@ Hooks.on('closempConfig',() => {
 Hooks.on('closecalibrationProgressScreen',() => {
     removeOverlay();
     calibrationProgress.setCalibrationRunning(false)
-    console.log('stopping calibration')
-    
     sendWS({event:"calibration", state:"cancel"});
 });
 

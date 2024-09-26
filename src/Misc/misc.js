@@ -16,6 +16,22 @@ let debugSettings = {
 
 let batteryNotificationTimer = 0;
 
+export function hideElement(id) {
+  const elmnt = document.getElementById(id);
+  if (elmnt) elmnt.style.display = 'none';
+}
+
+export function showElement(id) {
+  const elmnt = document.getElementById(id);
+  if (elmnt) elmnt.style.display = '';
+}
+
+export function setSelectElement(id, value) {
+  if (value == undefined) return;
+  const elmnt = document.getElementById(id);
+  if (elmnt) elmnt.value = value;
+}
+
 export function roundFloat(num, significance) {
   const multiplier = Math.pow(10, significance);
   return Math.round(multiplier*num)/multiplier;

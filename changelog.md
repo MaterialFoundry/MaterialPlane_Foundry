@@ -1,5 +1,23 @@
 # Changelog Material Plane Foundry Module
 
+### v3.2.1 - 26-09-2024
+
+Additions:
+<ul>
+<li>During the calibration configuration, a test is performed to see if the display is configured correctly (full screen, browser zoom, display scaling). A warning is given if the test failed.</li>
+<li>When configuring the calibration, both the GM's and active user's configuration screens are now synchronized</li>
+</ul>
+
+Fixes:
+<ul>
+<li>Fixed an issue where the calibration markers would not be displayed in the correct location if a second display connected to the computer had a different resolution or scaling than the TV</li>
+</ul>
+
+Other:
+<ul>
+<li>Some code cleanup</li>
+</ul>
+
 ### v3.2.0 - 16-08-2024
 
 Additions:

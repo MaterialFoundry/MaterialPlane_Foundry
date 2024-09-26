@@ -247,6 +247,8 @@
     "MaterialPlane.Notifications.BatteryLowSensor": "Sensor battery low.",
     "MaterialPlane.Notifications.NoDrawingPermission": "User lacks permission to create drawings.",
     "MaterialPlane.Notifications.NoTemplatePermission": "User lacks permission to create templates.",
+    "MaterialPlane.Notifications.AutoCalibrationStarting": "Performing auto calibration",
+    "MaterialPlane.Notifications.AutoCalibrationDone": "Auto calibration done",
 
     "MaterialPlane.CalDialog.Singlepoint1": "Single-point calibration",
     "MaterialPlane.CalDialog.Singlepoint2": "Please calibrate each corner of you screen.",
