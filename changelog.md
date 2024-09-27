@@ -1,5 +1,9 @@
 # Changelog Material Plane Foundry Module
 
+### v3.2.2 - 27-09-2024
+
+Due to a mistake some files were missing in v3.2.1, preventing the module from working. This is now fixed.
+
 ### v3.2.1 - 26-09-2024
 
 Additions:
