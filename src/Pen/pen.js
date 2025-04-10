@@ -69,7 +69,8 @@ export class Pen extends CanvasLayer {
     }
 
     async analyze(data){
-        if (this.menu.open && !this.menu.visible) this.menu.show();
+        //if (this.menu.open && !this.menu.visible) this.menu.show();
+        this.menu.show(data);
         let command = data.command;
         if (command == 2) command = 'penIdle';
         else if (command == 3) command = 'penA';
@@ -81,7 +82,7 @@ export class Pen extends CanvasLayer {
 
         const point = data.irPoints[0];
         const coords = {x:point.x, y:point.y};
-        let scaledCoords = scaleIRinput(coords);
+        let scaledCoords = scaleIRinput(coords, true);
         let status = 'click';
 
         if (command == 'penIdle') {         //no buttons pressed
@@ -121,6 +122,8 @@ export class Pen extends CanvasLayer {
             angle: undefined
         };
 
+        this.drawMenu(coordinates);
+
         if (status == 'hold') {
             if (this.holdTime == undefined) this.holdTime = Date.now();
 
@@ -157,10 +160,14 @@ export class Pen extends CanvasLayer {
         else
             this.oldCommand = command;
 
+        if (command == 'penC') console.log('penC', status)
+
         if (command == 'penC' && status == 'click') { //draw or hide menu
-            if (this.menu.visible) this.menu.hide();
-            else this.drawMenu(coordinates);
-            return;
+           // console.log('menuVisible', this.menu.visible, this.menu)
+            //if (this.menu.visible) this.menu.hide();
+            //this.drawMenu(coordinates);
+            this.menu.moveMenu(coordinates);
+           // return;
         }
         else if (command == 'penB') {
             const point2 = data.irPoints[1];

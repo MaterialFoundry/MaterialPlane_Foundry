@@ -412,7 +412,7 @@ Hooks.on('renderPlayerList', (a,b, playerlist) => {
 let viewPositionOld;
 
 Hooks.on('canvasPan', (canvas, viewPosition) => {
-    if (pen == undefined) return;
+    if (pen == undefined || !pen?.cursor?.visible) return;
     if (viewPositionOld == undefined) {
         viewPositionOld = viewPosition;
         return;

@@ -2,6 +2,14 @@ import { moduleName } from "../../MaterialPlane.js";
 
 export const registerSettings = function() {
 
+    game.settings.register(moduleName, 'penOffset', {
+        scope: "world",
+        config: false,
+        type: Object,
+        default: {x: 80, y: -400},
+        range: { min: -1000, max: 1000, step: 1 },
+    })
+
     game.settings.register(moduleName,'baseSetup', {
         scope: "world",
         config: false,
@@ -118,6 +126,16 @@ export const registerSettings = function() {
         scope: "world",
         config: false,
         default: true,
+        type: Boolean
+    });
+
+    /**
+     * Auto rotate
+     */
+    game.settings.register(moduleName,'autoRotate', {
+        scope: "world",
+        config: false,
+        default: false,
         type: Boolean
     });
 

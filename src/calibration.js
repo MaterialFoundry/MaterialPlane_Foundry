@@ -56,7 +56,7 @@ export class calibrationProgressScreen extends FormApplication {
 
     configureElements(config, socket=false) {
         this.config = config;
-
+        console.log('config', config)
         hideElement("mpCalMethodExplanation");
         hideElement("mpCalSinglepointSelector");
         hideElement("mpCalSinglepointDescription");
@@ -110,6 +110,7 @@ export class calibrationProgressScreen extends FormApplication {
             }
         }
         else if (config.methodSel == 'Custom') {
+            
             showElement('mpCalOffsetSelector');
             showElement('mpCalOffsetDescription');
 
@@ -119,6 +120,8 @@ export class calibrationProgressScreen extends FormApplication {
             else if (config.customMode === 'Custom') {
                 showElement('mpCalStartButton');
                 hideElement('mpCalOffsetDescription');
+                showElement('mpCalSinglepointSelector');
+                showElement('mpCalSinglepointDescription');
             }
             else if (config.customMode === 'Calibrate') {
                 hideElement('mpCalOffsetDescription');
@@ -215,7 +218,7 @@ export class calibrationProgressScreen extends FormApplication {
 
             if (locationSel == 'On-Screen')
                 msg.calibrationBounds = calibrationBounds;
-
+            console.log('sendMsg', msg)
             sendWS(msg); 
         });
 
@@ -252,7 +255,7 @@ export class calibrationProgressScreen extends FormApplication {
         setTimeout(()=> {
             document.getElementById('mpCalConfig').style.display = '';
             document.getElementById('mpCalProcedure').style.display = 'none';
-        },10);
+        },100);
     }
 
     start(calMode, onScreen) {

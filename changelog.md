@@ -1,5 +1,24 @@
 # Changelog Material Plane Foundry Module
 
+### v3.3.0_pre1 - 11-04-2025
+Pre-release
+
+Additions:
+<ul>
+<li>(Experimental) Added token auto rotation. Still needs some work, especially for rotating in place.</li>
+<li>Limited the maximum distanced a linked token is allowed to move towards a base to 6 grid spaces. This can prevent unintentional token movement.</li>
+</ul>
+
+Fixes:
+<ul>
+<li>(Temporary workaround) Pen menu doesn't always open when it should. As a temporary workaround the menu will always open when the pen is detected.</li>
+</ul>
+
+Other:
+<ul>
+<li>Cleaned up localization file</li>
+</ul>
+
 ### v3.2.2 - 27-09-2024
 
 Due to a mistake some files were missing in v3.2.1, preventing the module from working. This is now fixed.

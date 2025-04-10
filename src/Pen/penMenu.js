@@ -219,7 +219,7 @@ export class penMenu extends CanvasLayer {
 
     visible = false;
     open = false;
-    infoVisible = false;
+    infoVisible = true;
     infoMenu;
 
     menuSize;
@@ -367,7 +367,7 @@ export class penMenu extends CanvasLayer {
         else {
             this.infoVisible = true;
         }
-        this.drawMenu(this.location);
+        this.drawMenu(this.location, true);
 
         this.blockInfoVisible = true;
         setTimeout(()=>this.blockInfoVisible = false,500)
@@ -472,7 +472,7 @@ export class penMenu extends CanvasLayer {
             this.drawMenu({
                 x: data.x - location.x,
                 y: data.y - location.y
-            });
+            }, true);
             let control;
             
             if (this.selectedName == 'template') {
@@ -502,7 +502,7 @@ export class penMenu extends CanvasLayer {
             this.drawMenu({
                 x: data.x - location.x,
                 y: data.y - location.y
-            });
+            }, true);
         }
         else if (secondRing && this.selectedName == 'template' && this.selectedTemplate != selected) {
             this.selectedTemplate = selected;
@@ -511,7 +511,7 @@ export class penMenu extends CanvasLayer {
             this.drawMenu({
                 x: data.x - location.x,
                 y: data.y - location.y
-            });
+            }, true);
         }
         else if (secondRing && this.selectedName == 'draw') {
             if (selected < 16) {
@@ -539,7 +539,7 @@ export class penMenu extends CanvasLayer {
             this.drawMenu({
                 x: data.x - location.x,
                 y: data.y - location.y
-            });
+            }, true);
         }
     }
 
@@ -564,7 +564,8 @@ export class penMenu extends CanvasLayer {
       /*
        * Update the cursor position, size and color
        */
-    drawMenu(data) {
+    drawMenu(data, force = false) {
+        console.log('drawMenu', data)
         if (data == undefined) {
             if (this.lastData == undefined) return;
             data = this.lastData;
@@ -575,6 +576,8 @@ export class penMenu extends CanvasLayer {
         else if (data.rawCoords != undefined) {
             this.lastData = data;
         }
+
+        if (this.open && !force) return;
         
         this.open = true;
         const x = data.x;
@@ -839,11 +842,11 @@ export class penMenu extends CanvasLayer {
     */
     show() {
         if (this.menuSize != game.settings.get(moduleName,'MenuSize')) {
-            this.drawMenu();
+            this.drawMenu(undefined, true);
         }
         this.container.visible = true;
         this.visible = true;
-        this.open = true;
+        //this.open = true;
         if (this.selected == 5) this.pen.drawingTarget.show();
     }
 

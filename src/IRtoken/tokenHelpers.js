@@ -21,7 +21,7 @@ export function comparePositions(posA, posB) {
  * @param {*} cornerComp Compensates for the difference between measured coordinates and token coordinates
  * @return {*} Scaled coordinates
  */
-export function scaleIRinput(coords){
+export function scaleIRinput(coords, pen){
     if (coords.x < 0) coords.x = 0;
     if (coords.x > 4095) coords.x = 4095;
     if (coords.y < 0) coords.y = 0;
@@ -30,10 +30,12 @@ export function scaleIRinput(coords){
     //Calculate the amount of pixels that are visible on the screen
     const horVisible = screen.width/canvas.scene._viewPosition.scale;
     const vertVisible = screen.height/canvas.scene._viewPosition.scale;
+
+    const penOffset = pen ? game.settings.get(moduleName, 'penOffset') : {x: 0, y: 0};
   
     //Calculate the scaled coordinates
-    const posX = (coords.x/4096)*horVisible+canvas.scene._viewPosition.x-horVisible/2;
-    const posY = (coords.y/4096)*vertVisible+canvas.scene._viewPosition.y-vertVisible/2;
+    const posX = ((coords.x + penOffset.x)/4096)*horVisible+canvas.scene._viewPosition.x-horVisible/2;
+    const posY = ((coords.y + penOffset.y)/4096)*vertVisible+canvas.scene._viewPosition.y-vertVisible/2;
   
     debug('cal',`Raw: (${Math.round(coords.x)}, ${Math.round(coords.y)}). Scaled: (${Math.round(posX)}, ${Math.round(posY)}). View: (${Math.round(canvas.scene._viewPosition.x)}, ${Math.round(canvas.scene._viewPosition.y)}, ${canvas.scene._viewPosition.scale}). Canvas: ${canvas.dimensions.width}x${canvas.dimensions.height} (${canvas.dimensions.rect.x}, ${canvas.dimensions.rect.y}). Scene: ${canvas.dimensions.sceneWidth}x${canvas.dimensions.sceneHeight} (${canvas.dimensions.sceneRect.x}, ${canvas.dimensions.sceneRect.y}). Display: ${screen.width}x${screen.height}`)
   

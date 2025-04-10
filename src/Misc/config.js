@@ -67,8 +67,10 @@ export class mpConfig extends FormApplication {
             collision: game.settings.get(moduleName,'collisionPrevention'),
             hideElements: game.settings.get(moduleName,'HideElements'),
             penMenu: game.settings.get(moduleName,'MenuSize'),
+            penOffset: game.settings.get(moduleName,'penOffset'),
             cursorSize: game.settings.get(moduleName,'CursorSize'),
             baseOrientation: game.settings.get(moduleName,'baseOrientation'),
+            autoRotation: game.settings.get(moduleName, 'autoRotate'),
 
             connectionMode: game.settings.get(moduleName,'ConnectionMode'),
             sensorIP: game.settings.get(moduleName,'IP'),
@@ -154,6 +156,7 @@ export class mpConfig extends FormApplication {
         html.find("input[id=mpMovementMarker]").on('change', event =>           { this.setSettings('movementMarker',event.target.checked); });
         html.find("input[id=mpNonOwned]").on('change', event =>                 { this.setSettings('EnNonOwned',event.target.checked); });
         html.find("input[id=mpCollision]").on('change', event =>                { this.setSettings('collisionPrevention',event.target.checked); });
+        html.find("input[id=mpAutoRotate]").on('change', event =>               { this.setSettings('autoRotate',event.target.checked); });
         html.find("input[id=mpHideDisplay]").on('change', event =>              { this.setSettings('HideElements',event.target.checked); this.restart = true; });
         html.find("input[id=mpBatteryNotifications]").on('change', event =>     { this.setSettings('batteryNotifications',event.target.checked); });
         html.find("select[id=mpBaseOrientation]").on('change', async event =>   { this.setSettings('baseOrientation',event.target.value); });
@@ -180,6 +183,38 @@ export class mpConfig extends FormApplication {
             html.find("input[id=mpPenMenu]")[0].value = val;
             html.find("input[id=mpPenMenuNumber]")[0].value = val;
             this.setSettings('MenuSize',val);
+        });
+        html.find("input[id=mpPenOffsetX]").on('change', event =>  { 
+            const val = this.constrain(event.target.value, game.settings.settings.get("MaterialPlane.penOffset").range);
+            html.find("input[id=mpPenOffsetX]")[0].value = val;
+            html.find("input[id=mpPenOffsetXNumber]")[0].value = val;
+            let offset = game.settings.get(moduleName, 'penOffset');
+            offset.x = parseInt(val);
+            this.setSettings('penOffset',offset);
+        });
+        html.find("input[id=mpPenOffsetXNumber]").on('change', event =>  { 
+            const val = this.constrain(event.target.value, game.settings.settings.get("MaterialPlane.penOffset").range);
+            html.find("input[id=mpPenOffsetX]")[0].value = val;
+            html.find("input[id=mpPenOffsetXNumber]")[0].value = val;
+            let offset = game.settings.get(moduleName, 'penOffset');
+            offset.x = parseInt(val);
+            this.setSettings('penOffset',offset);
+        });
+        html.find("input[id=mpPenOffsetY]").on('change', event =>  { 
+            const val = this.constrain(event.target.value, game.settings.settings.get("MaterialPlane.penOffset").range);
+            html.find("input[id=mpPenOffsetY]")[0].value = val;
+            html.find("input[id=mpPenOffsetYNumber]")[0].value = val;
+            let offset = game.settings.get(moduleName, 'penOffset');
+            offset.y = parseInt(val);
+            this.setSettings('penOffset',offset);
+        });
+        html.find("input[id=mpPenOffsetTNumber]").on('change', event =>  { 
+            const val = this.constrain(event.target.value, game.settings.settings.get("MaterialPlane.penOffset").range);
+            html.find("input[id=mpPenOffsetT]")[0].value = val;
+            html.find("input[id=mpPenOffsetTNumber]")[0].value = val;
+            let offset = game.settings.get(moduleName, 'penOffset');
+            offset.t = parseInt(val);
+            this.setSettings('penOffset',offset);
         });
         html.find("input[id=mpBlockInteraction]").on('change', event => { parent.blockInteraction = event.target.checked; });
 

@@ -1,8 +1,8 @@
 {
-  "title": "Material Plane",
-  "description": "Module for tracking physical minis. By using an IR tracking camera and mini bases with IR LED's this module can be used to move tokens in Foundry by moving physical tokens on top of a horizontally mounted TV",
-  "version": "3.2.2",
-  "authors": [
+    "title": "Material Plane",
+    "description": "Module for tracking physical minis. By using an IR tracking camera and mini bases with IR LED's this module can be used to move tokens in Foundry by moving physical tokens on top of a horizontally mounted TV",
+    "version": "3.3.0_pre1",
+    "authors": [
         {
             "name": "CDeenen",
             "email": "info@materialfoundry.nl",
@@ -11,54 +11,54 @@
             "reddit": "CDeenen123"
         }
     ],
-  "esmodules": [
-    "MaterialPlane.js"
-  ],
-  "styles": [
-    "./css/style.css"
-  ],
-  "socket": true,
-  "flags": {
-    "minimumSensorVersion": "3.0.0",
-    "minimumSensorWsVersion": "2.0.0",
-    "minimumBaseVersion": "2.0.0",
-    "minimumPenVersion": "2.0.0",
-    "minimumMSversion": "1.0.2"
-  },
-  "languages": [
-    {
-      "lang": "en",
-      "name": "English",
-      "path": "lang/en.json",
-      "flags": {}
-    }
-  ],
-  "media": [
-    {
-      "type": "icon",
-      "url": "modules/MaterialPlane/img/MaterialFoundry512x512.png",
-      "loop": false,
-      "flags": {}
+    "esmodules": [
+        "MaterialPlane.js"
+    ],
+    "styles": [
+        "./css/style.css"
+    ],
+    "socket": true,
+    "flags": {
+        "minimumSensorVersion": "3.0.0",
+        "minimumSensorWsVersion": "2.0.0",
+        "minimumBaseVersion": "2.0.0",
+        "minimumPenVersion": "2.0.0",
+        "minimumMSversion": "1.0.2"
     },
-    {
-      "type": "setup",
-      "url": "modules/MaterialPlane/img/MaterialFoundry2560x1440.jpg",
-      "loop": false,
-      "flags": {}
-    },
-    {
-      "type": "cover",
-      "url": "modules/MaterialPlane/img/MaterialFoundry2560x1440.jpg",
-      "loop": false,
-      "flags": {}
+    "languages": [
+        {
+            "lang": "en",
+            "name": "English",
+            "path": "lang/en.json",
+            "flags": {}
+        }
+    ],
+    "media": [
+        {
+            "type": "icon",
+            "url": "modules/MaterialPlane/img/MaterialFoundry512x512.png",
+            "loop": false,
+            "flags": {}
+        },
+        {
+            "type": "setup",
+            "url": "modules/MaterialPlane/img/MaterialFoundry2560x1440.jpg",
+            "loop": false,
+            "flags": {}
+        },
+        {
+            "type": "cover",
+            "url": "modules/MaterialPlane/img/MaterialFoundry2560x1440.jpg",
+            "loop": false,
+            "flags": {}
+        }
+    ],
+    "url": "https://github.com/MaterialFoundry/MaterialPlane_Foundry",
+    "manifest": "https://github.com/MaterialFoundry/MaterialPlane_Foundry/releases/latest/download/module.json",
+    "download": "https://github.com/MaterialFoundry/MaterialPlane_Foundry/releases/download/v3.2.2/module.zip",
+    "id": "MaterialPlane",
+    "compatibility": {
+        "minimum": "11",
+        "verified": "12"
     }
-  ],
-  "url": "https://github.com/MaterialFoundry/MaterialPlane_Foundry",
-  "manifest": "https://github.com/MaterialFoundry/MaterialPlane_Foundry/releases/latest/download/module.json",
-  "download": "https://github.com/MaterialFoundry/MaterialPlane_Foundry/releases/download/v3.2.2/module.zip",
-  "id": "MaterialPlane",
-  "compatibility": {
-    "minimum": "11",
-    "verified": "12"
-  }
 }
