@@ -228,7 +228,7 @@ export class IRtoken {
                 let payload = {
                     "msgType": "moveToken",
                     "senderId": game.user.id, 
-                    "receiverId": game.data.users.find(users => users.role == 4)._id, 
+                    "receiverId": game.users.activeGM._id,
                     "tokenId": this.token.id,
                     "newCoords": newCoords
                 };
@@ -349,7 +349,7 @@ export class IRtoken {
                 let payload = {
                     "msgType": "moveToken",
                     "senderId": game.user.id, 
-                    "receiverId": game.data.users.find(users => users.role == 4)._id, 
+                    "receiverId": game.users.activeGM._id,
                     "tokenId": this.token.id,
                     "newCoords": newCoords
                 };
