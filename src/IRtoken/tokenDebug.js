@@ -1,4 +1,6 @@
-export class TokenDebug extends CanvasLayer {
+import { MaterialPlaneLayer } from "../Misc/misc.js";
+
+export class TokenDebug extends MaterialPlaneLayer {
     enabled = false;
 
     gridSpace = {x:0,y:0};

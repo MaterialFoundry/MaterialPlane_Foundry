@@ -158,7 +158,7 @@ async function tapDetect(data) {
 }
 
 async function moveToken(id,coordinates,scaledCoordinates,forceNew) {
-    return await IRtokens[id].update(coordinates,scaledCoordinates,forceNew);
+    return await IRtokens[id].update(coordinates,scaledCoordinates,forceNew,true);
 }
 
 function touchTimeout(id) {

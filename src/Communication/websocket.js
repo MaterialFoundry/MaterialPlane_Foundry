@@ -22,7 +22,6 @@ async function analyzeWSmessage(msg,passthrough = false){
     try {
         data = JSON.parse(msg);
         debug('ws',data);
-        //if (data.status !== "ping") console.log('REC', data)
     }
     catch (error) {
         console.warn('could not parse JSON. Message: "', msg , '". Error: ', error);

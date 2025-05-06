@@ -1,6 +1,5 @@
 import { moduleName } from "../../MaterialPlane.js";
 import { debug } from "../Misc/misc.js";
-import { compatibilityHandler } from "../Misc/compatibilityHandler.js";
 
 /**
  * Compare positions of two tokens/objects. If they are equal, return true
@@ -21,7 +20,7 @@ export function comparePositions(posA, posB) {
  * @param {*} cornerComp Compensates for the difference between measured coordinates and token coordinates
  * @return {*} Scaled coordinates
  */
-export function scaleIRinput(coords, pen){
+export function scaleIRinput(coords){
     if (coords.x < 0) coords.x = 0;
     if (coords.x > 4095) coords.x = 4095;
     if (coords.y < 0) coords.y = 0;
@@ -30,12 +29,10 @@ export function scaleIRinput(coords, pen){
     //Calculate the amount of pixels that are visible on the screen
     const horVisible = screen.width/canvas.scene._viewPosition.scale;
     const vertVisible = screen.height/canvas.scene._viewPosition.scale;
-
-    const penOffset = pen ? game.settings.get(moduleName, 'penOffset') : {x: 0, y: 0};
   
     //Calculate the scaled coordinates
-    const posX = ((coords.x + penOffset.x)/4096)*horVisible+canvas.scene._viewPosition.x-horVisible/2;
-    const posY = ((coords.y + penOffset.y)/4096)*vertVisible+canvas.scene._viewPosition.y-vertVisible/2;
+    const posX = (coords.x/4096)*horVisible+canvas.scene._viewPosition.x-horVisible/2;
+    const posY = (coords.y/4096)*vertVisible+canvas.scene._viewPosition.y-vertVisible/2;
   
     debug('cal',`Raw: (${Math.round(coords.x)}, ${Math.round(coords.y)}). Scaled: (${Math.round(posX)}, ${Math.round(posY)}). View: (${Math.round(canvas.scene._viewPosition.x)}, ${Math.round(canvas.scene._viewPosition.y)}, ${canvas.scene._viewPosition.scale}). Canvas: ${canvas.dimensions.width}x${canvas.dimensions.height} (${canvas.dimensions.rect.x}, ${canvas.dimensions.rect.y}). Scene: ${canvas.dimensions.sceneWidth}x${canvas.dimensions.sceneHeight} (${canvas.dimensions.sceneRect.x}, ${canvas.dimensions.sceneRect.y}). Display: ${screen.width}x${screen.height}`)
   
@@ -81,7 +78,7 @@ export function findToken(coords, spacing, currentToken, mode){
             if (token.h >= spacing && token.h > sp) sp = token.h;
         }
         else {
-            coordsCenter = compatibilityHandler('tokenCenter', token, token.x, token.y); 
+            coordsCenter = token.getCenterPoint({x: token.x, y: token.y});
             const baseOrientation = game.settings.get(moduleName,'baseOrientation');
             if (baseOrientation == '0') {
             dx = Math.abs(coordsCenter.x - coords.x + (token.document.width-1)*spacing/2);
@@ -163,7 +160,7 @@ export function getGridCenter(coords, token) {
         y: coords.y + 0.5*gridSize
     }
 
-    return compatibilityHandler('gridCenter', newCoords.x, newCoords.y);
+    return canvas.grid.getCenterPoint(newCoords);
 }
 
 /**
@@ -255,6 +252,12 @@ export function getTokenGridEnterPosition(token, previousPosition, currentGridSp
 export function getTokenCollision(token, origin, destination, useTestPosition=false, previousPosition, debug) {
     const gridSize = canvas.dimensions.size;
 
+    if (previousPosition) {
+        const path = canvas.grid.measurePath([origin, previousPosition]);
+        const distance = path.distance / canvas.grid.distance;
+        if (distance > 0) origin = previousPosition;
+    }
+    
     if (useTestPosition) {
         let dest = Object.assign({}, destination);
         
@@ -356,12 +359,12 @@ export function checkSurroundingGridCollision(token, coords, origin, debug) {
 export function findNearestEmptySpace(token, coords, originPosition) {
     const spacer = canvas.scene.gridType === CONST.GRID_TYPES.SQUARE ? 1.41 : 1;
     //If space is already occupied
-    if (findToken(compatibilityHandler('tokenCenter', token, coords.x, coords.y),(spacer * Math.min(compatibilityHandler('canvasWidth'), compatibilityHandler('canvasHeight')))/2,token) != undefined) {
+    if (findToken(token.getCenterPoint(coords),(spacer * Math.min(canvas.grid.sizeX, canvas.grid.sizeY))/2,token) != undefined) {
         ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.SpaceOccupied"));
         let ray = new Ray({x: originPosition.x, y: originPosition.y}, {x: coords.x, y: coords.y});
 
         //Code below modified from _highlightMeasurement() in ruler class in core foundry  
-        const nMax = Math.max(Math.floor(ray.distance / (spacer * Math.min(compatibilityHandler('canvasWidth'), compatibilityHandler('canvasHeight')))), 1);
+        const nMax = Math.max(Math.floor(ray.distance / (spacer * Math.min(canvas.grid.sizeX, canvas.grid.sizeY))), 1);
         const tMax = Array.fromRange(nMax+1).map(t => t / nMax);
 
         // Track prior position
@@ -373,9 +376,11 @@ export function findNearestEmptySpace(token, coords, originPosition) {
          
             // Get grid position
             let [r0, c0] = (i === 0) ? [null, null] : prior;
-            let [r1, c1] = compatibilityHandler('getGridOffset', x, y);
+            const offset = canvas.grid.getOffset({x,y});
+            let [r1, c1] = [offset.i, offset.j];
             if ( r0 === r1 && c0 === c1 ) continue;
-            let [x1, y1] = compatibilityHandler('getTopLeftPoint', r1, c1);
+            const topLeftPoint = canvas.grid.getTopLeftPoint({i:r1, j:c1});
+            let [x1, y1] = [topLeftPoint.x, topLeftPoint.y];
             gridPositions.push({x: x1, y: y1})
             
             // Skip the first one
@@ -383,21 +388,23 @@ export function findNearestEmptySpace(token, coords, originPosition) {
             if ( i === 0 ) continue;
 
             // If the positions are not neighbors, also highlight their halfway point
-            if (!compatibilityHandler('testAdjacency', {i:r0, j:c0}, {i:r1, j:c1})) {
+            if (!canvas.grid.testAdjacency({i:r0, j:c0}, {i:r1, j:c1})) {
                 let th = tMax[i - 1] + (0.5 / nMax);
                 let {x, y} = ray.project(th);
-                let [rh, ch] = compatibilityHandler('getGridOffset', x, y);
-                let [xh, yh] = compatibilityHandler('getTopLeftPoint', rh, ch);
+                const offset = canvas.grid.getOffset({x,y});
+                let [rh, ch] = [offset.i, offset.j];
+                const topLeftPoint = canvas.grid.getTopLeftPoint({i:rh, j:ch});
+                let [xh, yh] = [topLeftPoint.x, topLeftPoint.y];
                 gridPositions.splice(gridPositions.length-1, 0, {x: xh, y: yh})
             }
         }
         for (let i=gridPositions.length-1; i>=0; i--) {
             const position = gridPositions[i];
-            const centeredPosition = compatibilityHandler('tokenCenter', token, position.x, position.y);
-            if (getTokenCollision(token, compatibilityHandler('tokenCenter', token, coords.x, coords.y), centeredPosition)) {
+            const centeredPosition = token.getCenterPoint(position);
+            if (getTokenCollision(token, token.getCenterPoint(coords), centeredPosition)) {
                 continue;
             }
-            if (findToken(centeredPosition,(spacer * Math.min(compatibilityHandler('canvasWidth'), compatibilityHandler('canvasHeight')))/2,token) == undefined) {
+            if (findToken(centeredPosition,(spacer * Math.min(canvas.grid.sizeX, canvas.grid.sizeY))/2,token) == undefined) {
                 return position;
             }
         }

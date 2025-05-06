@@ -13,7 +13,7 @@ import { MaterialPlaneLayer } from "../Misc/misc.js";
 /*
  * 
  */
-export class Pen extends CanvasLayer {
+export class Pen extends MaterialPlaneLayer {
     constructor() {
       super();
       this.cursor;
@@ -160,11 +160,7 @@ export class Pen extends CanvasLayer {
         else
             this.oldCommand = command;
 
-        if (command == 'penC') console.log('penC', status)
-
         if (command == 'penC' && status == 'click') { //draw or hide menu
-           // console.log('menuVisible', this.menu.visible, this.menu)
-            //if (this.menu.visible) this.menu.hide();
             //this.drawMenu(coordinates);
             this.menu.moveMenu(coordinates);
            // return;

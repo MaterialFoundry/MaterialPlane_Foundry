@@ -1,5 +1,3 @@
-import { compatibilityHandler } from "../../Misc/compatibilityHandler.js";
-
 let template;
 let newTemplate = false;
 let bar;
@@ -31,7 +29,7 @@ export function templateFunction(command,data,status, menu) {
             else {
                 let tool = menu.selectedTemplateName;
 
-                const snappedPosition = compatibilityHandler('snappedPoint', data);
+                const snappedPosition = canvas.grid.getSnappedPoint(data, {mode:0});
 
                 const templateData = {
                     user: game.user.id,
@@ -99,7 +97,7 @@ export function templateFunction(command,data,status, menu) {
         }
         else if (status == 'release') {
             if (template == undefined || menu.selectedTemplate == 6) return;
-            const snappedPosition = compatibilityHandler('snappedPoint', data);
+            const snappedPosition = canvas.grid.getSnappedPoint(data, {mode:0});
             template.document.update({x:snappedPosition.x,y:snappedPosition.y});
         }
     }
@@ -136,7 +134,7 @@ export function templateFunction(command,data,status, menu) {
         }
         else if (status == 'release') {
             if (template == undefined || menu.selectedTemplate == 6) return;
-            const snappedPosition = compatibilityHandler('snappedPoint', data);
+            const snappedPosition = canvas.grid.getSnappedPoint(data, {mode:0});
             template.document.update({x:snappedPosition.x,y:snappedPosition.y,direction:template.document.direction});
         }  
     }

@@ -12,7 +12,7 @@ import { registerLayer, configureDebug } from "./src/Misc/misc.js";
 import { initializeIRtokens, initializeCursors, setLastBaseAddress, pen } from "./src/analyzeIR.js";
 import { IRremote } from "./src/IRremote/IRremote.js";
 import { analyzeTouch } from "./src/analyzeTouch.js";
-import { compatibilityInit } from "./src/Misc/compatibilityHandler.js";
+import { compatibilityHandler } from "./src/Misc/compatibilityHandler.js";
 
 export const moduleName = "MaterialPlane";
 export let lastToken;
@@ -20,6 +20,7 @@ export let lastTokenSceneName;
 
 let hideElements = false;
 let enableModule = false;
+let isActiveUser = false;
 
 //export let calibrationDialog;
 export let configDialog;
@@ -137,6 +138,8 @@ function checkKeys() {
     });
 }
 
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Hooks
@@ -170,7 +173,8 @@ Hooks.on('ready', async ()=>{
         game.settings.set(moduleName, 'ActiveUser',game.userId)
     }
 
-    enableModule = game.user.id == game.settings.get(moduleName,'ActiveUser');
+    isActiveUser = game.user.id == game.settings.get(moduleName,'ActiveUser');
+    enableModule = isActiveUser;
     hideElements = game.settings.get(moduleName,'HideElements') && game.user.isGM == false && enableModule;
     if (game.settings.get(moduleName,'device') == 'sensor' && game.settings.get(moduleName,'ConnectionMode') != "noConnect" && window.location.protocol == "https:" && game.settings.get(moduleName,'ConnectionMode') != 'materialCompanion'){
         ui.notifications.warn("Material Plane: "+game.i18n.localize("MaterialPlane.Notifications.SSL"));
@@ -209,7 +213,11 @@ Hooks.on('ready', async ()=>{
         if (game.user.id == payload.receiverId) {
             if (payload.msgType == "moveToken"){
                 let token = canvas.tokens.get(payload.tokenId);
-                if (token != undefined) token.document.update({x: payload.newCoords.x, y: payload.newCoords.y});
+                if (token != undefined) token.document.update({x: payload.newCoords.x, y: payload.newCoords.y, animate: false});
+            }
+            if (payload.msgType == "setTokenMovementAction"){
+                let token = canvas.tokens.get(payload.tokenId);
+                if (token != undefined) token.document.update({movementAction: payload.action});
             }
         }
         else if (payload.msgType == 'refresh') {
@@ -292,34 +300,6 @@ Hooks.on('ready', async ()=>{
     })
 });
 
-Hooks.on("renderSidebarTab", (app, html) => {
-    enableModule = game.user.id == game.settings.get(moduleName,'ActiveUser');
-    if (!enableModule && !game.user.isGM) return;
-
-    if (app.options.id == 'settings') {
-        const popOut = app.popOut ? "_PopOut" : "";
-        const label = $(
-            `<div id="MP-section">
-            <h2>Material Plane</h2>
-
-            <button id="MaterialPlane_ConfigBtn${popOut}" title="Material Plane Configuration">
-                <i></i> ${game.i18n.localize("MaterialPlane.Config.Title")}
-            </button>
-            </div>
-            `
-        );
-        const setupButton = html.find("div[id='settings-game']");
-        setupButton.after(label);
-        
-        document.getElementById(`MaterialPlane_ConfigBtn${popOut}`).addEventListener("click",event => {
-            configDialog.setConfigOpen(true);
-            configDialog.render(true);
-        });
-        
-    }
-});
-
-
 Hooks.on('closempConfig',() => {
     configDialog.setConfigOpen(false);
 });
@@ -335,7 +315,8 @@ Hooks.on('closecalibrationProgressScreen',() => {
  * Initialize settings
  */
 Hooks.once('init', function(){
-    compatibilityInit();
+    compatibilityHandler.init();
+    compatibilityHandler.createConfigButton(enableModule);
     registerSettings();
     registerLayer();
     configDialog = new mpConfig();
@@ -412,7 +393,7 @@ Hooks.on('renderPlayerList', (a,b, playerlist) => {
 let viewPositionOld;
 
 Hooks.on('canvasPan', (canvas, viewPosition) => {
-    if (pen == undefined || !pen?.cursor?.visible) return;
+    if (pen == undefined) return;
     if (viewPositionOld == undefined) {
         viewPositionOld = viewPosition;
         return;

@@ -1,4 +1,3 @@
-import { moduleName } from "../../MaterialPlane.js";
 import { compatibilityHandler } from "./compatibilityHandler.js";
 
 let debugSettings = {
@@ -38,11 +37,8 @@ export function roundFloat(num, significance) {
 }
 
 export function activateControl(controlName) {
-  if (ui.controls.activeControl == controlName) return;
-  const control = ui.controls.controls.find(c => c.name == controlName);
-  ui.controls.initialize({layer:control.layer});
-  canvas.layers.find(l => l.options.name == control.layer).activate();
-  ui.controls.render(); 
+  if (compatibilityHandler.controls.activeControl() == controlName) return;
+  compatibilityHandler.controls.activateControl(controlName);
 }
 
 export function updatePowerState(data) {
@@ -83,8 +79,9 @@ export function updatePowerState(data) {
       batteryColor = "#FF0000";
   }
   
-  if (document.getElementById("batteryLabel") == null) {
-      const playersElement = document.getElementsByClassName("players-mode")[0];
+  const playersElement = compatibilityHandler.playersElement();
+  if (playersElement && document.getElementById("batteryLabel") == null) {
+      
       let batteryIcon = document.createElement("i");
       batteryIcon.id = "batteryIcon";
       batteryIcon.style.fontSize = "0.75em";
@@ -96,9 +93,12 @@ export function updatePowerState(data) {
       playersElement.after(batteryIcon);
   }
   
-  document.getElementById("batteryLabel").innerHTML = `${battery}%`;
-  document.getElementById("batteryIcon").className = icon; 
-  document.getElementById("batteryIcon").style.color = batteryColor;
+  if (playersElement) {
+    document.getElementById("batteryLabel").innerHTML = `${battery}%`;
+    document.getElementById("batteryIcon").className = icon; 
+    document.getElementById("batteryIcon").style.color = batteryColor;
+  }
+  
 }
 
 export function configureDebug(data) {
@@ -206,7 +206,7 @@ export class MaterialPlaneLayer extends CanvasLayer {
 
   /** @override */
   static get layerOptions() {
-    return compatibilityHandler('mergeObject', super.layerOptions, { zIndex: 20000 });
+    return foundry.utils.mergeObject(super.layerOptions, { zIndex: 20000 });
   }
 
   activate() {

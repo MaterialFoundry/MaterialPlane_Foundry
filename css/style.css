@@ -153,6 +153,7 @@ header.mpBaseTableHeader {
 }
 .mpExpandable {
     cursor: pointer;
+    display: flex;
 }
 .mpCollapsed {
     display:none;
@@ -255,7 +256,6 @@ header.mpBaseTableHeader {
 }
 
 .mpBaseListContainer {
-    min-height: 150px;
     max-height: 150px;
     overflow-y: scroll;
 }

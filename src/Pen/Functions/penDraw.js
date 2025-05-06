@@ -17,7 +17,7 @@ let freehand = false;
  */
 export async function drawFunction(command, data, status, menu) {
     if (command == 'penIdle') {
-        if (drawing != undefined && (drawing.type == compatibilityHandler('drawingTypes').POLYGON || drawing.type == compatibilityHandler('drawingTypes').FREEHAND) && newDrawing) {
+        if (drawing != undefined && (drawing.type == compatibilityHandler.drawingClass().SHAPE_TYPES.POLYGON || drawing.type == compatibilityHandler.drawingClass().SHAPE_TYPES.FREEHAND) && newDrawing) {
             drawing._addPoint({x:data.x, y:data.y}, {snap:false, temporary:true});
             drawing.renderFlags.set({refreshShape: true});
         }
@@ -39,70 +39,73 @@ export async function drawFunction(command, data, status, menu) {
                 }
             }
             //Add point to the drawing
-            else if (drawing != undefined && drawing.type == compatibilityHandler('drawingTypes').POLYGON && drawing.document.bezierFactor == 0 && newDrawing) {
+            else if (drawing != undefined && drawing.type == compatibilityHandler.drawingClass().SHAPE_TYPES.POLYGON && drawing.document.bezierFactor == 0 && newDrawing) {
                 drawing._addPoint({x:data.x,y:data.y},false)
             }
             //Start drawing
             else {
                 let tool = menu.selectedDrawingToolName;
-                let drawingData = canvas.layers.filter(layer => layer.name == 'DrawingsLayer')[0]._getNewDrawingData({x:data.x,y:data.y})
+
                 let type;
                 freehand = false;
-                if (tool == 'rect') type = compatibilityHandler('drawingTypes').RECTANGLE;
-                else if (tool == 'ellipse') type = compatibilityHandler('drawingTypes').ELLIPSE;
-                else if (tool == 'polygon') type = compatibilityHandler('drawingTypes').POLYGON;
+                if (tool == 'rect') type = compatibilityHandler.drawingClass().SHAPE_TYPES.RECTANGLE;
+                else if (tool == 'ellipse') type = compatibilityHandler.drawingClass().SHAPE_TYPES.ELLIPSE;
+                else if (tool == 'polygon') type = compatibilityHandler.drawingClass().SHAPE_TYPES.POLYGON;
                 else if (tool == 'freehand') {
-                    type = compatibilityHandler('drawingTypes').POLYGON;
-                    ui.controls.controls.find(c => c.name == 'drawings').activeTool = 'freehand';
-                    ui.controls.render(); 
+                    type = compatibilityHandler.drawingClass().SHAPE_TYPES.POLYGON;
+                    compatibilityHandler.controls.activateControl('drawings', 'freehand');
                     freehand = true;
                 }
 
-                drawingData.shape.type = type;
-                if (tool == 'freehand') drawingData.bezierFactor = 0.5;
-                drawingData.fillColor = menu.colors[menu.selectedFillColor].hex;
-                drawingData.fillType = menu.colors[menu.selectedFillColor].name == 'none' ? 0 : 1;
-                drawingData.strokeColor = menu.colors[menu.selectedLineColor].hex;
-                drawingData.strokeAlpha = menu.colors[menu.selectedLineColor].name == 'none' ? 0 : 1;
-                drawingData.x = data.x;
-                drawingData.y = data.y;
-                drawingData.strokeAlpha = 1;
-                drawingData.strokeWidth = 8;
+                const drawingData = {
+                    shape: {
+                        type: type,
+                        width: 10,
+                        height: 10,
+                        points: tool === 'polygon' || tool === 'freehand' ? [0,0,1,0] : undefined
+                    },
+                    x: data.x,
+                    y: data.y,
+                    bezierFactor: tool === 'freehand' ? 0.5 : 0,
+                    fillType:  menu.colors[menu.selectedFillColor].name === 'none' ? CONST.DRAWING_FILL_TYPES.NONE : CONST.DRAWING_FILL_TYPES.SOLID,
+                    fillColor: menu.colors[menu.selectedFillColor].hex,
+                    strokeColor: menu.colors[menu.selectedLineColor].hex
+                }
 
-                const document = new DrawingDocument(drawingData, {parent: canvas.scene});
-                drawing = new Drawing(document);
-                canvas.drawings.preview.addChild(drawing);
-                drawing._addPoint({x:data.x, y:data.y},false)
-                drawing.draw();
-                
+                let drawings = await canvas.scene.createEmbeddedDocuments('Drawing', [
+                    DrawingDocument.fromSource(drawingData)
+                ]);
+
+                drawing = canvas.drawings.placeables.find(d => d.id === drawings[0]._id);
+                drawing._fixedPoints = [0,0]
+
                 newDrawing = true;
             }
         }
         else if (status == 'hold') {
             if (drawing == undefined || menu.selectedDrawing == 6) return;
 
-            if (drawing.type == compatibilityHandler('drawingTypes').POLYGON && (!freehand || freehand && !newDrawing)) return;
+            if (drawing.type == compatibilityHandler.drawingClass().SHAPE_TYPES.POLYGON && (!freehand || freehand && !newDrawing)) return;
 
-            if (drawing.type == compatibilityHandler('drawingTypes').POLYGON && newDrawing) {          
+            if (drawing.type == compatibilityHandler.drawingClass().SHAPE_TYPES.POLYGON && newDrawing) {          
                 drawing._addPoint({x:data.x, y:data.y});
                 drawing.refresh();
             }
 
             //Resize drawing
             else {
-                const dx = data.x - drawing.x;
-                const dy = data.y - drawing.y;
-
-                drawing.document.shape.width = dx;
-                drawing.document.shape.height = dy;
-                drawing.refresh();
+                let dx = data.x - drawing.x;
+                let dy = data.y - drawing.y;
+                if (dx < 10) dx = 10;
+                if (dy < 10) dy = 10;
+                drawing.document.update({shape:{width:dx,height:dy}})
             }
             
         }
         else if (status == 'release') {
             if (drawing == undefined || menu.selectedDrawing == 6) return;
    
-            if (drawing.type != compatibilityHandler('drawingTypes').POLYGON || drawing.document.bezierFactor > 0) {
+            if (drawing.type != compatibilityHandler.drawingClass().SHAPE_TYPES.POLYGON || drawing.document.bezierFactor > 0) {
                 if (newDrawing) {
                     newDrawing = false;
                     canvas.drawings.preview.removeChild(drawing);
@@ -122,7 +125,7 @@ export async function drawFunction(command, data, status, menu) {
     }
     else if (command == 'penA') {
         if (status == 'click') {
-            if (newDrawing && drawing.type == compatibilityHandler('drawingTypes').POLYGON) {
+            if (newDrawing && drawing.type == compatibilityHandler.drawingClass().SHAPE_TYPES.POLYGON) {
                 newDrawing = false;
                 canvas.drawings.preview.removeChild(drawing);
                 const cls = getDocumentClass('Drawing');
@@ -146,7 +149,7 @@ export async function drawFunction(command, data, status, menu) {
         }
     }
     else if (command == 'penB') {
-        if (newDrawing && drawing.type == compatibilityHandler('drawingTypes').POLYGON) {
+        if (newDrawing && drawing.type == compatibilityHandler.drawingClass().SHAPE_TYPES.POLYGON) {
             if (status == 'click') {
 
             }

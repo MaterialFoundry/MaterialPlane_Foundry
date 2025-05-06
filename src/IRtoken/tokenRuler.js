@@ -27,7 +27,7 @@ export class DragRuler {
      * @param {*} position 
      * @returns 
      */
-    start(token, position) {
+    async start(token, position) {
         if (game.settings.get(moduleName,'tokenRuler').mode == 'disabled') return;
 
         if (this.ruler != undefined) this.end();
@@ -37,9 +37,7 @@ export class DragRuler {
         
         this.previousPosition = position;
 
-        //Create a new ruler and start it
-        this.ruler = new Ruler(game.user);
-        canvas.controls.rulers.addChild(this.ruler);
+        this.ruler = await compatibilityHandler.ruler.draw();
     }
 
     /**
@@ -57,9 +55,12 @@ export class DragRuler {
 
         if (this.path[0] == undefined) {
             this.path[0] = this.origin;
-            this.ruler.clear();
-            this.ruler._state = Ruler.STATES.STARTING;
-            this.ruler._addWaypoint(this.origin);
+            compatibilityHandler.ruler.clear(this.ruler);
+            compatibilityHandler.ruler.setStartState(this.ruler);
+            compatibilityHandler.ruler.addWaypoint(this.ruler, this.origin);
+            //this.ruler.clear();
+            //this.ruler._state = Ruler.STATES.STARTING;
+            //this.ruler._addWaypoint(this.origin);
         }
 
         if (rulerSettings.mode == 'follow') {
@@ -71,7 +72,8 @@ export class DragRuler {
                     if (segments !== undefined) {
                         const lastSegment = segments[segments.length-1];
                         if (comparePositions(position,lastSegment.ray.A)) {
-                            this.ruler._removeWaypoint(position);
+                            compatibilityHandler.ruler.removeWaypoint(this.ruler, position);
+                            //this.ruler._removeWaypoint(position);
                             this.lastSegmentOrigin = position;
                         }
                     }
@@ -84,19 +86,21 @@ export class DragRuler {
                 let origin = this.lastSegmentOrigin;
                 if (origin == undefined) origin = lastSegment.ray.A;
                 const destination = position;
-                const distance = compatibilityHandler('measureDistance', origin, destination, {gridSpaces:true});
+                const distance = canvas.grid.measurePath([origin, destination]).distance;
                 const slope = origin.x != destination.x && origin.y != destination.y;
     
                 if (slope && distance > 5) {
-                    this.ruler._addWaypoint(this.path[this.path.length-3]);
-                    this.ruler._addWaypoint(position);
+                    compatibilityHandler.ruler.addWaypoint(this.ruler, this.path[this.path.length-3]);
+                    compatibilityHandler.ruler.addWaypoint(this.ruler, position);
+                    //this.ruler._addWaypoint(this.path[this.path.length-3]);
+                    //this.ruler._addWaypoint(position);
                     this.lastSegmentOrigin = position;
                 }
             } 
         }
 
-        if (rulerSettings.mode == 'pathfinding') {
-            const pathfindingDistance = game.settings.get(moduleName,'tokenRuler').distance * compatibilityHandler('gridSize');
+        else if (rulerSettings.mode == 'pathfinding') {
+            const pathfindingDistance = game.settings.get(moduleName,'tokenRuler').distance * canvas.grid.size;
 
             if (!routingLibEnabled) {
                 if (Date.now() - routingLibNotificationTimer > 10000) {
@@ -117,7 +121,7 @@ export class DragRuler {
 
             if (pathfindingDistance != 0) {
                 //calculate the distance between the current position and the last locked segment
-                const distanceFromLastLocked = compatibilityHandler('measureDistance', position, this.pathFinderStart, {gridSpaces:true});
+                const distanceFromLastLocked = canvas.grid.measurePath([position, this.pathFinderStart]).distance;
 
                 //if this distance is small enough remove the last segment from storage and set the starting coordinate. This allows backtracking
                 if (distanceFromLastLocked <= pathfindingDistance) {
@@ -132,11 +136,12 @@ export class DragRuler {
                 //for all segments that were calculated in the previous pathfinding calculation
                 for (let i=0; i<this.pathFinderSegmentsPrevious.length; i++) {
                     const segment = this.pathFinderSegmentsPrevious[i];
-                    const coordsArr = compatibilityHandler('getGridOffset', segment.y, segment.x);
+                    const offset = canvas.grid.getOffset({x: segment.y,y: segment.x});
+                    const coordsArr = [offset.i, offset.j];
                     const coords = {x: coordsArr[0], y: coordsArr[1]};
 
                     //calculate the distance between the segment and the current position
-                    const distance = compatibilityHandler('measureDistance', coords,position,{gridSpaces:true});
+                    const distance = canvas.grid.measurePath([coords, position]).distance;
     
                     //if the distance is large enough, store all segments up until this point
                     if (distance > pathfindingDistance) {
@@ -150,8 +155,10 @@ export class DragRuler {
             }
             
             //calculate the new path, starting from the last locked segment
-            const from = compatibilityHandler('getGridOffset', this.pathFinderStart.x, this.pathFinderStart.y);
-            const to = compatibilityHandler('getGridOffset', position.x, position.y);
+            const startOffset = canvas.grid.getOffset(this.pathFinderStart);
+            const from = [startOffset.i, startOffset.j];
+            const endOffset = canvas.grid.getOffset(position);
+            const to = [endOffset.i, endOffset.j];
             const path = await routinglib.calculatePath({x:from[1],y:from[0]}, {x:to[1],y:to[0]});
             this.pathFinderSegmentsPrevious = path.path;
 
@@ -162,13 +169,14 @@ export class DragRuler {
 
             //add waypoints to ruler
             for (let segment of pathSegments) {
-                const coordsArr = compatibilityHandler('getTopLeftPoint', segment.y, segment.x);
+                const topLeftPoint = canvas.grid.getTopLeftPoint({i:segment.x, j:segment.y});
+                const coordsArr = [topLeftPoint.x, topLeftPoint.y];
                 const pos = {x: coordsArr[0], y: coordsArr[1]};
                 this.ruler._addWaypoint(pos);
             }
         }
-
-        this.ruler.measure(position);
+        compatibilityHandler.ruler.measure(this.ruler, position, this.path);
+        //this.ruler.measure(position);
     }
 
     /**
@@ -176,7 +184,8 @@ export class DragRuler {
      */
     end() {
         this.token = undefined;
-        this.ruler.clear();
+        compatibilityHandler.ruler.clear(this.ruler);
+        //this.ruler.clear();
         this.ruler = undefined;
         this.previousPosition = {x: 0, y: 0};
         this.path = [];

@@ -1,7 +1,9 @@
+import { MaterialPlaneLayer } from "../Misc/misc.js";
+
 /**
  * Draws a rectangle to indicate where a token would land if released
  */
-export class TokenMarker extends CanvasLayer {
+export class TokenMarker extends MaterialPlaneLayer {
     constructor() {
         super();
         this.init();

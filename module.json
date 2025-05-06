@@ -1,14 +1,13 @@
 {
     "title": "Material Plane",
     "description": "Module for tracking physical minis. By using an IR tracking camera and mini bases with IR LED's this module can be used to move tokens in Foundry by moving physical tokens on top of a horizontally mounted TV",
-    "version": "3.3.0_pre1",
+    "version": "3.2.3",
     "authors": [
         {
-            "name": "CDeenen",
+            "name": "Material Foundry",
             "email": "info@materialfoundry.nl",
-            "discord": "Cris#6864",
-            "patreon": "MaterialFoundry",
-            "reddit": "CDeenen123"
+            "discord": "materialfoundry",
+            "patreon": "materialfoundry"
         }
     ],
     "esmodules": [
@@ -29,36 +28,30 @@
         {
             "lang": "en",
             "name": "English",
-            "path": "lang/en.json",
-            "flags": {}
+            "path": "lang/en.json"
         }
     ],
     "media": [
         {
             "type": "icon",
-            "url": "modules/MaterialPlane/img/MaterialFoundry512x512.png",
-            "loop": false,
-            "flags": {}
+            "url": "modules/MaterialPlane/img/MaterialFoundry512x512.png"
         },
         {
             "type": "setup",
-            "url": "modules/MaterialPlane/img/MaterialFoundry2560x1440.jpg",
-            "loop": false,
-            "flags": {}
+            "url": "modules/MaterialPlane/img/MaterialFoundry2560x1440.jpg"
         },
         {
             "type": "cover",
-            "url": "modules/MaterialPlane/img/MaterialFoundry2560x1440.jpg",
-            "loop": false,
-            "flags": {}
+            "url": "modules/MaterialPlane/img/MaterialFoundry2560x1440.jpg"
         }
     ],
-    "url": "https://github.com/MaterialFoundry/MaterialPlane_Foundry",
+    "url": "https://materialfoundry.github.io/MaterialPlane/",
+    "readme": "https://materialfoundry.github.io/MaterialPlane/",
     "manifest": "https://github.com/MaterialFoundry/MaterialPlane_Foundry/releases/latest/download/module.json",
     "download": "https://github.com/MaterialFoundry/MaterialPlane_Foundry/releases/download/v3.2.2/module.zip",
     "id": "MaterialPlane",
     "compatibility": {
-        "minimum": "11",
-        "verified": "12"
+        "minimum": "12",
+        "verified": "13"
     }
 }

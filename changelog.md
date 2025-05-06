@@ -1,23 +1,16 @@
 # Changelog Material Plane Foundry Module
 
-### v3.3.0_pre1 - 11-04-2025
-Pre-release
+### v3.2.3 - 07-05-2025
 
-Additions:
-<ul>
-<li>(Experimental) Added token auto rotation. Still needs some work, especially for rotating in place.</li>
-<li>Limited the maximum distanced a linked token is allowed to move towards a base to 6 grid spaces. This can prevent unintentional token movement.</li>
-</ul>
+Made compatible with Foundry v13 for the MP hardware, touch isn't working properly yet. Support for Foundry v11 has been dropped.
 
 Fixes:
-<ul>
-<li>(Temporary workaround) Pen menu doesn't always open when it should. As a temporary workaround the menu will always open when the pen is detected.</li>
-</ul>
+* Made some improvement on how linked tokens are handled when a new scene is loaded or a new token is placed on the scene. Previously, it was possible for the token to teleport through walls when the token was moved for the first time, this should no longer be possible.
+* The pen menu would not always show up. It has been changed so the menu will always show up when the pen is detected.
 
-Other:
-<ul>
-<li>Cleaned up localization file</li>
-</ul>
+Known issues:
+* There are multiple compatibility warnings. Some that can only be fixed once support for Foundry v12 is dropped, and some that can be fixed before then. Compatibility warnings should not affect the usability of the module.
+* Touch appears to be somewhat working, but there are a lot of errors in the console. These errors appear to be related to how core Foundry handles touch inputs. They do not appear to hinder MP's touch implementation (and might actually be helpful in preventing the core touch implementation from functioning). This will be looked into for a later update. Touch still isn't working perfectly, though.
 
 ### v3.2.2 - 27-09-2024
 

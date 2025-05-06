@@ -1,8 +1,8 @@
 import { moduleName } from "../../MaterialPlane.js";
-import { activateControl } from "../Misc/misc.js";
+import { activateControl, MaterialPlaneLayer } from "../Misc/misc.js";
 import { scaleIRinput } from "../IRtoken/tokenHelpers.js";
 
-export class penMenu extends CanvasLayer {
+export class penMenu extends MaterialPlaneLayer {
     constructor() {
       super();
       this.init();
@@ -565,7 +565,6 @@ export class penMenu extends CanvasLayer {
        * Update the cursor position, size and color
        */
     drawMenu(data, force = false) {
-        console.log('drawMenu', data)
         if (data == undefined) {
             if (this.lastData == undefined) return;
             data = this.lastData;

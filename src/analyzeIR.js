@@ -122,6 +122,18 @@ export async function analyzeIR(data) {
                             
                             if (token != undefined) {
                                 IRtokens[point.number].token = token;
+                                IRtokens[point.number].oldMovementAction = token?.document.movementAction;
+                                if (token.can(game.user,"control"))
+                                    await token.document.update({movementAction: 'displace'});
+                                else
+                                    game.socket.emit(`module.MaterialPlane`, {
+                                        "msgType": "setTokenMovementAction",
+                                        "senderId": game.user.id, 
+                                        "receiverId": game.data.users.find(users => users.role == 4)._id, 
+                                        "tokenId": token.id,
+                                        "action": 'displace'
+                                    });
+
                                 debug('baseData',`Grabbed token ${token.name} with base ID: ${data.id}`)
                             }
                             else {

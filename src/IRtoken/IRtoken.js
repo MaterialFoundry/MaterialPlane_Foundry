@@ -5,7 +5,6 @@ import { findToken, getGridCenter, getIRDeadZone, getIROffset, getTokenGridEnter
 import { TokenMarker } from "./tokenMarker.js";
 import { TokenDebug } from "./tokenDebug.js";
 import { compatibilityHandler } from "../Misc/compatibilityHandler.js";
-import { Pathfinder } from "./pathfinder.js";
 
 let pausedMessage = false;
 
@@ -18,11 +17,7 @@ export class IRtoken {
         this.previousPosition;
         this.scaledCoords;
         this.previousCoords;
-        this.currentScene;
-        this.path = [];
-        this.pathCounter = 0;
-        this.pathAvg = {x:0, y:0};
-        this.tokenAngle;
+        this.oldMovementAction;
 
         this.marker = new TokenMarker();
         this.debug = new TokenDebug();
@@ -30,7 +25,6 @@ export class IRtoken {
         canvas.stage.addChild(this.debug);
         this.marker.init();
         this.debug.init();
-        this.pathfinder = new Pathfinder();
 
         this.ruler = new DragRuler();
     }
@@ -39,7 +33,7 @@ export class IRtoken {
      * New IR coordinates were received. Coordinates will be scaled. If a token is near the scaled coordinate
      * @param {*} coords 
      */
-    async update(data,scaledCoords,forceNew=false,moveToken=true){
+    async update(data,scaledCoords,forceNew=false,moveToken=true,touch=false){
 
         if (data == undefined && this.token == undefined) return;
 
@@ -61,11 +55,13 @@ export class IRtoken {
             this.scaledCoords = scaledCoords;
         }
 
-        if (this.token && this.currentScene !== canvas.scene.id) {
+        if (this.token && (!this.currentGridSpace || !this.previousPosition || !this.originPosition || !this.oldMovementAction)) {
             this.currentGridSpace = {x:this.token.x+canvas.dimensions.size/2, y:this.token.y+canvas.dimensions.size/2}
             this.previousPosition = this.currentGridSpace;
+            this.controlledToken = this.token;
             this.originPosition = {x:this.token.x, y:this.token.y};
-            this.currentScene = canvas.scene.id;
+            this.oldMovementAction = this.token?.document.movementAction;
+            this.token.MPlastPosition = this.previousPosition;
         }
         
         //If no token is assigned yet
@@ -94,11 +90,28 @@ export class IRtoken {
             this.previousPosition = this.currentGridSpace;
             this.controlledToken = this.token;
             this.originPosition = {x:this.token.x, y:this.token.y};
+            this.oldMovementAction = this.token?.document.movementAction;
+            this.token.MPlastPosition = this.previousPosition;
+            
+            if (this.token.can(game.user,"control"))
+                await this.token.document.update({movementAction: 'displace'});
+            else
+                game.socket.emit(`module.MaterialPlane`, {
+                    "msgType": "setTokenMovementAction",
+                    "senderId": game.user.id, 
+                    "receiverId": game.data.users.find(users => users.role == 4)._id, 
+                    "tokenId": this.token.id,
+                    "action": 'displace'
+                });
 
             //Start the token ruler
             this.ruler.start(this.token, this.currentGridSpace);
-
-            this.pathfinder.start(this.token, this.currentGridSpace)
+            
+            if (touch) {
+                //this.token._finalizeDragLeft = (ev) => {
+                //    console.log('dragLeft')
+                //}
+            }
         }
 
         //Select token
@@ -139,49 +152,8 @@ export class IRtoken {
         let currentGridSpace = getGridCenter(coords, this.token);
         this.debug.updateGridSpace(currentGridSpace);
 
-        if (game.settings.get(moduleName, 'autoRotate')) {
-            let angle;
-            if (this.pathCounter === 0) {
-                this.path.push({coords})
-            }
-            else {
-                const diff = {x: this.path[this.pathCounter-1].coords.x - coords.x, y: this.path[this.pathCounter-1].coords.y - coords.y};
-                this.path.push({coords, diff});
-                this.pathAvg = {x:0, y:0};
-                for (let i=0; i<this.pathCounter; i++) {
-                    this.pathAvg.x += this.path[i].diff?.x || 0;
-                    this.pathAvg.y += this.path[i].diff?.y || 0;
-                }
-                this.pathAvg.x /= this.pathCounter;
-                this.pathAvg.y /= this.pathCounter;
-    
-                const radians = Math.atan2(this.pathAvg.y, this.pathAvg.x);
-                angle = 180 * radians / Math.PI + 90;
-    
-                this.tokenAngle = angle;
-                this.token.document.rotation = this.tokenAngle;
-            }
-            
-            if (this.path.length > 20) this.path.shift();
-            else this.pathCounter++;
-    
-            //console.log('path', coords, this.path, this.pathAvg, angle, this.pathCounter)
-        }
-        
-
-        //console.log('prev', this.previousPosition, currentGridSpace, canvas.grid.measurePath([this.previousPosition,currentGridSpace]).distance)
         //Check if a token has entered a new grid space, if so, store where it entered the space
-        const path = canvas.grid.measurePath([this.previousPosition, currentGridSpace]);
-        const distance = path.distance / canvas.grid.distance;
-        if (distance > 6) return;
-        let enterPos;
-        if (distance == 0)
-            enterPos = await getTokenGridEnterPosition(this.token, this.previousPosition, currentGridSpace, coords, this.debug);
-        else
-            enterPos = this.previousPosition || this.originPosition
-
-        //this.pathfinder.calculatePath(currentGridSpace);
-
+        let enterPos = await getTokenGridEnterPosition(this.token, this.previousPosition, currentGridSpace, coords, this.debug);
 
         let movementMethod = game.settings.get(moduleName,'movementMethod');
 
@@ -280,7 +252,7 @@ export class IRtoken {
             this.token.refresh();
 
             //Update lighting in case of 'live' movement method
-            if (movementMethod == 'live') compatibilityHandler('initializeSources', this.token);
+            if (movementMethod == 'live') this.token.initializeSources();
 
             //Print debug message
             debug('moveToken',`Token: ${this.token.name}, Move to: (${coords.x}, ${coords.y})`)
@@ -333,16 +305,17 @@ export class IRtoken {
             //If user can control the token
             if (this.token.can(game.user,"control")) {
                 //Update token position
-                await this.token.document.update(newCoords);
-                
-                if (this.token == undefined) return false;
+                //const oldMovementAction = this.token?.document.movementAction;
+                await this.token?.document.update({...newCoords});
 
+                if (this.token == undefined) return false;
+                
                 //Prevent token animation
                 if (this.token?.animationName)
-                    CanvasAnimation.terminateAnimation(this.token.animationName);
+                    compatibilityHandler.terminateTokenAnimation(this.token);
 
                 //Print debug message
-                debug('dropToken',`Token ${this.token.name}, Dropping at (${newCoords.x}, ${newCoords.y})`)
+                debug('dropToken',`Token ${this.token?.name}, Dropping at (${newCoords.x}, ${newCoords.y})`)
             }
             //Otherwise, request movement from GM client
             else {
@@ -363,18 +336,32 @@ export class IRtoken {
         //Make sure the token is positioned in the correct spot (required if a token is moved but dropped at its starting position)
         this.token.document.x = newCoords.x;
         this.token.document.y = newCoords.y;
-        if (game.settings.get(moduleName, 'autoRotate')) this.token.document.rotation = this.tokenAngle;
         this.token.refresh();
-        compatibilityHandler('initializeSources', this.token);
+        this.token.initializeSources();
+
+        if (this.oldMovementAction === 'displace') 
+            this.oldMovementAction = 'walk'
+
+        if (this.token.can(game.user,"control"))
+            await this.token.document.update({movementAction: this.oldMovementAction});
+        else
+            game.socket.emit(`module.MaterialPlane`, {
+                "msgType": "setTokenMovementAction",
+                "senderId": game.user.id, 
+                "receiverId": game.data.users.find(users => users.role == 4)._id, 
+                "tokenId": this.token.id,
+                "action": this.oldMovementAction
+            });
         
         //Release token, if setting is enabled
-        if (release) this.token.release();
+        if (release) this.token?.release();
 
         //Handle tokenDrop for token ruler
         this.ruler.tokenDrop();
 
         this.token = undefined;
         this.marker.hide();
+
         return true;
     }
 }
