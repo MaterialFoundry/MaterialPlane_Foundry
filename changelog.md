@@ -1,5 +1,10 @@
 # Changelog Material Plane Foundry Module
 
+### v3.2.4_pre1 - 20-05-2025
+
+Fixes:
+* Fixed conflicting handlebar naming with the DC20 system.
+
 ### v3.2.3 - 07-05-2025
 
 Made compatible with Foundry v13 for the MP hardware, touch isn't working properly yet. Support for Foundry v11 has been dropped.

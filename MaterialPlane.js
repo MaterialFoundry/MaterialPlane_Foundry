@@ -58,14 +58,14 @@ export const urls = [
     }
 ]
 
-Handlebars.registerHelper('ifCond', function(v1, v2, options) {
+Handlebars.registerHelper('mpIfCond', function(v1, v2, options) {
     if(v1 === v2) {
       return options.fn(this);
     }
     return options.inverse(this);
 });
 
-Handlebars.registerHelper('ifNCond', function(v1, v2, options) {
+Handlebars.registerHelper('mpIfNCond', function(v1, v2, options) {
     if(v1 === v2) {
         return options.inverse(this);
     }
