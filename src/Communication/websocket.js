@@ -10,6 +10,8 @@ let wsInterval;                 //Interval timer to detect disconnections
 let disableTimeout = false;
 let connectFailedMsg = false;
 let connectionAttempts = 0;
+let secureWebsockets = false;
+let websocketProtocol = "ws"
 
 /**
  * Analyzes the message received from the IR tracker.-
@@ -91,8 +93,10 @@ async function analyzeWSmessage(msg,passthrough = false){
 export async function startWebsocket() {
     
     ip = game.settings.get(moduleName,'ConnectionMode') == 'materialCompanion' ? game.settings.get(moduleName,'MaterialServerIP') : game.settings.get(moduleName,'IP');
-    console.log(`Material Plane: Starting websocket on 'ws://${ip}'`);
-    ws = new WebSocket('ws://'+ip);
+    secureWebsockets = game.settings.get(moduleName,'secureWebsockets');
+    if (secureWebsockets) websocketProtocol = "wss";
+    console.log(`Material Plane: Starting websocket on '${websocketProtocol}://${ip}'`);
+    ws = new WebSocket(websocketProtocol+'://'+ip);
     
     clearInterval(wsInterval);
 
