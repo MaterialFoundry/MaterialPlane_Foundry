@@ -214,7 +214,7 @@ export class mpConfig extends FormApplication {
             document.getElementById("mpConnAttemptsNumber").value = val;
             this.setSettings('nrOfConnAttempts',val);
         });
-        html.find("input[id=mpSecureWebsockets]").on('change', event => { this.setSettings('secureWebsockets',event.target.checked); });
+        html.find("input[id=mpSecureWebsockets]").on('change', event => { this.setSettings('secureWebsockets',event.target.checked); this.restart = true; });
 
         // --- Touch settings ---
         html.find("select[id=mpTapMode]").on('change', event =>         { this.setSettings('tapMode',event.target.value); });
