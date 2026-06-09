@@ -1,4 +1,5 @@
 import { moduleName, routingLibEnabled } from "../../MaterialPlane.js";
+import { debug } from "../Misc/misc.js";
 import { compatibilityHandler } from "../Misc/compatibilityHandler.js";
 import { comparePositions } from "./tokenHelpers.js";
 
@@ -48,6 +49,8 @@ export class DragRuler {
     async move(position) {
         const rulerSettings = game.settings.get(moduleName,'tokenRuler');
         if (rulerSettings.mode == 'disabled') return;
+
+        debug('ruler', `move, position=(x,y) = ${position.x}, ${position.y}`);
 
         //If the position of the ruler's endpoint has not changed, return
         if (comparePositions(this.previousPosition, position)) return;
@@ -159,6 +162,7 @@ export class DragRuler {
             const from = [startOffset.i, startOffset.j];
             const endOffset = canvas.grid.getOffset(position);
             const to = [endOffset.i, endOffset.j];
+            debug('ruler', `calculating ${from[1]}, ${from[0]}, to ${to[1]}, ${to[0]}`);
             const path = await routinglib.calculatePath({x:from[1],y:from[0]}, {x:to[1],y:to[0]});
             this.pathFinderSegmentsPrevious = path.path;
 
@@ -173,6 +177,7 @@ export class DragRuler {
                 const coordsArr = [topLeftPoint.x, topLeftPoint.y];
                 const pos = {x: coordsArr[0], y: coordsArr[1]};
                 this.ruler._addWaypoint(pos);
+                debug('ruler', `segment is ${pos.x}, ${pos.y}`);
             }
         }
         compatibilityHandler.ruler.measure(this.ruler, position, this.path);

@@ -31,7 +31,12 @@ export class IRtoken {
 
     /**
      * New IR coordinates were received. Coordinates will be scaled. If a token is near the scaled coordinate
-     * @param {*} coords 
+     *
+     * @params {object} data:  while referenced and stored into rawCoordinates, rawCoordinates appears unused.
+     * @params {object} scaledCoords: x and y values that correspond to canvas pixels.
+     * @params {boolean} forcenew: Force a new token to be associated with this movement.
+     * @params {boolean} moveToken: Move the token
+     * @params {boolean} touch: Generated from touchscreen?  Current does nothing.
      */
     async update(data,scaledCoords,forceNew=false,moveToken=true,touch=false){
 

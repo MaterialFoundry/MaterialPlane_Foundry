@@ -41,6 +41,35 @@ export function scaleIRinput(coords){
 }
 
 /**
+ * Scales canvas coordinates to those of the IR;
+ * scaleCanvasToIR(scaleIRinput(x, y)) should return x,y - this function reverses
+ * what scaleIRinput does, though due to rounding, it might be plus or minus 1
+ *
+ * @param {object}: Canvas coordinates
+ * @return {object}: Scaled coordinates
+ */
+export function scaleCanvasToIR(coords){
+    //Calculate the amount of pixels that are visible in the screen window
+    const horVisible = window.innerWidth/canvas.scene._viewPosition.scale;
+    const vertVisible = window.innerHeight/canvas.scene._viewPosition.scale;
+
+    //Calculate the unscaled coordinates
+    let posX = 4096 * (coords.x - canvas.scene._viewPosition.x + (horVisible/2))/ horVisible;
+    let posY = 4096 * (coords.y - canvas.scene._viewPosition.y + (vertVisible/2))/ vertVisible;
+
+    // Ensure the final values are within 0 to 4095
+    if (posX < 0) posX = 0;
+    if (posX > 4095) posX = 4095;
+    if (posY < 0) posY = 0;
+    if (posY > 4095) posY = 4095;
+
+    debug('cal',`Raw: (${Math.round(coords.x)}, ${Math.round(coords.y)}). Unscaled: (${Math.round(posX)}, ${Math.round(posY)}). View: (${Math.round(canvas.scene._viewPosition.x)}, ${Math.round(canvas.scene._viewPosition.y)}, ${canvas.scene._viewPosition.scale}). Canvas: ${canvas.dimensions.width}x${canvas.dimensions.height} (${canvas.dimensions.rect.x}, ${canvas.dimensions.rect.y}). Scene: ${canvas.dimensions.sceneWidth}x${canvas.dimensions.sceneHeight} (${canvas.dimensions.sceneRect.x}, ${canvas.dimensions.sceneRect.y}). Display: ${window.innerWidth}x${window.innerHeight}`)
+
+    //Return the value
+    return {"x":Math.round(posX),"y":Math.round(posY)};
+}
+
+/**
  * Find the token closest to the coordinates
  * 
  * @param {*} position Coordinates
@@ -126,7 +155,7 @@ export function getIROffset(coords, token) {
     const gridSize = canvas.dimensions.size;
     const baseOrientation = game.settings.get(moduleName,'baseOrientation');
     let newCoords = {};
-   
+
     //Compensate for the difference between the center of the token and the top-left of the token, and compensate for token size
     if (baseOrientation == '0') {
         newCoords.x = coords.x - (token.document.width-0.5)*gridSize;

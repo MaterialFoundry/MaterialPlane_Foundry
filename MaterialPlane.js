@@ -9,7 +9,7 @@ import { mpConfig } from "./src/Misc/config.js";
 import { sendWS, startWebsocket } from "./src/Communication/websocket.js";
 import { calibrationProgressScreen, removeOverlay, calOverlay } from "./src/calibration.js";
 import { registerLayer, configureDebug } from "./src/Misc/misc.js";
-import { initializeIRtokens, initializeCursors, setLastBaseAddress, pen } from "./src/analyzeIR.js";
+import { initializeIRtokens, initializeCursors, setLastBaseAddress, pen, fakeIRdata, getTokenByID } from "./src/analyzeIR.js";
 import { IRremote } from "./src/IRremote/IRremote.js";
 import { analyzeTouch } from "./src/analyzeTouch.js";
 import { compatibilityHandler } from "./src/Misc/compatibilityHandler.js";
@@ -320,7 +320,28 @@ Hooks.once('init', function(){
     registerSettings();
     registerLayer();
     configDialog = new mpConfig();
-    calibrationProgress = new calibrationProgressScreen();    
+    calibrationProgress = new calibrationProgressScreen();
+
+    /*
+     * Attach functions to this modules api interface so
+     * that they can be called from the browsers java console.
+     * This allows testing/development without actually needing to
+     * move tokens around.
+     *
+     * Use of these apis (from java console).  See actual function
+     * declarations for what options the different functions take.
+     * mf = game.modules.get('MaterialPlane');
+     * mf.api.fakeIRdata(....);
+     *
+     */
+    const myModule = game.modules.get('MaterialPlane');
+
+    if (myModule) {
+        myModule.api = {
+            fakeIRdata: fakeIRdata,
+            getTokenByID: getTokenByID
+        };
+    }
 });
 
 /**
@@ -441,4 +462,4 @@ export async function checkForUpdate(reqType) {
     });
 
     
-} 
+}

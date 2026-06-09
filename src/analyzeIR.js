@@ -2,7 +2,7 @@ import { moduleName,configDialog,calibrationProgress } from "../MaterialPlane.js
 import { IRtoken } from "./IRtoken/IRtoken.js";
 import { debug } from "./Misc/misc.js";
 import { Pen } from "./Pen/pen.js";
-import { scaleIRinput } from "./IRtoken/tokenHelpers.js";
+import {scaleCanvasToIR, scaleIRinput} from "./IRtoken/tokenHelpers.js";
 import { Cursor } from "./Misc/cursor.js";
 
 export let lastBaseAddress = 0;
@@ -12,7 +12,7 @@ export let pen;
 let oldCommand = 0;
 let batteryNotificationTimer = 0;
 
-function getTokenByID(id){
+export function getTokenByID(id){
     const tokenIDs = game.settings.get(moduleName,'baseSetup');
     const baseData = tokenIDs.find(p => p.baseId == id);
     if (baseData == undefined) return undefined;
@@ -45,11 +45,29 @@ export function setLastBaseAddress(address) {
  * Analyzes the data received from the IR tracker.
  * If coordinates are received, scale the coordinates to the in-game coordinate system, find the token closest to those coordinates, and either take control of a new token or update the position of the image of that token
  * If no coordinates are received, move token to last recieved position
+ * @param {Object} data - the IR data received.  Format of the Object:
+ *   command {number}: Command from IR source (really only relevant for the pointer). Will be 1 for bases
+ *   battery {number}: Battery level of the given source
+ *   detectedPoints {number}: How many IR points are provided.  Not sure if this is ever greater than 1 -
+ *      I suppose it could be the case if the polling is slow (backlog of data)
+ *   id {number}: The based id
+ *   status {string}: Type of message - seems to always be "IR data"
+ *   irPoints {Object[]}: Array of IR point data, also an object:
+ *     x,y {number}: coordinate of data - this is raw from the sensor, and needs to be transformed
+ *                  to canvas coordinates.  Special value of -9999, -9999 is used to denote that
+ *                  an IR source has disappeared, but in the case, id is also zero.
+ *     area {number}: Size of IR source.  Appears unused in this function
+ *     avgBrigthness, maxBrightness {number}: Brightness information for this source.  Appears unused in
+ *          this function
+ *     number:  What IR source is being tracked?  This indexes into
+ *        IRTokens[], which is used to track movement of particular token.  If only moving 1 token,
+ *        this always seems to be zero.
  */
 export async function analyzeIR(data) {
     const activeUser = game.settings.get(moduleName,'ActiveUser');
     if (configDialog?.configOpen) configDialog.drawIrCoordinates(data);
-    //console.log('data',data)
+    //console.log('analyzeIR data');
+    //console.dir(data, {depth: null});
 
     foundBases = data.detectedPoints;
 
@@ -252,4 +270,44 @@ export async function analyzeIR(data) {
             */
         }
     }
+}
+
+/* This fakes the reception of IR data, calling analyzeIRdata()
+ * @param {number} baseid: ID of the base to mimic.  Most likely should match one
+ *    of the ids assigned to actors within the MaterialFoundry configuration
+ * @param {number} command: The IR command that has been sent.  Seems to be 1 for base
+ *    movement, 0 for base has stopped transmitting.
+ * @param {number} x, y:  The canvas positions of where this signal should appear to be
+ *   fakeIRdata will convert this back to sensor coordinates before calling analyzeIRdata() -
+ *   using canvas positions is just simpler since mostly like for testing, the goal is to
+ *   move a token a set number of spaces in some direction.  Special -9999, -9999 is passed
+ *   unscaled, as that is used for dropping the base.
+ *
+ * Note that fakeIRdata() does not fill in all the data that is normally returned -
+ * rather, it just fills in what is used by analyzeIRdata(), so things like
+ * brightness and area of the point data is not filled in.
+ *
+ * Example of use:
+ * First, find the module and api:
+ * mf = game.modules.get('MaterialPlane');
+ * Next, find the token with the id you want - 1234 in this case
+ * mytoken = mf.api.getTokenByID(1234)
+ * Set the gridsize - makes following command shorter:
+ * gridsize = canvas.dimensions.size;
+ * Now, move the token 2 spaces to the right with fake IR data.  Half a gridsize is added so that
+ * the generated coordinates will be in the middle of a square.  Use negative values to move left/up.
+ * mf.api.fakeIRdata(1234, 1, mytoken.x + 2 * gridsize + gridsize / 2, mytoken.y + gridsize / 2)
+ * To drop the token:
+ * mf.api.fakeIRdata(1234, 0, -9999, -9999)
+ */
+export function fakeIRdata(baseid, command, x, y) {
+    let payload={battery: 100, command: command, status: 'IR data', id: baseid, detectedPoints: 1}
+    if (x == -9999 && y== -9999) {
+        payload['irPoints'] = [{number: 0, x: -9999, y: -9999}];
+    }
+    else {
+        let pos = scaleCanvasToIR({x: x, y:y});
+        payload['irPoints'] = [{number: 0, x: pos.x, y: pos.y}];
+    }
+    analyzeIR(payload);
 }

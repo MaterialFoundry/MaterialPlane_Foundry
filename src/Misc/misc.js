@@ -10,7 +10,8 @@ let debugSettings = {
   moveToken: false,
   dropToken: false,
   baseData: false,
-  cal: false
+  cal: false,
+  ruler: false
 };
 
 let batteryNotificationTimer = 0;
