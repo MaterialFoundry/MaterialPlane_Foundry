@@ -275,6 +275,16 @@
                 </div>
             </div>
 
+            <!-- Use Secure Websockets -->
+            <div class="mpConfigFormElements" id="mpSecureWebsockets">
+                <label class="mpTooltip">{{localize "MaterialPlane.Config.SecureWebsockets"}}*
+                    <span class="mpTooltiptext">{{localize "MaterialPlane.Config.SecureWebsockets_Hint"}}</span>
+                </label>
+                <div class="mpConfigFormVal">
+                    <input type="checkbox" id="mpSecureWebsockets" {{#if secureWebsockets}}checked{{/if}}>
+                </div>
+            </div>
+
             <!-- Number of connections attempts -->
             <div class="mpConfigFormElements">
                 <label class="mpTooltip">{{localize "MaterialPlane.Config.MaxAttempts"}}

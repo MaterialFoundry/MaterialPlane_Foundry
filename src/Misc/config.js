@@ -73,6 +73,7 @@ export class mpConfig extends FormApplication {
             sensorIP: game.settings.get(moduleName,'IP'),
             materialServerIP: game.settings.get(moduleName,'MaterialServerIP'),
             nrOfConnAttempts: game.settings.get(moduleName,'nrOfConnAttempts'),
+            secureWebsockets: game.settings.get(moduleName,'secureWebsockets'),
 
             tapMode: game.settings.get(moduleName,'tapMode'),
             touchTimeout: game.settings.get(moduleName,'touchTimeout'),
@@ -213,6 +214,7 @@ export class mpConfig extends FormApplication {
             document.getElementById("mpConnAttemptsNumber").value = val;
             this.setSettings('nrOfConnAttempts',val);
         });
+        html.find("input[id=mpSecureWebsockets]").on('change', event => { this.setSettings('secureWebsockets',event.target.checked); this.restart = true; });
 
         // --- Touch settings ---
         html.find("select[id=mpTapMode]").on('change', event =>         { this.setSettings('tapMode',event.target.value); });
