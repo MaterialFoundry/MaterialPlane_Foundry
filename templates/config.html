@@ -196,6 +196,16 @@
                 </div>
             </div>
 
+            <!-- Token Lock-->
+            <div class="mpConfigFormElements">
+               <label class="mpTooltip">{{localize "MaterialPlane.Config.TokenLock"}}
+                    <span class="mpTooltiptext">{{localize "MaterialPlane.Config.TokenLock_Hint"}}</span>
+               </label>
+               <div class="mpConfigFormVal">
+                   <input type="checkbox" id="mpTokenLock"  {{#if tokenLock}}checked{{/if}}>
+               </div>
+            </div>
+
             <!-- Ruler Mode -->
             <div class="mpConfigFormElements">
                 <label class="mpTooltip">{{localize "MaterialPlane.Config.RulerMode_Label"}}

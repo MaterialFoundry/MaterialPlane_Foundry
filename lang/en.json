@@ -48,6 +48,8 @@
     "MaterialPlane.Config.BatteryNotifications_Hint": "Will display a notification if there is a low battery",
     "MaterialPlane.Config.BaseOrientation_Label": "Base Orientation",
     "MaterialPlane.Config.BaseOrientation_Hint": "(For base adapters only) Set the orientation of the bases relative to the display. 0 degrees means that the infrared LED is on the top-right side of the display.",
+    "MaterialPlane.Config.TokenLock": "Lock actor and base",
+    "MaterialPlane.Config.TokenLock_Hint": "When set and using production hardware, if base has been assigned to an actor, then only that base will move the actor.  This can be useful if there are occasion stray IR sources or production and DIY bases are being used together.",
 
     "MaterialPlane.Config.SensorIP": "Sensor Module IP Address",
     "MaterialPlane.Config.SensorIP_Hint": "Fill in the IP address of the sensor module, include the port. Default: 'masterialsensor.local:3000'.",

@@ -525,10 +525,13 @@ export class calibrationOverlay extends ControlsLayer {
 
     update() {
         if (document.getElementById("mpCalError")) {
+            //Check if window is fullscreen
+            const isNotFullScreen = screen.width != window.innerWidth || screen.height != window.innerHeight;
+                    
             //Check for browser zoom or display scaling
             const isScaled = window.devicePixelRatio != 1;
 
-            if (isScaled)
+            if (isNotFullScreen || isScaled) 
                 document.getElementById("mpCalError").style.display = "";
             else
                 document.getElementById("mpCalError").style.display = "none";
@@ -537,9 +540,9 @@ export class calibrationOverlay extends ControlsLayer {
         }
         
 
-        //Calculate the amount of pixels that are visible on the screen/in the window
-        const horVisible = window.innerWidth/canvas.scene._viewPosition.scale;
-        const vertVisible = window.innerHeight/canvas.scene._viewPosition.scale;
+        //Calculate the amount of pixels that are visible on the screen
+        const horVisible = screen.width/canvas.scene._viewPosition.scale;
+        const vertVisible = screen.height/canvas.scene._viewPosition.scale;
 
         const x = canvas.scene._viewPosition.x;
         let y = canvas.scene._viewPosition.y;

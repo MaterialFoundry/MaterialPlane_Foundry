@@ -8,6 +8,27 @@ import { compatibilityHandler } from "../Misc/compatibilityHandler.js";
 
 let pausedMessage = false;
 
+/**
+ * getBaseByTokenName - for a given actor name, return base ID that matches.
+ * This checks if the actor is linked, in which case it will be returned.
+ * If not, it will only return if the basedata scene matches current scene.
+ * Note since baseSetup likely does not change very often, it could be a decent
+ * optimization to store that data someplace instead of needing to look it up every time.
+ * This is similar to getTokenByID() in analyzeIR.js, but putting it in that file would
+ * cause recursive imports.
+ *
+ * @param name {str}: The actor name to find the base id for.
+ * @returns {number}: The assigned base ID, or 0 for no match.
+ */
+export function getBaseByTokenName(name){
+    const tokenIDs = game.settings.get(moduleName,'baseSetup');
+    const baseData = tokenIDs.find(p => p.tokenName == name);
+    if (baseData == undefined) return 0;
+    if (baseData.linkActor) return baseData.baseId;
+    else if (baseData.sceneName == canvas.scene.name) return baseData.baseId;
+    return 0;
+}
+
 export class IRtoken {
     constructor() { 
         this.controlledToken = undefined;   //Stores the currently controlled token
@@ -32,14 +53,13 @@ export class IRtoken {
     /**
      * New IR coordinates were received. Coordinates will be scaled. If a token is near the scaled coordinate
      *
-     * @params {object} data:  while referenced and stored into rawCoordinates, rawCoordinates appears unused.
+     * @params {object} data: Contains raw x & y values (not used), and id of IR source.
      * @params {object} scaledCoords: x and y values that correspond to canvas pixels.
      * @params {boolean} forcenew: Force a new token to be associated with this movement.
      * @params {boolean} moveToken: Move the token
      * @params {boolean} touch: Generated from touchscreen?  Current does nothing.
      */
     async update(data,scaledCoords,forceNew=false,moveToken=true,touch=false){
-
         if (data == undefined && this.token == undefined) return;
 
         //Prevent movement if game is paused
@@ -73,22 +93,27 @@ export class IRtoken {
         if (this.token == undefined || forceNew) {
             //Find the nearest token to the scaled coordinates
             if (this.token == undefined) this.token = findToken( this.scaledCoords );
-            
+
             if (this.token == undefined) {
                 debug('updateMovement','No token found')
                 return false;
             }
-            
+
             //If the user can't control the token and non-owned token movement is disabled, prevent token movement
             if (this.token.can(game.user,"control") == false && game.settings.get(moduleName,'EnNonOwned') == false) {
-                
                 debug('updateMovement',`User can't control token ${this.token?.name}`)
                 this.token = undefined;
                 return false;
             }
-
             //Print debug message
             debug('updateMovement',`Found token ${this.token.name}`)
+
+            let baseID = getBaseByTokenName(this.token.name);
+            if (baseID != 0 && baseID != data.id && game.settings.get(moduleName,'tokenLock') == true) {
+                debug('updateMovement', `Token lock set, so ${baseID} can not be controlled by ${data.id}`);
+                this.token = undefined;
+                return false;
+            }
 
             //Get the current grid space of the token
             this.currentGridSpace = {x:this.token.x+canvas.dimensions.size/2, y:this.token.y+canvas.dimensions.size/2}

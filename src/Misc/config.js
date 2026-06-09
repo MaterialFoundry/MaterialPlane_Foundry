@@ -68,6 +68,7 @@ export class mpConfig extends FormApplication {
             penMenu: game.settings.get(moduleName,'MenuSize'),
             cursorSize: game.settings.get(moduleName,'CursorSize'),
             baseOrientation: game.settings.get(moduleName,'baseOrientation'),
+            tokenLock: game.settings.get(moduleName,'tokenLock'),
 
             connectionMode: game.settings.get(moduleName,'ConnectionMode'),
             sensorIP: game.settings.get(moduleName,'IP'),
@@ -154,6 +155,7 @@ export class mpConfig extends FormApplication {
         html.find("input[id=mpMovementMarker]").on('change', event =>           { this.setSettings('movementMarker',event.target.checked); });
         html.find("input[id=mpNonOwned]").on('change', event =>                 { this.setSettings('EnNonOwned',event.target.checked); });
         html.find("input[id=mpCollision]").on('change', event =>                { this.setSettings('collisionPrevention',event.target.checked); });
+        html.find("input[id=mpTokenLock]").on('change', event =>                { this.setSettings('tokenLock',event.target.checked); });
         html.find("input[id=mpHideDisplay]").on('change', event =>              { this.setSettings('HideElements',event.target.checked); this.restart = true; });
         html.find("input[id=mpBatteryNotifications]").on('change', event =>     { this.setSettings('batteryNotifications',event.target.checked); });
         html.find("select[id=mpBaseOrientation]").on('change', async event =>   { this.setSettings('baseOrientation',event.target.value); });

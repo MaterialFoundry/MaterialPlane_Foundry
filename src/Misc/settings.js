@@ -142,6 +142,17 @@ export const registerSettings = function() {
     });
 
     /**
+     * Sets if the only production bases can moved assigned actors.
+     */
+    game.settings.register(moduleName,'tokenLock', {
+        scope: "world",
+        config: false,
+        default: false,
+        type: Boolean
+    });
+
+
+    /**
      * Hides all elements on the target client, if that client is not a GM
      */
     game.settings.register(moduleName,'HideElements', {

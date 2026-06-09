@@ -102,7 +102,7 @@ export async function analyzeIR(data) {
             }
             
             let forceNew = false;
-            const coords = {x:point.x, y:point.y};
+            const coords = {x:point.x, y:point.y, id:data.id};
             let scaledCoords = scaleIRinput(coords);
 
             debug('baseData',`Command: ${command}, nr of bases: ${foundBases}, base ID: ${data.id}`)
