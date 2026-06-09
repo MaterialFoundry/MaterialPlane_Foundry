@@ -135,6 +135,8 @@
                         <option value="live" {{#mpIfCond movementMethod 'live'}}selected{{/mpIfCond}}>{{localize "MaterialPlane.Config.MovementMethod_Live"}}</option>
                         <option value="default" {{#mpIfCond movementMethod 'default'}}selected{{/mpIfCond}}>{{localize "MaterialPlane.Config.MovementMethod_Default"}}</option>
                         <option value="stepByStep" {{#mpIfCond movementMethod 'stepByStep'}}selected{{/mpIfCond}}>{{localize "MaterialPlane.Config.MovementMethod_SbS"}}</option>
+                        <option value="tokenDrop" {{#mpIfCond movementMethod 'tokenDrop'}}selected{{/mpIfCond}}>{{localize "MaterialPlane.Config.MovementMethod_tokenDrop"}}</option>
+
                     </select>
                 </div>
             </div>
@@ -205,6 +207,7 @@
                         <option value="straight" {{#mpIfCond rulerMode 'straight'}}selected{{/mpIfCond}}>{{localize "MaterialPlane.Config.RulerModeStraight"}}</option>
                         <option value="follow" {{#mpIfCond rulerMode 'follow'}}selected{{/mpIfCond}}>{{localize "MaterialPlane.Config.RulerModeFollow"}}</option>
                         <option value="pathfinding" {{#mpIfCond rulerMode 'pathfinding'}}selected{{/mpIfCond}}>{{localize "MaterialPlane.Config.RulerModePathfinding"}}</option>
+                        <option value="findMovementPath" {{#mpIfCond rulerMode 'findMovementPath'}}selected{{/mpIfCond}}>{{localize "MaterialPlane.Config.RulerFindMovementPath"}}</option>
                     </select>
                 </div>
             </div>

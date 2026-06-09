@@ -9,7 +9,7 @@ import { mpConfig } from "./src/Misc/config.js";
 import { sendWS, startWebsocket } from "./src/Communication/websocket.js";
 import { calibrationProgressScreen, removeOverlay, calOverlay } from "./src/calibration.js";
 import { registerLayer, configureDebug } from "./src/Misc/misc.js";
-import { initializeIRtokens, initializeCursors, setLastBaseAddress, pen, fakeIRdata, getTokenByID } from "./src/analyzeIR.js";
+import { initializeIRtokens, initializeCursors, setLastBaseAddress, pen, fakeIRdata, getTokenByID, rulerTest, rulerTestEnd } from "./src/analyzeIR.js";
 import { IRremote } from "./src/IRremote/IRremote.js";
 import { analyzeTouch } from "./src/analyzeTouch.js";
 import { compatibilityHandler } from "./src/Misc/compatibilityHandler.js";
@@ -339,7 +339,9 @@ Hooks.once('init', function(){
     if (myModule) {
         myModule.api = {
             fakeIRdata: fakeIRdata,
-            getTokenByID: getTokenByID
+            getTokenByID: getTokenByID,
+            rulerTest: rulerTest,
+            rulerTestEnd: rulerTestEnd
         };
     }
 });

@@ -42,19 +42,151 @@ export class DragRuler {
     }
 
     /**
+     * Handle token ruler for the findMovementPath case.
+     * @param {Object} position.  Contains x and y canvas value of desired end point of ruler.
+     * @param {boolean} draw_ruler: Whether the ruler should be drawn, or just the calculations performed.
+     *        This is used in tokenDropDrop() to calculate a path in case the ruler mode is not set to findMovementPath
+     *
+     */
+    async findMovementPath(position, draw_ruler=true) {
+        // The position values passed to the ruler are center points on the space.  But findMovementPath()
+        // uses top left, the ruler uses top left, token is top left, so easier to just have everything
+        // use that as the reference coordinates.
+        const gridSize = canvas.dimensions.size;
+        const newpos = {x: position.x - gridSize/2, y: position.y - gridSize/2, snapped: true};
+        const tok = this.token;
+        let unreachableWaypoints = [];
+        let segments = [];
+
+        if (tok == undefined) return;
+
+        debug('ruler', `findMovementPath calculating path from ${tok.x}, ${tok.y} to ${newpos.x}, ${newpos.y}`);
+
+        const pathJob = tok.findMovementPath([{x: tok.x, y: tok.y}, newpos], {preview: true, history:true});
+        let waypoints = await pathJob.promise;
+
+        // By default, findMovementPath() will return a path as far as it can.  Other modules may change this
+        // behavior and return all or nothing, so handle that scenario.  Wayfinder seems to just return a single
+        // waypoint if there is no path - that of the token itself.  It is still desirable to draw the dashed
+        // (unreachable) line in this case.
+        if (waypoints === undefined || waypoints.length < 2) {
+            debug('ruler', `findMovementPath did not find path from ${tok.x}, ${tok.y} to ${newpos.x}, ${newpos.y}`);
+            this.path = [];
+            unreachableWaypoints = tok.document.getCompleteMovementPath([{x: tok.x, y: tok.y}, newpos]);
+        } else {
+            this.path = waypoints;
+
+            // The ruler needs to have every space as a waypoint to be drawn correctly, so use
+            // getCompleteMovementPath() to do that.
+            for (let i = 1; i < waypoints.length; i++) {
+                let intermediateWaypoints = tok.document.getCompleteMovementPath([waypoints[i - 1], waypoints[i]]);
+
+                let intermediateSegments = intermediateWaypoints.map(obj => ({
+                    ...obj,
+                    checkpoint: false,
+                    intermediate: true
+                }));
+
+                // The first and last segment need some special handling in order for the ruler to be drawn correctly.
+                intermediateSegments[0].checkpoint = true;
+                intermediateSegments[0].intermediate = false;
+                // Last segment also is not intermediate
+                intermediateSegments[intermediateSegments.length - 1].intermediate = false;
+                segments.push(...intermediateSegments);
+            }
+            /**
+             * If the final point in the path calculated does not match the final desired coordinates,
+             * something must be blocking the path.  Calculate a path from that to final desired
+             * space and put that in unreachableWaypoints.  By default, foundry draws that as
+             * a dashed line.
+             */
+            unreachableWaypoints = [];
+            const lastWaypoint = segments.at(-1);
+
+            if (!comparePositions(newpos, lastWaypoint)) {
+                debug('ruler', `Path is blocked, last waypoint is ${lastWaypoint.x}, ${lastWaypoint.y}, target is ${newpos.x}, ${newpos.y}`);
+
+                lastWaypoint.snapped = true;
+                unreachableWaypoints = tok.document.getCompleteMovementPath([lastWaypoint, newpos]);
+            }
+        }
+
+        // If not drawing the ruler, do not need to deal with the unreachableWaypoints, as none of the data
+        // below is stored in the ruler.
+        if (!draw_ruler) return;
+
+        /**
+         * Now the distance between all those points needs to be calculated.  Need to merge the results
+         * from measureMovementPath() and the waypoints.  It seems odd to calculate the distance for the
+         * unreachable waypoints, but that is what the standard ruler (mouse drag) does, so follow that
+         * behavior.  Want to do only one measurement call so that it can properly take into account
+         * any special movement rules (every other diagonal counting 2, which some game systems do)
+         */
+        const dist = tok.measureMovementPath([...segments, ...unreachableWaypoints]);
+        this.pathFinderSegments = segments.map((wp, idx) =>
+            ({...wp, cost: dist.waypoints[idx].backward?.cost}));
+
+        let unreachableWPDist = [];
+        if (unreachableWaypoints.length > 0) {
+            // Like the planned waypoints, the final waypoint needs different checkpoint & intermediate values.
+            // Since these are unreachable, it should be a straight line.
+            unreachableWPDist = unreachableWaypoints.map((wp, idx) =>
+                ({
+                    ...wp,
+                    cost: dist.waypoints[idx + segments.length].backward?.cost,
+                    checkpoint: false,
+                    elevation: 0,
+                    intermediate: true
+                }))
+
+            // If none of the planned movement is reachable, then the entire ruler is unreachable waypoints.
+            // In that case, need to set these values so it is properly used as a starting point.
+            if (segments.length == 0) {
+                unreachableWPDist[0].checkpoint = true;
+                unreachableWPDist[0].intermediate = false;
+            }
+
+            unreachableWPDist[unreachableWaypoints.length - 1].checkpoint = true;
+            unreachableWPDist[unreachableWaypoints.length - 1].intermediate = false;
+        }
+        /**
+         * This is using the token's ruler property, which is a bit different from how the rest of this file deals
+         * with it (using the canvas ruler).  This works for V13, not sure how well it would work on older
+         * versions of foundry (foundry API documentation does not detail when changes are made to the API)
+         * While each ruler is associated with a specific foundry user, test seems to show that multiple rulers
+         * can still be displayed at the same time.
+         */
+        let plannedMovement={};
+        plannedMovement[game.user.id] = {history: tok.document.movementHistory, hidden: false, searching:false,
+                unreachableWaypoints:unreachableWPDist, foundPath: this.pathFinderSegments};
+        tok.ruler.refresh({passedWaypoints: [], pendingWaypoints: [], plannedMovement: plannedMovement});
+        tok.ruler.visible = true;
+        tok.ruler.draw();
+    }
+
+    /**
      * Handle token/ruler movement
-     * @param {*} position 
-     * @returns 
+     * @param {Object} position.  Contains x and y canvas positions.
      */
     async move(position) {
         const rulerSettings = game.settings.get(moduleName,'tokenRuler');
         if (rulerSettings.mode == 'disabled') return;
 
-        debug('ruler', `move, position=(x,y) = ${position.x}, ${position.y}`);
+        debug('ruler', `move ruler to ${position.x}, ${position.y}`);
 
         //If the position of the ruler's endpoint has not changed, return
         if (comparePositions(this.previousPosition, position)) return;
         this.previousPosition = position;
+
+        /**
+         * The logic if using findMovementPath is different enough from the rest in
+         * this function that it is cleaner to just put it in its own function
+         */
+        if (rulerSettings.mode == 'findMovementPath') {
+            this.findMovementPath(position, true);
+            return
+        }
+
 
         if (this.path[0] == undefined) {
             this.path[0] = this.origin;
@@ -188,6 +320,16 @@ export class DragRuler {
      * Handle the stopping of the ruler
      */
     end() {
+        const rulerSettings = game.settings.get(moduleName,'tokenRuler');
+
+        if (rulerSettings.mode === 'findMovementPath') {
+            this.token.ruler.clear();
+            this.path = [];
+            this.token = undefined;
+            this.ruler = undefined;
+            return;
+        }
+
         this.token = undefined;
         compatibilityHandler.ruler.clear(this.ruler);
         //this.ruler.clear();

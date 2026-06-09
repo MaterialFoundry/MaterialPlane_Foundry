@@ -272,7 +272,8 @@ export async function analyzeIR(data) {
     }
 }
 
-/* This fakes the reception of IR data, calling analyzeIRdata()
+/**
+ * This fakes the reception of IR data, calling analyzeIRdata()
  * @param {number} baseid: ID of the base to mimic.  Most likely should match one
  *    of the ids assigned to actors within the MaterialFoundry configuration
  * @param {number} command: The IR command that has been sent.  Seems to be 1 for base
@@ -310,4 +311,44 @@ export function fakeIRdata(baseid, command, x, y) {
         payload['irPoints'] = [{number: 0, x: pos.x, y: pos.y}];
     }
     analyzeIR(payload);
+}
+
+/**
+ * This is a helper to provide a way to test the ruler without needing to do the rest of the
+ * IR logic.
+ *
+ * @param {number} irtoken: Index into irtoken to use. This can be useful if it is desired to
+ *                  test multiple tokens at the same time.
+ * @param {object} token: the token to draw the ruler for.
+ * @param {number} x: Canvas x position to draw ruler to
+ * @param {number} y: Canvas y position to draw ruler to.
+ *
+ * Note that this updates the IRtokens array, since the ruler needs that.  This is fine for testing,
+ * but calling this function when moving actual IR bases around will likely result in odd behavior.
+ * Might be nice to allow an index into IRtokens to test multiple rulers at t
+ *
+ * Example of use:
+ * First, find the module and api:
+ * mf = game.modules.get('MaterialPlane');
+ * Next, find the token with the id you want - 1234 in this case
+ * mytoken = mf.api.getTokenByID(1234)
+ * Set the gridsize - makes following command shorter:
+ * gridsize = canvas.dimensions.size;
+ * Now draw the ruler from token to 2 spaces to the right. Not needed to add half a grid space
+ * as the ruler calculations seem to take that into account.
+ * Use negative values to move left/up.
+ * mf.api.RulerTest(0, mytoken, mytoken.x + 2 * gridsize, y: mytoken.y)
+ */
+export function rulerTest(irtoken, token, x, y)
+{
+    IRtokens[irtoken].ruler.start(token, {x: token.x, y: token.y});
+    IRtokens[irtoken].ruler.move({x:x, y:y});
+}
+
+/**
+ * This calls the end() function for the ruler
+ * @constructor
+ */
+export function rulerTestEnd(irtoken) {
+    IRtokens[irtoken].ruler.end();
 }
