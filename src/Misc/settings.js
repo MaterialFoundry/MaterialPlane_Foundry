@@ -250,6 +250,16 @@ export const registerSettings = function() {
         type: String
     });
 
+    /**
+     * Secure Websockets
+     */
+    game.settings.register(moduleName,'secureWebsockets', {
+        scope: "client",
+        config: false,
+        default: false,
+        type: Boolean
+    });
+
     //invisible settings
     game.settings.register(moduleName,'menuOpen', {
         scope: "client",

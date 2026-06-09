@@ -158,10 +158,153 @@ export class IRtoken {
 
         return true;
     }
+    /**
+     * Show how the token might get to the new coords
+     * @param {Object} coords: Contains x & y canvas coordinates
+     *
+     * With movementMethod of tokenDrop, the token does not move until it is dropped.
+     * As such, in this mode, all that is done is that the ruler is drawn.  The
+     * coordinates need to be stored, because when the token is dropped, the
+     * coordinates are not provided at that time.  moveToken() does this,
+     * but if that changes, it needs to be added to this function.
+     *
+     * The usefulness of this movement is much more useful if paired with the FindMovementPath
+     * ruler method, since this function also uses FindMovementPath to determine a path to the
+     * destination - ideally, the 2 settings should be tied together.
+     *
+     * This function is simple enough it really doesn't need to be its own function,
+     * but this may make it easier if moveToken() is refactored in various ways to
+     * add any new logic here.
+     */
+    async moveTokenDrop(coords) {
+        let currentGridSpace = getGridCenter(coords, this.token);
+        debug('moveToken',`moveTokenDrop: Would move token from ${this.token.x}, ${this.token.y} to ${currentGridSpace.x}, ${currentGridSpace.y}`);
+        // Other parts of MaterialPlane sets movementAction to displace - in that mode, the ruler is not
+        // drawn & calculated properly, so reset movementAction to the old value, and make sure the old
+        // value is not displace, but walk instead (in that case, what the real old movementAction was is
+        // probably lost
+        if (this.oldMovementAction === 'displace')
+            this.oldMovementAction = 'walk'
+
+        await this.token.document.update({movementAction: this.oldMovementAction});
+
+        this.currentGridSpace = currentGridSpace;
+        this.ruler.move(currentGridSpace);
+    }
+
+    /**
+     * The token has been dropped, so now move it along its path.  This is used when the movement method is to
+     * not move the token until it is dropped.  Hence, the pretty terrible function name - tokenDrop describes
+     * the movement method, and Drop the action that is being done.
+     *
+     * This is called from dropIRtoken(), which only calls this is movementMethod is tokenDrop.  If this is called
+     * when that is not the movementMethod, unpredictable results are likely.
+     *
+     */
+    async tokenDropDrop(release = game.settings.get(moduleName,'deselect')){
+
+        //If no token is controlled, return
+        if (this.token == undefined) return false;
+
+        const gridSize = canvas.dimensions.size;
+
+        let newCoords = {
+            x: this.currentGridSpace.x - 0.5*gridSize,
+            y: this.currentGridSpace.y - 0.5*gridSize,
+            rotation: this.token.document.rotation
+        }
+
+        debug('moveToken',`TokenDropDrop newCoords is ${newCoords.x}, ${newCoords.y}`);
+
+        /* The path that the ruler sets is used here if set to findMovementPath.  If the ruler is not set to that,
+         * then call ruler.findMovementPath() to fill in the needed data.
+         */
+        const rulerSettings = game.settings.get(moduleName,'tokenRuler');
+        debug('moveToken',`TokenDropDrop rulerSettings is ${rulerSettings.mode}`);
+
+        if (rulerSettings.mode != 'findMovementPath') {
+            await this.ruler.findMovementPath(newCoords, false);
+        }
+
+        if (this.ruler.path === undefined || this.ruler.path.length == 0) {
+            debug('moveToken', `TokenDropDrop did not find path from ${this.token.x}, ${this.token.y} to ${newCoords.x}, ${newCoords.y}`);
+        } else {
+            this.previousPosition = this.currentGridSpace;
+            let final_pos = this.ruler.path[this.ruler.path.length - 1];
+
+
+            let newCoords = {
+                x: final_pos.x - final_pos.x % gridSize,
+                y: final_pos.y - final_pos.y % gridSize,
+                rotation: this.token.document.rotation
+            }
+
+            debug('moveToken',`TokenDropDrop adjusted final coords is ${newCoords.x}, ${newCoords.y}`);
+
+            for (const wp of this.ruler.path) {
+                debug('moveToken', `Moving token to waypoint ${wp.x}, ${wp.y}`);
+
+                // If user can control the token
+                if (this.token.can(game.user, "control")) {
+                    //Update token position
+                    //const oldMovementAction = this.token?.document.movementAction;
+                    await this.token?.document.update({...wp});
+
+                    if (this.token == undefined) return false;
+
+                    //Prevent token animation
+                    if (this.token?.animationName)
+                        compatibilityHandler.terminateTokenAnimation(this.token);
+                }
+                //Otherwise, request movement from GM client
+                else {
+                    let payload = {
+                        "msgType": "moveToken",
+                        "senderId": game.user.id,
+                        "receiverId": game.data.users.find(users => users.role == 4)._id,
+                        "tokenId": this.token.id,
+                        "newCoords": wp
+                    };
+                    game.socket.emit(`module.MaterialPlane`, payload);
+                }
+
+
+                //Make sure the token is positioned in the correct spot (required if a token is moved but dropped at its starting position)
+                this.token.document.x = newCoords.x;
+                this.token.document.y = newCoords.y;
+                this.token.refresh();
+                this.token.initializeSources();
+
+                if (this.oldMovementAction === 'displace')
+                    this.oldMovementAction = 'walk'
+
+                if (this.token.can(game.user, "control"))
+                    await this.token.document.update({movementAction: this.oldMovementAction});
+                else
+                    game.socket.emit(`module.MaterialPlane`, {
+                        "msgType": "setTokenMovementAction",
+                        "senderId": game.user.id,
+                        "receiverId": game.data.users.find(users => users.role == 4)._id,
+                        "tokenId": this.token.id,
+                        "action": this.oldMovementAction
+                    });
+            }
+        }
+        //Release token, if setting is enabled
+        if (release) this.token?.release();
+
+        //Handle tokenDrop for token ruler
+        this.ruler.tokenDrop();
+
+        this.token = undefined;
+        this.marker.hide();
+
+        return true;
+    }
 
     /**
      * Move the token to the new coordinates
-     * @param {*} coords 
+     * @param {*} coords
      */
     async moveToken(coords) {
         this.debug.updateToken(this.token);
@@ -181,10 +324,14 @@ export class IRtoken {
         let currentGridSpace = getGridCenter(coords, this.token);
         this.debug.updateGridSpace(currentGridSpace);
 
+        let movementMethod = game.settings.get(moduleName,'movementMethod');
+        if (movementMethod == 'tokenDrop') {
+            this.moveTokenDrop(coords);
+            return;
+        }
+
         //Check if a token has entered a new grid space, if so, store where it entered the space
         let enterPos = await getTokenGridEnterPosition(this.token, this.previousPosition, currentGridSpace, coords, this.debug);
-
-        let movementMethod = game.settings.get(moduleName,'movementMethod');
 
         //Check if a collision occurs between the position where the token entered the grid space, and the current position. This is to prevent teleportation through walls that are placed through a grid space.
         let collision;
@@ -304,12 +451,22 @@ export class IRtoken {
     }
 
      /**
-     * Calculate the difference between the old coordinates of the token and the last measured coordinates, and move the token there
-     */
+      * Calculate the difference between the old coordinates of the token and the last measured coordinates, and move the token there
+      *
+      * @params (boolean) release: Release the token on drop.  None of the function callers set this, and here it
+      *     set to the module setting of deselect behavior.
+      * @returns boolean: This is always set to true, and the callers of this function do not look at the
+      *     return value, so this could probably be removed.
+      */
     async dropIRtoken(release = game.settings.get(moduleName,'deselect')){
         
         //If no token is controlled, return
         if (this.token == undefined) return false;
+
+        if (game.settings.get(moduleName,'movementMethod') === 'tokenDrop') {
+            this.tokenDropDrop();
+            return true;
+        }
 
         const gridSize = canvas.dimensions.size;
 
