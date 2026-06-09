@@ -60,6 +60,8 @@
     "MaterialPlane.Config.ConnectionModeNoConnect": "Don't Connect",
     "MaterialPlane.Config.MaxAttempts": "Maximum Connection Attempts",
     "MaterialPlane.Config.MaxAttempts_Hint": "The maximum amount of times Material Plane will attempt to connect to the sensor or Material Companion.",
+    "MaterialPlane.Config.SecureWebsockets": "Use Secure Websockets",
+    "MaterialPlane.Config.SecureWebsockets_Hint": "If checked, connect using Secure Websockets.  Note that there is no built in mechanism to provide secure websockets in the Material Plane hardware or Material Companion.  A secured proxy must be provided by the user.",
 
     "MaterialPlane.Config.TapMode": "Touch Mode",
     "MaterialPlane.Config.TapMode_Hint": "Sets the touch mode. This can be used to distinguish between touches caused by minis and taps that are meant to interact with the canvas (such as opening doors). 'Tap Timeout': When a new touch is detected, a timer will start. If the touch is removed before the timer is bigger than 'Tap Timeout', MP will assume it was a tap. Otherwise it'll assume a mini was placed. Token movement will start after 'Tap Timeout' has elapsed. 'Raise Mini': When a new touch is detected, MP will check if a touch has recently (within the last 'Tap Timeout' ms) ended near the new touch. It that's the case, MP will assume a mini is being moved, otherwise it'll assume a tap.",
